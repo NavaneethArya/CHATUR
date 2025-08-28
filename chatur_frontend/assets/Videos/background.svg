@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450" width="300" height="450">
+    <style>
+        .sky { fill: #e0f7fa; }
+        .hill { fill: #66bb6a; }
+        .house-main { fill: #fff3e0; }
+        .house-roof { fill: #ffcc80; }
+        .house-door { fill: #d7ccc8; }
+        .tree-trunk { fill: #a1887f; }
+        .tree-leaves { fill: #81c784; }
+        .phone-body { fill: #42a5f5; }
+        .phone-screen { fill: #e3f2fd; }
+        .notification-bg { fill: #ef5350; }
+        .notification-text { fill: #fff; }
+        .person-skin-1 { fill: #ffb74d; }
+        .person-skin-2 { fill: #a1887f; }
+        .person-skin-3 { fill: #fbc02d; }
+        .person-shirt-1 { fill: #c5cae9; }
+        .person-shirt-2 { fill: #ffb74d; }
+        .person-hair-1 { fill: #4e342e; }
+        .person-hair-2 { fill: #fffde7; }
+    </style>
+    <rect class="sky" width="300" height="450" />
+    <path class="hill" d="M0,450 Q75,300 150,350 T300,300 V450 Z" />
+
+    <!-- Simplified House -->
+    <g id="house" transform="translate(20, 300) scale(0.6)">
+        <rect class="house-main" x="50" y="50" width="100" height="80" rx="5" ry="5"/>
+        <path class="house-roof" d="M40,50 L160,50 L100,0 Z"/>
+        <rect class="house-door" x="85" y="90" width="30" height="40" rx="3" ry="3"/>
+    </g>
+
+    <!-- Stylized Palm Tree -->
+    <g id="palm-tree" transform="translate(50, 200) scale(0.8)">
+        <rect class="tree-trunk" x="140" y="100" width="20" height="80" rx="5" ry="5"/>
+        <path class="tree-leaves" d="M150,100 L120,50 A30,30 0 0,1 180,50 L150,100 M150,100 L110,60 A30,30 0 0,0 190,60 L150,100 M150,100 L100,70 A30,30 0 0,0 200,70 L150,100"/>
+    </g>
+
+    <!-- Simplified Characters -->
+    <g id="characters" transform="translate(100, 200)">
+        <!-- Person 1 (left) -->
+        <circle class="person-skin-1" cx="20" cy="180" r="15"/>
+        <rect class="person-shirt-1" x="5" y="190" width="30" height="50" rx="5" ry="5"/>
+        <rect class="person-hair-1" x="10" y="170" width="20" height="10" rx="2" ry="2"/>
+        <!-- Person 2 (center-left) -->
+        <circle class="person-skin-2" cx="70" cy="160" r="15"/>
+        <rect class="person-shirt-2" x="55" y="170" width="30" height="60" rx="5" ry="5"/>
+        <rect class="person-hair-2" x="60" y="150" width="20" height="10" rx="2" ry="2"/>
+        <!-- Person 3 (center-right) -->
+        <circle class="person-skin-3" cx="120" cy="160" r="15"/>
+        <rect class="person-shirt-1" x="105" y="170" width="30" height="60" rx="5" ry="5"/>
+        <rect class="person-hair-1" x="110" y="150" width="20" height="10" rx="2" ry="2"/>
+        <!-- Person 4 (right) -->
+        <circle class="person-skin-1" cx="170" cy="180" r="15"/>
+        <rect class="person-shirt-2" x="155" y="190" width="30" height="50" rx="5" ry="5"/>
+        <rect class="person-hair-1" x="160" y="170" width="20" height="10" rx="2" ry="2"/>
+    </g>
+
+    <!-- Phone and Notification -->
+    <g id="phone" transform="translate(150, 100) scale(1)">
+        <rect class="phone-body" x="40" y="100" width="40" height="80" rx="5" ry="5"/>
+        <rect class="phone-screen" x="43" y="103" width="34" height="74" rx="3" ry="3"/>
+        <circle class="notification-bg" cx="75" cy="105" r="10"/>
+        <text class="notification-text" x="72" y="108" font-family="Arial" font-size="10">1</text>
+    </g>
+</svg>
