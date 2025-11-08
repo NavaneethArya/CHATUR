@@ -198,7 +198,10 @@ class ProductManager {
     if (index >= 0 && index < _products.length) {
       final productId = _products[index].productId;
       if (productId != null) {
-        final success = await FirebaseStoreService.updateProduct(productId, product);
+        final success = await FirebaseStoreService.updateProduct(
+          productId,
+          product,
+        );
         if (success) {
           await loadProducts(); // Reload to get updated data
           print('Product updated: ${product.productName}');

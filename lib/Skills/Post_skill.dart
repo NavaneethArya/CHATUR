@@ -68,20 +68,19 @@ class _PostSkillScreenState extends State<PostSkillScreen> {
   bool _isListening = false;
   bool _speechAvailable = false;
   LatLng? _currentLatLng;
-  double _radiusMeters = 5000;
+  final double _radiusMeters = 5000;
 
   final List<Map<String, dynamic>> _categories = [
-  {'name': 'Carpenter', 'icon': Icons.construction},
-  {'name': 'Electrician', 'icon': Icons.electrical_services},
-  {'name': 'Plumber', 'icon': Icons.plumbing},
-  {'name': 'Cook', 'icon': Icons.restaurant},
-  {'name': 'Painter', 'icon': Icons.format_paint},
-  {'name': 'Driver', 'icon': Icons.local_taxi},
-  {'name': 'Mechanic', 'icon': Icons.build},
-  {'name': 'Tutor', 'icon': Icons.school},
-  {'name': 'Other', 'icon': Icons.add_circle_outline}, // 👈 Added
-];
-
+    {'name': 'Carpenter', 'icon': Icons.construction},
+    {'name': 'Electrician', 'icon': Icons.electrical_services},
+    {'name': 'Plumber', 'icon': Icons.plumbing},
+    {'name': 'Cook', 'icon': Icons.restaurant},
+    {'name': 'Painter', 'icon': Icons.format_paint},
+    {'name': 'Driver', 'icon': Icons.local_taxi},
+    {'name': 'Mechanic', 'icon': Icons.build},
+    {'name': 'Tutor', 'icon': Icons.school},
+    {'name': 'Other', 'icon': Icons.add_circle_outline}, // 👈 Added
+  ];
 
   @override
   void initState() {
@@ -99,41 +98,39 @@ class _PostSkillScreenState extends State<PostSkillScreen> {
     super.dispose();
   }
 
-  
-void _onCategorySelected(String selectedCategory) async {
-  if (selectedCategory == 'Other') {
-    final custom = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          title: Text('Add Custom Skill'),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(hintText: 'Enter your skill name'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+  void _onCategorySelected(String selectedCategory) async {
+    if (selectedCategory == 'Other') {
+      final custom = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final controller = TextEditingController();
+          return AlertDialog(
+            title: Text('Add Custom Skill'),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(hintText: 'Enter your skill name'),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, controller.text.trim()),
+                child: Text('Add'),
+              ),
+            ],
+          );
+        },
+      );
 
-    if (custom != null && custom.isNotEmpty) {
-      setState(() => _formData.category = custom);
+      if (custom != null && custom.isNotEmpty) {
+        setState(() => _formData.category = custom);
+      }
+    } else {
+      setState(() => _formData.category = selectedCategory);
     }
-  } else {
-    setState(() => _formData.category = selectedCategory);
   }
-}
-
 
   Future<void> _initSpeech() async {
     try {
@@ -170,7 +167,7 @@ void _onCategorySelected(String selectedCategory) async {
   Future<void> _pickImages() async {
     try {
       final picked = await _picker.pickMultiImage(imageQuality: 70);
-      if (picked != null && mounted) {
+      if (mounted) {
         setState(() => _formData.imageFiles = picked.take(5).toList());
       }
     } catch (e) {
@@ -182,11 +179,16 @@ void _onCategorySelected(String selectedCategory) async {
     const cloudName = 'drxymvjkq';
     const uploadPreset = 'CHATUR';
 
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-    final request = http.MultipartRequest('POST', url)
-      ..fields['upload_preset'] = uploadPreset
-      ..fields['folder'] = 'chatur/skills'
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
+    final request =
+        http.MultipartRequest('POST', url)
+          ..fields['upload_preset'] = uploadPreset
+          ..fields['folder'] = 'chatur/skills'
+          ..files.add(
+            await http.MultipartFile.fromPath('file', imageFile.path),
+          );
 
     try {
       final response = await request.send();
@@ -209,7 +211,8 @@ void _onCategorySelected(String selectedCategory) async {
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
         return;
       }
 
@@ -228,9 +231,12 @@ void _onCategorySelected(String selectedCategory) async {
       final placemarks = await placemarkFromCoordinates(lat, lon);
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
-        final address = [p.street, p.locality, p.administrativeArea, p.country]
-            .where((s) => s != null && s.isNotEmpty)
-            .join(', ');
+        final address = [
+          p.street,
+          p.locality,
+          p.administrativeArea,
+          p.country,
+        ].where((s) => s != null && s.isNotEmpty).join(', ');
         setState(() {
           _formData.address = address;
           _addressController.text = address;
@@ -299,28 +305,31 @@ void _onCategorySelected(String selectedCategory) async {
           .collection('skills')
           .doc(skillId)
           .set({
-        'skillId': skillId,
-        'userId': user.uid,
-        'skillTitle': _formData.title.isNotEmpty ? _formData.title : _formData.category,
-        'category': _formData.category,
-        'description': _formData.description,
-        'flatPrice': _formData.flatPrice,
-        'perKmPrice': _formData.perKmPrice,
-        'images': urls,
-        'address': _formData.address,
-        'coordinates': _formData.coordinates,
-        'serviceRadiusMeters': _radiusMeters,
-        'availability': {
-          'days': _formData.availableDays,
-          'startTime': _formData.startTime?.format(context),
-          'endTime': _formData.endTime?.format(context),
-        },
-        'createdAt': FieldValue.serverTimestamp(),
-        'status': 'active',
-        'rating': 0.0,
-        'reviewCount': 0,
-        'viewCount': 0,
-      });
+            'skillId': skillId,
+            'userId': user.uid,
+            'skillTitle':
+                _formData.title.isNotEmpty
+                    ? _formData.title
+                    : _formData.category,
+            'category': _formData.category,
+            'description': _formData.description,
+            'flatPrice': _formData.flatPrice,
+            'perKmPrice': _formData.perKmPrice,
+            'images': urls,
+            'address': _formData.address,
+            'coordinates': _formData.coordinates,
+            'serviceRadiusMeters': _radiusMeters,
+            'availability': {
+              'days': _formData.availableDays,
+              'startTime': _formData.startTime?.format(context),
+              'endTime': _formData.endTime?.format(context),
+            },
+            'createdAt': FieldValue.serverTimestamp(),
+            'status': 'active',
+            'rating': 0.0,
+            'reviewCount': 0,
+            'viewCount': 0,
+          });
 
       if (mounted) {
         Navigator.pop(context); // Close loading
@@ -335,9 +344,9 @@ void _onCategorySelected(String selectedCategory) async {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -350,8 +359,12 @@ void _onCategorySelected(String selectedCategory) async {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(_currentPage == 0 ? Icons.close : Icons.arrow_back, color: AppColors.text),
-          onPressed: _currentPage == 0 ? () => Navigator.pop(context) : _previousPage,
+          icon: Icon(
+            _currentPage == 0 ? Icons.close : Icons.arrow_back,
+            color: AppColors.text,
+          ),
+          onPressed:
+              _currentPage == 0 ? () => Navigator.pop(context) : _previousPage,
         ),
         title: Text(
           'Post a Service',
@@ -380,8 +393,6 @@ void _onCategorySelected(String selectedCategory) async {
     );
   }
 
-  
-
   Widget _buildCategoryPage() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -390,7 +401,11 @@ void _onCategorySelected(String selectedCategory) async {
         children: [
           const Text(
             'What service do you offer?',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -457,9 +472,14 @@ void _onCategorySelected(String selectedCategory) async {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey[300],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Continue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -475,21 +495,31 @@ void _onCategorySelected(String selectedCategory) async {
         children: [
           Text(
             'Describe your ${_formData.category} service',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 24),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: TextField(
               controller: _descriptionController,
               maxLines: 8,
               onChanged: (v) => _formData.description = v,
               decoration: InputDecoration(
-                hintText: 'Describe your experience, skills, and what makes you unique...',
+                hintText:
+                    'Describe your experience, skills, and what makes you unique...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -514,32 +544,51 @@ void _onCategorySelected(String selectedCategory) async {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!, width: 2, style: BorderStyle.solid),
+                border: Border.all(
+                  color: Colors.grey[300]!,
+                  width: 2,
+                  style: BorderStyle.solid,
+                ),
               ),
-              child: _formData.imageFiles.isEmpty
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_photo_alternate, size: 48, color: AppColors.primary),
-                        const SizedBox(height: 12),
-                        Text('Add Photos (up to 5)', style: TextStyle(color: AppColors.textLight, fontSize: 16)),
-                      ],
-                    )
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(8),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
+              child:
+                  _formData.imageFiles.isEmpty
+                      ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Add Photos (up to 5)',
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      )
+                      : GridView.builder(
+                        padding: const EdgeInsets.all(8),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                        itemCount: _formData.imageFiles.length,
+                        itemBuilder: (context, index) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              File(_formData.imageFiles[index].path),
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
                       ),
-                      itemCount: _formData.imageFiles.length,
-                      itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(File(_formData.imageFiles[index].path), fit: BoxFit.cover),
-                        );
-                      },
-                    ),
             ),
           ),
           const SizedBox(height: 32),
@@ -547,13 +596,22 @@ void _onCategorySelected(String selectedCategory) async {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _formData.description.isNotEmpty && _formData.imageFiles.isNotEmpty ? _nextPage : null,
+              onPressed:
+                  _formData.description.isNotEmpty &&
+                          _formData.imageFiles.isNotEmpty
+                      ? _nextPage
+                      : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey[300],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Continue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -570,7 +628,11 @@ void _onCategorySelected(String selectedCategory) async {
         children: [
           const Text(
             'Pricing & Availability',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 24),
           Container(
@@ -578,18 +640,28 @@ void _onCategorySelected(String selectedCategory) async {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Service Price', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Service Price',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 16),
                 TextField(
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Flat Rate (₹)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => _formData.flatPrice = int.tryParse(v),
                 ),
@@ -597,45 +669,65 @@ void _onCategorySelected(String selectedCategory) async {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Available Days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const Text(
+            'Available Days',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: days.map((day) {
-              final selected = _formData.availableDays.contains(day);
-              return GestureDetector(
-                onTap: () => setState(() {
-                  selected ? _formData.availableDays.remove(day) : _formData.availableDays.add(day);
-                }),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: selected ? AppColors.primary : Colors.grey[300]!),
-                  ),
-                  child: Text(
-                    day,
-                    style: TextStyle(
-                      color: selected ? Colors.white : AppColors.text,
-                      fontWeight: FontWeight.w600,
+            children:
+                days.map((day) {
+                  final selected = _formData.availableDays.contains(day);
+                  return GestureDetector(
+                    onTap:
+                        () => setState(() {
+                          selected
+                              ? _formData.availableDays.remove(day)
+                              : _formData.availableDays.add(day);
+                        }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color:
+                              selected ? AppColors.primary : Colors.grey[300]!,
+                        ),
+                      ),
+                      child: Text(
+                        day,
+                        style: TextStyle(
+                          color: selected ? Colors.white : AppColors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 24),
-          const Text('Working Hours', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const Text(
+            'Working Hours',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                    if (time != null) setState(() => _formData.startTime = time);
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (time != null)
+                      setState(() => _formData.startTime = time);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -643,14 +735,19 @@ void _onCategorySelected(String selectedCategory) async {
                     side: BorderSide(color: Colors.grey[300]!),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: Text(_formData.startTime?.format(context) ?? 'Start Time'),
+                  child: Text(
+                    _formData.startTime?.format(context) ?? 'Start Time',
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
                     if (time != null) setState(() => _formData.endTime = time);
                   },
                   style: ElevatedButton.styleFrom(
@@ -669,18 +766,24 @@ void _onCategorySelected(String selectedCategory) async {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _formData.flatPrice != null &&
-                      _formData.availableDays.isNotEmpty &&
-                      _formData.startTime != null &&
-                      _formData.endTime != null
-                  ? _nextPage
-                  : null,
+              onPressed:
+                  _formData.flatPrice != null &&
+                          _formData.availableDays.isNotEmpty &&
+                          _formData.startTime != null &&
+                          _formData.endTime != null
+                      ? _nextPage
+                      : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey[300],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Continue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -697,14 +800,20 @@ void _onCategorySelected(String selectedCategory) async {
         children: [
           const Text(
             'Service Location',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 24),
           Container(
             height: 300,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+              ],
             ),
             clipBehavior: Clip.antiAlias,
             child: FlutterMap(
@@ -712,13 +821,15 @@ void _onCategorySelected(String selectedCategory) async {
               options: MapOptions(
                 initialCenter: center,
                 initialZoom: 14,
-                onTap: (_, latLng) => _setLocation(latLng.latitude, latLng.longitude),
+                onTap:
+                    (_, latLng) =>
+                        _setLocation(latLng.latitude, latLng.longitude),
               ),
               children: [
                 TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.chatur.app',
-              ),
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.chatur.app',
+                ),
                 if (_currentLatLng != null)
                   CircleLayer(
                     circles: [
@@ -739,7 +850,11 @@ void _onCategorySelected(String selectedCategory) async {
                         point: _currentLatLng!,
                         width: 50,
                         height: 50,
-                        child: const Icon(Icons.location_pin, color: AppColors.primary, size: 40),
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
                       ),
                     ],
                   ),
@@ -761,7 +876,9 @@ void _onCategorySelected(String selectedCategory) async {
             controller: _addressController,
             decoration: InputDecoration(
               labelText: 'Address',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -777,9 +894,14 @@ void _onCategorySelected(String selectedCategory) async {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey[300],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Publish Service', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Publish Service',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],

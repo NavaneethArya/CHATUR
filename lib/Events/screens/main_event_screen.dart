@@ -1,6 +1,4 @@
-import 'package:chatur_frontend/Events/events_screen.dart';
 import 'package:chatur_frontend/Events/models/event_model.dart';
-import 'package:chatur_frontend/Events/models/notification_model.dart';
 import 'package:chatur_frontend/Events/screens/add_event_with_location.dart';
 import 'package:chatur_frontend/Events/screens/all_events.dart';
 import 'package:chatur_frontend/Events/screens/notifications_screen.dart';
@@ -25,13 +23,13 @@ class EventColors {
   static const success = Color(0xFF00C896);
   static const warning = Color(0xFFFD79A8);
   static const background = Color(0xFFF8F9FE);
-  
+
   static const gradient1 = LinearGradient(
     colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const gradient2 = LinearGradient(
     colors: [Color(0xFFFF6B9D), Color(0xFFFD79A8)],
     begin: Alignment.topLeft,
@@ -46,29 +44,30 @@ class EventColors {
 }
 
 class MainEventScreen extends StatefulWidget {
+  const MainEventScreen({super.key});
+
   @override
   _MainEventScreenState createState() => _MainEventScreenState();
 }
 
 // REPLACE THE EXISTING STATE VARIABLES WITH THESE
-class _MainEventScreenState extends State<MainEventScreen> with TickerProviderStateMixin {
+class _MainEventScreenState extends State<MainEventScreen>
+    with TickerProviderStateMixin {
   final currentUser = FirebaseAuth.instance.currentUser;
   bool _isPanchayatMember = false;
   List<EventModel> _events = [];
   bool _isLoading = false;
   bool _isRefreshing = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   // ADD THESE NEW ANIMATION CONTROLLERS
   late AnimationController _fabController;
   late AnimationController _headerController;
-  late Animation<double> _fabScale;
-  late Animation<Offset> _headerSlide;
 
   @override
   void initState() {
     super.initState();
-    
+
     // ADD THESE ANIMATION INITIALIZATIONS
     _fabController = AnimationController(
       vsync: this,
@@ -78,20 +77,12 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    
-    _fabScale = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _fabController, curve: Curves.elasticOut),
-    );
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
-    
+
     _headerController.forward();
     Future.delayed(const Duration(milliseconds: 500), () {
       _fabController.forward();
     });
-    
+
     _checkPanchayatStatus();
     _loadEvents();
   }
@@ -105,8 +96,9 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
 
   Future<void> _checkPanchayatStatus() async {
     if (currentUser != null && currentUser!.email != null) {
-      final isPanchayat =
-          await PanchayatAuthService.isPanchayatMember(currentUser!.email!);
+      final isPanchayat = await PanchayatAuthService.isPanchayatMember(
+        currentUser!.email!,
+      );
       if (mounted) {
         setState(() => _isPanchayatMember = isPanchayat);
       }
@@ -188,8 +180,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                AddEventWithLocationPage(panchayatData: memberData),
+            builder: (_) => AddEventWithLocationPage(panchayatData: memberData),
           ),
         );
 
@@ -205,7 +196,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.grey[50],
-      
+
       // ============================================
       // APP BAR WITH DRAWER & NOTIFICATIONS
       // ============================================
@@ -249,12 +240,15 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
               stream: NotificationService.getUnreadCountStream(),
               builder: (context, snapshot) {
                 final unreadCount = snapshot.data ?? 0;
-                
+
                 return Stack(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.notifications_outlined,
-                          color: Colors.black87, size: 28),
+                      icon: Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.black87,
+                        size: 28,
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -308,7 +302,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
             children: [
               // Profile Header
               _buildDrawerHeader(),
-              
+
               Divider(height: 1),
 
               // Menu Items
@@ -331,7 +325,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
                         }
                       },
                     ),
-                    
+
                     _buildDrawerItem(
                       icon: Icons.add_circle_outline_rounded,
                       title: 'Add Event',
@@ -354,7 +348,9 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => NotificationsScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => NotificationsScreen(),
+                          ),
                         );
                       },
                     ),
@@ -408,38 +404,39 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
       // ============================================
       // BODY - EVENTS LIST
       // ============================================
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Loading events...',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            )
-          : _events.isEmpty
+      body:
+          _isLoading
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Loading events...',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+              : _events.isEmpty
               ? _buildEmptyState()
               : RefreshIndicator(
-                  onRefresh: () => _loadEvents(forceRefresh: true),
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _events.length,
-                    itemBuilder: (context, index) {
-                      return EventCard(
-                        key: ValueKey(_events[index].id),
-                        event: _events[index],
-                        currentUserEmail: currentUser?.email ?? '',
-                        isPanchayatMember: _isPanchayatMember,
-                        onEventChanged: () => _loadEvents(forceRefresh: true),
-                      );
-                    },
-                  ),
+                onRefresh: () => _loadEvents(forceRefresh: true),
+                child: ListView.builder(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _events.length,
+                  itemBuilder: (context, index) {
+                    return EventCard(
+                      key: ValueKey(_events[index].id),
+                      event: _events[index],
+                      currentUserEmail: currentUser?.email ?? '',
+                      isPanchayatMember: _isPanchayatMember,
+                      onEventChanged: () => _loadEvents(forceRefresh: true),
+                    );
+                  },
                 ),
+              ),
 
       // ============================================
       // FAB - ADD EVENT
@@ -498,22 +495,21 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
               ],
             ),
             child: ClipOval(
-              child: currentUser?.photoURL != null
-                  ? CachedNetworkImage(
-                      imageUrl: currentUser!.photoURL!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(
-                        Icons.person,
-                        size: 40,
-                        color: Colors.deepPurple,
-                      ),
-                    )
-                  : Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.deepPurple,
-                    ),
+              child:
+                  currentUser?.photoURL != null
+                      ? CachedNetworkImage(
+                        imageUrl: currentUser!.photoURL!,
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (context, url) => CircularProgressIndicator(),
+                        errorWidget:
+                            (context, url, error) => Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.deepPurple,
+                            ),
+                      )
+                      : Icon(Icons.person, size: 40, color: Colors.deepPurple),
             ),
           ),
           SizedBox(height: 16),
@@ -535,10 +531,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
               Expanded(
                 child: Text(
                   userEmail,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.white70),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -552,10 +545,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
               SizedBox(width: 6),
               Text(
                 userPhone,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.white70),
               ),
             ],
           ),
@@ -603,11 +593,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
           color: (color ?? Colors.deepPurple).withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(
-          icon,
-          color: color ?? Colors.deepPurple,
-          size: 24,
-        ),
+        child: Icon(icon, color: color ?? Colors.deepPurple, size: 24),
       ),
       title: Text(
         title,
@@ -619,10 +605,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.grey[600],
-        ),
+        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -633,9 +616,7 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.grey[300]!, width: 1),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: Column(
         children: [
@@ -645,20 +626,14 @@ class _MainEventScreenState extends State<MainEventScreen> with TickerProviderSt
               SizedBox(width: 8),
               Text(
                 'Chatur v1.0',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
           SizedBox(height: 8),
           Text(
             'Community Help & Technology for Uplifting Ruralities',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -728,19 +703,19 @@ class EventCard extends StatefulWidget {
   final VoidCallback onEventChanged;
 
   const EventCard({
-    Key? key,
+    super.key,
     required this.event,
     required this.currentUserEmail,
     required this.isPanchayatMember,
     required this.onEventChanged,
-  }) : super(key: key);
+  });
 
   @override
   _EventCardState createState() => _EventCardState();
 }
 
 class _EventCardState extends State<EventCard> {
-  bool _showAllComments = false;
+  final bool _showAllComments = false;
 
   bool get isLiked => widget.event.likedBy.contains(widget.currentUserEmail);
 
@@ -751,13 +726,13 @@ class _EventCardState extends State<EventCard> {
         widget.event.id,
         widget.currentUserEmail,
       );
-      
+
       // Trigger refresh to show updated like count
       widget.onEventChanged();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update like')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update like')));
     }
   }
 
@@ -766,11 +741,12 @@ class _EventCardState extends State<EventCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CommentBottomSheet(
-        event: widget.event,
-        currentUserEmail: widget.currentUserEmail,
-        onCommentAdded: widget.onEventChanged,
-      ),
+      builder:
+          (context) => CommentBottomSheet(
+            event: widget.event,
+            currentUserEmail: widget.currentUserEmail,
+            onCommentAdded: widget.onEventChanged,
+          ),
     );
   }
 
@@ -819,17 +795,11 @@ class _EventCardState extends State<EventCard> {
               children: [
                 Text(
                   widget.event.createdBy,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 Text(
                   'Panchayat Member',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
@@ -842,9 +812,10 @@ class _EventCardState extends State<EventCard> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AddEventWithLocationPage(
-                        existingEvent: widget.event,
-                      ),
+                      builder:
+                          (_) => AddEventWithLocationPage(
+                            existingEvent: widget.event,
+                          ),
                     ),
                   ).then((result) {
                     if (result == true) {
@@ -855,28 +826,29 @@ class _EventCardState extends State<EventCard> {
                   _deleteEvent();
                 }
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: Colors.blue),
-                      SizedBox(width: 10),
-                      Text('Edit'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 10),
-                      Text('Delete'),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.blue),
+                          SizedBox(width: 10),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 10),
+                          Text('Delete'),
+                        ],
+                      ),
+                    ),
+                  ],
             ),
         ],
       ),
@@ -891,16 +863,18 @@ class _EventCardState extends State<EventCard> {
         width: double.infinity,
         height: 400,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          height: 400,
-          color: Colors.grey[200],
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        errorWidget: (context, url, error) => Container(
-          height: 400,
-          color: Colors.grey[200],
-          child: Icon(Icons.error, size: 50, color: Colors.red),
-        ),
+        placeholder:
+            (context, url) => Container(
+              height: 400,
+              color: Colors.grey[200],
+              child: Center(child: CircularProgressIndicator()),
+            ),
+        errorWidget:
+            (context, url, error) => Container(
+              height: 400,
+              color: Colors.grey[200],
+              child: Icon(Icons.error, size: 50, color: Colors.red),
+            ),
       ),
     );
   }
@@ -926,7 +900,6 @@ class _EventCardState extends State<EventCard> {
           IconButton(
             icon: Icon(Icons.bookmark_border, color: Colors.black87, size: 28),
             onPressed: () {
-              // TODO: Bookmark functionality
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Bookmark feature coming soon!'),
@@ -945,10 +918,7 @@ class _EventCardState extends State<EventCard> {
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Text(
         '${widget.event.likes} ${widget.event.likes == 1 ? "like" : "likes"}',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-        ),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
     );
   }
@@ -977,30 +947,33 @@ class _EventCardState extends State<EventCard> {
   }
 
   Widget _buildCommentsPreview() {
-    final displayComments = _showAllComments
-        ? widget.event.comments
-        : widget.event.comments.take(2).toList();
+    final displayComments =
+        _showAllComments
+            ? widget.event.comments
+            : widget.event.comments.take(2).toList();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...displayComments.map((comment) => Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(color: Colors.black87, fontSize: 14),
-                    children: [
-                      TextSpan(
-                        text: comment.userName + ' ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(text: comment.text),
-                    ],
-                  ),
+          ...displayComments.map(
+            (comment) => Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
+                  children: [
+                    TextSpan(
+                      text: '${comment.userName} ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: comment.text),
+                  ],
                 ),
-              )),
+              ),
+            ),
+          ),
           if (widget.event.comments.length > 2 && !_showAllComments)
             GestureDetector(
               onTap: _showComments,
@@ -1025,8 +998,7 @@ class _EventCardState extends State<EventCard> {
               Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
               SizedBox(width: 6),
               Text(
-                DateFormat('EEEE, MMM dd, yyyy')
-                    .format(widget.event.eventDate),
+                DateFormat('EEEE, MMM dd, yyyy').format(widget.event.eventDate),
                 style: TextStyle(
                   color: Colors.grey[700],
                   fontSize: 13,
@@ -1068,10 +1040,11 @@ class _EventCardState extends State<EventCard> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => EventLocationMapScreen(
-            location: widget.event.location!,
-            locationName: widget.event.locationName ?? 'Event Location',
-          ),
+          builder:
+              (_) => EventLocationMapScreen(
+                location: widget.event.location!,
+                locationName: widget.event.locationName ?? 'Event Location',
+              ),
         ),
       );
     }
@@ -1080,48 +1053,52 @@ class _EventCardState extends State<EventCard> {
   void _deleteEvent() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            SizedBox(width: 10),
-            Text('Delete Event?'),
-          ],
-        ),
-        content:
-            Text('Are you sure you want to delete "${widget.event.heading}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await EventFirebaseService.deleteEvent(
-                  widget.event.eventDate,
-                  widget.event.id,
-                );
-                Navigator.pop(context);
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                SizedBox(width: 10),
+                Text('Delete Event?'),
+              ],
+            ),
+            content: Text(
+              'Are you sure you want to delete "${widget.event.heading}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await EventFirebaseService.deleteEvent(
+                      widget.event.eventDate,
+                      widget.event.id,
+                    );
+                    Navigator.pop(context);
 
-                widget.onEventChanged();
+                    widget.onEventChanged();
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Event deleted successfully')),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to delete event')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete', style: TextStyle(color: Colors.white)),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Event deleted successfully')),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete event')),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text('Delete', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -1136,11 +1113,11 @@ class CommentBottomSheet extends StatefulWidget {
   final VoidCallback onCommentAdded;
 
   const CommentBottomSheet({
-    Key? key,
+    super.key,
     required this.event,
     required this.currentUserEmail,
     required this.onCommentAdded,
-  }) : super(key: key);
+  });
 
   @override
   _CommentBottomSheetState createState() => _CommentBottomSheetState();
@@ -1157,7 +1134,8 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     setState(() => _isPosting = true);
 
     try {
-      final userName = FirebaseAuth.instance.currentUser?.displayName ??
+      final userName =
+          FirebaseAuth.instance.currentUser?.displayName ??
           widget.currentUserEmail.split('@')[0];
 
       await EventFirebaseService.addComment(
@@ -1180,9 +1158,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add comment')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add comment')));
     } finally {
       if (mounted) {
         setState(() => _isPosting = false);
@@ -1234,42 +1212,46 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               ),
               Divider(),
               Expanded(
-                child: widget.event.comments.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.comment_outlined,
-                                size: 60, color: Colors.grey[300]),
-                            SizedBox(height: 16),
-                            Text(
-                              'No comments yet',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
+                child:
+                    widget.event.comments.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.comment_outlined,
+                                size: 60,
+                                color: Colors.grey[300],
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Be the first to comment!',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 14,
+                              SizedBox(height: 16),
+                              Text(
+                                'No comments yet',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 8),
+                              Text(
+                                'Be the first to comment!',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          controller: scrollController,
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: widget.event.comments.length,
+                          itemBuilder: (context, index) {
+                            final comment =
+                                widget.event.comments.reversed.toList()[index];
+                            return _buildCommentItem(comment);
+                          },
                         ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: widget.event.comments.length,
-                        itemBuilder: (context, index) {
-                          final comment =
-                              widget.event.comments.reversed.toList()[index];
-                          return _buildCommentItem(comment);
-                        },
-                      ),
               ),
               Container(
                 padding: EdgeInsets.all(12),
@@ -1296,7 +1278,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                               borderSide: BorderSide(color: Colors.grey[300]!),
                             ),
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
                           ),
                           maxLines: null,
                         ),
@@ -1304,19 +1288,20 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       SizedBox(width: 8),
                       CircleAvatar(
                         backgroundColor: Colors.deepPurple,
-                        child: _isPosting
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                        child:
+                            _isPosting
+                                ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : IconButton(
+                                  icon: Icon(Icons.send, color: Colors.white),
+                                  onPressed: _postComment,
                                 ),
-                              )
-                            : IconButton(
-                                icon: Icon(Icons.send, color: Colors.white),
-                                onPressed: _postComment,
-                              ),
                       ),
                     ],
                   ),
@@ -1369,20 +1354,14 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(
-                        comment.text,
-                        style: TextStyle(fontSize: 14),
-                      ),
+                      Text(comment.text, style: TextStyle(fontSize: 14)),
                     ],
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
                   _formatTimestamp(comment.timestamp),
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
@@ -1426,10 +1405,10 @@ class EventLocationMapScreen extends StatelessWidget {
   final String locationName;
 
   const EventLocationMapScreen({
-    Key? key,
+    super.key,
     required this.location,
     required this.locationName,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1466,10 +1445,7 @@ class EventLocationMapScreen extends StatelessWidget {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4,
-                          ),
+                          BoxShadow(color: Colors.black26, blurRadius: 4),
                         ],
                       ),
                       child: Text(
@@ -1484,11 +1460,7 @@ class EventLocationMapScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 4),
-                    Icon(
-                      Icons.location_on,
-                      color: Colors.red,
-                      size: 40,
-                    ),
+                    Icon(Icons.location_on, color: Colors.red, size: 40),
                   ],
                 ),
               ),

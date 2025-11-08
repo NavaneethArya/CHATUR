@@ -4,12 +4,10 @@ import 'package:chatur_frontend/Authentication/P_login_page.dart';
 import 'package:chatur_frontend/Authentication/P_register_page.dart';
 import 'package:chatur_frontend/Authentication/Wrapper.dart';
 import 'package:chatur_frontend/Authentication/P_OTP_verify.dart';
-import 'package:chatur_frontend/Chatbot/chatbot.dart';
 import 'package:chatur_frontend/Screens/OnboardingScreen.dart';
 import 'package:chatur_frontend/Screens/main_screen.dart';
 import 'package:chatur_frontend/Screens/profile_screen.dart';
 import 'package:chatur_frontend/Skills/Post_skill.dart';
-import 'package:chatur_frontend/Skills/skill_detail_screen.dart';
 import 'package:chatur_frontend/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +28,10 @@ class MainApp extends StatelessWidget {
       //home: EmailLoginPage(),
       initialRoute: '/wrapper',
       routes: {
-        '/wrapper': (context) =>  wrapper(),
-        '/phoneAuth': (context) =>  PhoneOTPverify(),
+        '/wrapper': (context) => wrapper(),
+        '/phoneAuth': (context) => PhoneOTPverify(),
         '/OnBoarding': (context) => OnboardingScreen(),
-        '/main': (context) =>  MainScreen(),
+        '/main': (context) => MainScreen(),
         '/login': (context) => P_loginpage(),
         '/register': (context) => P_Registerpage(),
         '/Elogin': (context) => E_LoginPage(),

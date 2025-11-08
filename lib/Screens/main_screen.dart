@@ -1,13 +1,9 @@
 import 'package:chatur_frontend/Events/screens/main_event_screen.dart';
 import 'package:chatur_frontend/My_Store/MainStorePage.dart';
-import 'package:chatur_frontend/My_Store/MyStore.dart';
-import 'package:chatur_frontend/My_Store/createStore.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import '../Events/events_screen.dart';
-import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -113,10 +109,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border(
-                top: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1,
-                ),
+                top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
               ),
             ),
             child: SafeArea(
@@ -151,7 +144,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           curve: Curves.easeInOut,
           padding: EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isActive ? navItem.color.withOpacity(0.12) : Colors.transparent,
+            color:
+                isActive ? navItem.color.withOpacity(0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -163,10 +157,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   AnimatedSwitcher(
                     duration: Duration(milliseconds: 300),
                     transitionBuilder: (child, animation) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      );
+                      return ScaleTransition(scale: animation, child: child);
                     },
                     child: Icon(
                       isActive ? navItem.activeIcon : navItem.icon,

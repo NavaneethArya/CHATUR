@@ -12,13 +12,13 @@ class SchemeInformationPage extends StatefulWidget {
   final VoidCallback onBookmarkToggle;
 
   const SchemeInformationPage({
-    Key? key,
+    super.key,
     required this.scheme,
     required this.isDarkMode,
     required this.textSizeMultiplier,
     required this.isBookmarked,
     required this.onBookmarkToggle,
-  }) : super(key: key);
+  });
 
   @override
   _SchemeInformationPageState createState() => _SchemeInformationPageState();
@@ -90,9 +90,10 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14 * widget.textSizeMultiplier,
-                      color: widget.isDarkMode
-                          ? Colors.grey[400]
-                          : Colors.grey[600],
+                      color:
+                          widget.isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -115,12 +116,13 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SchemeEligibilityPage(
-            scheme: widget.scheme,
-            isDarkMode: widget.isDarkMode,
-            textSizeMultiplier: widget.textSizeMultiplier,
-            aiGeneratedQuestions: questions,
-          ),
+          builder:
+              (context) => SchemeEligibilityPage(
+                scheme: widget.scheme,
+                isDarkMode: widget.isDarkMode,
+                textSizeMultiplier: widget.textSizeMultiplier,
+                aiGeneratedQuestions: questions,
+              ),
         ),
       );
     } catch (e) {
@@ -216,12 +218,13 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.blue.withOpacity(0.1),
+                  color:
+                      widget.isDarkMode
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.blue.withOpacity(0.1),
                   blurRadius: 8,
                   offset: Offset(0, 3),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -235,9 +238,10 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
                         style: TextStyle(
                           fontSize: 20 * widget.textSizeMultiplier,
                           fontWeight: FontWeight.bold,
-                          color: widget.isDarkMode
-                              ? Colors.blue.shade300
-                              : Colors.blue.shade900,
+                          color:
+                              widget.isDarkMode
+                                  ? Colors.blue.shade300
+                                  : Colors.blue.shade900,
                         ),
                       ),
                     ),
@@ -257,22 +261,26 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _isLoadingQuestions
-                            ? null
-                            : _navigateToEligibilityCheck,
-                        icon: _isLoadingQuestions
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(Icons.auto_awesome_outlined, size: 18),
-                        label: Text(_isLoadingQuestions
-                            ? 'Preparing...'
-                            : 'AI Eligibility Check'),
+                        onPressed:
+                            _isLoadingQuestions
+                                ? null
+                                : _navigateToEligibilityCheck,
+                        icon:
+                            _isLoadingQuestions
+                                ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Icon(Icons.auto_awesome_outlined, size: 18),
+                        label: Text(
+                          _isLoadingQuestions
+                              ? 'Preparing...'
+                              : 'AI Eligibility Check',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -297,12 +305,13 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.blue.withOpacity(0.1),
+                  color:
+                      widget.isDarkMode
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.blue.withOpacity(0.1),
                   blurRadius: 6,
                   offset: Offset(0, 2),
-                )
+                ),
               ],
             ),
             child: TabBar(
@@ -337,24 +346,41 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildContentList(widget.scheme.details, 'Details', textColor,
-                    secondaryTextColor, cardColor),
-                _buildContentList(widget.scheme.benefits, 'Benefits', textColor,
-                    secondaryTextColor, cardColor),
-                _buildContentList(widget.scheme.eligibility, 'Eligibility',
-                    textColor, secondaryTextColor, cardColor),
                 _buildContentList(
-                    widget.scheme.applicationProcess,
-                    'Application Process',
-                    textColor,
-                    secondaryTextColor,
-                    cardColor),
+                  widget.scheme.details,
+                  'Details',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
                 _buildContentList(
-                    widget.scheme.documentsRequired,
-                    'Documents Required',
-                    textColor,
-                    secondaryTextColor,
-                    cardColor),
+                  widget.scheme.benefits,
+                  'Benefits',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
+                _buildContentList(
+                  widget.scheme.eligibility,
+                  'Eligibility',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
+                _buildContentList(
+                  widget.scheme.applicationProcess,
+                  'Application Process',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
+                _buildContentList(
+                  widget.scheme.documentsRequired,
+                  'Documents Required',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
               ],
             ),
           ),
@@ -363,18 +389,19 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
     );
   }
 
-  Widget _buildContentList(List<String> items, String title, Color textColor,
-      Color? secondaryTextColor, Color cardColor) {
+  Widget _buildContentList(
+    List<String> items,
+    String title,
+    Color textColor,
+    Color? secondaryTextColor,
+    Color cardColor,
+  ) {
     if (items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.info_outline,
-              size: 64,
-              color: secondaryTextColor,
-            ),
+            Icon(Icons.info_outline, size: 64, color: secondaryTextColor),
             SizedBox(height: 16),
             Text(
               'No $title Available',
@@ -405,12 +432,13 @@ class _SchemeInformationPageState extends State<SchemeInformationPage>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: widget.isDarkMode
-                    ? Colors.black.withOpacity(0.2)
-                    : Colors.blue.withOpacity(0.08),
+                color:
+                    widget.isDarkMode
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.blue.withOpacity(0.08),
                 blurRadius: 6,
                 offset: Offset(0, 2),
-              )
+              ),
             ],
           ),
           child: Row(

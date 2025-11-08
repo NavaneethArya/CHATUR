@@ -31,15 +31,12 @@ class AppTheme {
       secondary: accentColor,
       surface: Colors.white,
       onSurface: Colors.black87,
-      background: backgroundLight,
     ),
     cardTheme: CardTheme(
       color: Colors.white,
       shadowColor: Colors.black12,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
 
@@ -67,15 +64,12 @@ class AppTheme {
       secondary: accentColor,
       surface: Color(0xFF1E1E1E),
       onSurface: Colors.white,
-      background: backgroundDark,
     ),
     cardTheme: CardTheme(
       color: const Color(0xFF1E1E1E),
       shadowColor: Colors.black45,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
 }

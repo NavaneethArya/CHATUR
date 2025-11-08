@@ -27,21 +27,17 @@ class _P_RegisterpageState extends State<P_Registerpage> {
 
   void _navigateToOtpScreen() {
     String phone = _phoneController.text.trim();
-      if (phone.startsWith("+91")) {
-        phone = phone.substring(3);
-      }
-      if (phone.length != 10) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Enter valid 10-digit mobile number")),
-        );
-        return;
-      }
-
-      Navigator.pushNamed(
-        context,
-        '/phoneAuth',
-        arguments: '+91$phone',
+    if (phone.startsWith("+91")) {
+      phone = phone.substring(3);
+    }
+    if (phone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter valid 10-digit mobile number")),
       );
+      return;
+    }
+
+    Navigator.pushNamed(context, '/phoneAuth', arguments: '+91$phone');
   }
 
   @override
@@ -55,11 +51,7 @@ class _P_RegisterpageState extends State<P_Registerpage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFE6F2FE),
-              Color(0xFFFDFDFD),
-              Color(0xFFFEF5F0),
-            ],
+            colors: [Color(0xFFE6F2FE), Color(0xFFFDFDFD), Color(0xFFFEF5F0)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -82,17 +74,19 @@ class _P_RegisterpageState extends State<P_Registerpage> {
               const Text("We will send an OTP on this number for verification"),
               const SizedBox(height: 30),
               TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Mobile Number',
-                    prefixIcon: Icon(Icons.phone),
-                    border: OutlineInputBorder(),
-                  ),
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  labelText: 'Mobile Number',
+                  prefixIcon: Icon(Icons.phone),
+                  border: OutlineInputBorder(),
                 ),
+              ),
               const SizedBox(height: 16),
-              const Text("Remember, this number will be used for login and recovery"),
+              const Text(
+                "Remember, this number will be used for login and recovery",
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedState,
@@ -106,9 +100,15 @@ class _P_RegisterpageState extends State<P_Registerpage> {
                     _selectedState = value!;
                   });
                 },
-                items: _states
-                    .map((state) => DropdownMenuItem(value: state, child: Text(state)))
-                    .toList(),
+                items:
+                    _states
+                        .map(
+                          (state) => DropdownMenuItem(
+                            value: state,
+                            child: Text(state),
+                          ),
+                        )
+                        .toList(),
               ),
               const SizedBox(height: 16),
               Row(
@@ -137,7 +137,7 @@ class _P_RegisterpageState extends State<P_Registerpage> {
                 onPressed: _agree ? _navigateToOtpScreen : null,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(45),
-                  backgroundColor: _agree ? Colors.deepOrange : Colors.grey,                
+                  backgroundColor: _agree ? Colors.deepOrange : Colors.grey,
                 ),
                 child: const Text('Register'),
               ),

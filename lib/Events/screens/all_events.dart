@@ -9,9 +9,10 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AllEventsPage extends StatefulWidget {
+  const AllEventsPage({super.key});
+
   @override
   _AllEventsPageState createState() => _AllEventsPageState();
 }
@@ -51,10 +52,10 @@ class _AllEventsPageState extends State<AllEventsPage>
     );
 
     _animationController.forward();
-    
+
     // Check user permissions
     _checkPanchayatStatus();
-    
+
     // Load events for current month
     _loadEventsForMonth();
   }
@@ -65,8 +66,9 @@ class _AllEventsPageState extends State<AllEventsPage>
   Future<void> _checkPanchayatStatus() async {
     if (currentUser != null && currentUser!.email != null) {
       try {
-        final isPanchayat =
-            await PanchayatAuthService.isPanchayatMember(currentUser!.email!);
+        final isPanchayat = await PanchayatAuthService.isPanchayatMember(
+          currentUser!.email!,
+        );
         if (mounted) {
           setState(() {
             _isPanchayatMember = isPanchayat;
@@ -98,7 +100,7 @@ class _AllEventsPageState extends State<AllEventsPage>
 
     try {
       final events = await EventFirebaseService.getEventsForMonth(_focusedDay);
-      
+
       if (mounted) {
         setState(() {
           _eventsByDate = events;
@@ -122,7 +124,10 @@ class _AllEventsPageState extends State<AllEventsPage>
   // ============================================
   // ADD/EDIT EVENT - PANCHAYAT ONLY
   // ============================================
-  Future<void> _openAddEvent({EventModel? eventToUpdate, DateTime? date}) async {
+  Future<void> _openAddEvent({
+    EventModel? eventToUpdate,
+    DateTime? date,
+  }) async {
     // Check if user is panchayat member
     if (!_isPanchayatMember) {
       // Show login dialog
@@ -134,9 +139,12 @@ class _AllEventsPageState extends State<AllEventsPage>
       if (memberData != null) {
         // User successfully logged in as panchayat
         setState(() => _isPanchayatMember = true);
-        
+
         // Now proceed to add event
-        _navigateToAddEvent(eventToUpdate: eventToUpdate, memberData: memberData);
+        _navigateToAddEvent(
+          eventToUpdate: eventToUpdate,
+          memberData: memberData,
+        );
       }
     } else {
       // Already panchayat member, proceed directly
@@ -151,13 +159,14 @@ class _AllEventsPageState extends State<AllEventsPage>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AddEventWithLocationPage(
-          existingEvent: eventToUpdate,
-          panchayatData: memberData,
-        ),
+        builder:
+            (_) => AddEventWithLocationPage(
+              existingEvent: eventToUpdate,
+              panchayatData: memberData,
+            ),
       ),
     );
-    
+
     if (result == true) {
       _loadEventsForMonth();
     }
@@ -174,70 +183,87 @@ class _AllEventsPageState extends State<AllEventsPage>
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _isDark ? Colors.grey[900] : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 10),
-            Text(
-              'Delete Event?',
-              style: TextStyle(color: _isDark ? Colors.white : Colors.black87),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: _isDark ? Colors.grey[900] : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to delete "${event.heading}"?',
-          style: TextStyle(color: _isDark ? Colors.white70 : Colors.black87),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await EventFirebaseService.deleteEvent(event.eventDate, event.id);
-                Navigator.pop(context);
-                _loadEventsForMonth();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 10),
-                        Text('Event deleted successfully'),
-                      ],
-                    ),
-                    backgroundColor: Colors.green[700],
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 28,
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Delete Event?',
+                  style: TextStyle(
+                    color: _isDark ? Colors.white : Colors.black87,
                   ),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to delete event'),
-                    backgroundColor: Colors.red[700],
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                ),
+              ],
+            ),
+            content: Text(
+              'Are you sure you want to delete "${event.heading}"?',
+              style: TextStyle(
+                color: _isDark ? Colors.white70 : Colors.black87,
               ),
             ),
-            child: Text('Delete', style: TextStyle(color: Colors.white)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await EventFirebaseService.deleteEvent(
+                      event.eventDate,
+                      event.id,
+                    );
+                    Navigator.pop(context);
+                    _loadEventsForMonth();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white),
+                            SizedBox(width: 10),
+                            Text('Event deleted successfully'),
+                          ],
+                        ),
+                        backgroundColor: Colors.green[700],
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete event'),
+                        backgroundColor: Colors.red[700],
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Delete', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -247,59 +273,62 @@ class _AllEventsPageState extends State<AllEventsPage>
   void _showPermissionDenied() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.lock_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 10),
-            Text('Permission Required'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Only Panchayat members can add, edit, or delete events.'),
-            SizedBox(height: 16),
-            Text(
-              'Would you like to login as a Panchayat member?',
-              style: TextStyle(fontWeight: FontWeight.w600),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              // Show login dialog
-              final memberData = await Navigator.push<Map<String, dynamic>>(
-                context,
-                MaterialPageRoute(builder: (_) => PanchayatLoginScreen()),
-              );
+            title: Row(
+              children: [
+                Icon(Icons.lock_rounded, color: Colors.orange, size: 28),
+                SizedBox(width: 10),
+                Text('Permission Required'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Only Panchayat members can add, edit, or delete events.'),
+                SizedBox(height: 16),
+                Text(
+                  'Would you like to login as a Panchayat member?',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
 
-              if (memberData != null) {
-                setState(() => _isPanchayatMember = true);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('✅ Logged in as Panchayat member'),
-                    backgroundColor: Colors.green[700],
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-            ),
-            child: Text('Login', style: TextStyle(color: Colors.white)),
+                  // Show login dialog
+                  final memberData = await Navigator.push<Map<String, dynamic>>(
+                    context,
+                    MaterialPageRoute(builder: (_) => PanchayatLoginScreen()),
+                  );
+
+                  if (memberData != null) {
+                    setState(() => _isPanchayatMember = true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('✅ Logged in as Panchayat member'),
+                        backgroundColor: Colors.green[700],
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                ),
+                child: Text('Login', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -311,33 +340,40 @@ class _AllEventsPageState extends State<AllEventsPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => EventDetailsBottomSheet(
-        event: event,
-        isPanchayatMember: _isPanchayatMember,
-        onEdit: () {
-          Navigator.pop(context);
-          _openAddEvent(eventToUpdate: event);
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _deleteEvent(event.eventDate, event);
-        },
-      ),
+      builder:
+          (context) => EventDetailsBottomSheet(
+            event: event,
+            isPanchayatMember: _isPanchayatMember,
+            onEdit: () {
+              Navigator.pop(context);
+              _openAddEvent(eventToUpdate: event);
+            },
+            onDelete: () {
+              Navigator.pop(context);
+              _deleteEvent(event.eventDate, event);
+            },
+          ),
     );
   }
 
   void _goToPreviousMonth() {
     setState(() {
-      _focusedDay =
-          DateTime(_focusedDay.year, _focusedDay.month - 1, _focusedDay.day);
+      _focusedDay = DateTime(
+        _focusedDay.year,
+        _focusedDay.month - 1,
+        _focusedDay.day,
+      );
     });
     _loadEventsForMonth();
   }
 
   void _goToNextMonth() {
     setState(() {
-      _focusedDay =
-          DateTime(_focusedDay.year, _focusedDay.month + 1, _focusedDay.day);
+      _focusedDay = DateTime(
+        _focusedDay.year,
+        _focusedDay.month + 1,
+        _focusedDay.day,
+      );
     });
     _loadEventsForMonth();
   }
@@ -380,9 +416,8 @@ class _AllEventsPageState extends State<AllEventsPage>
 
   @override
   Widget build(BuildContext context) {
-    final selectedEvents = _selectedDay == null
-        ? <EventModel>[]
-        : _getEventsForDay(_selectedDay!);
+    final selectedEvents =
+        _selectedDay == null ? <EventModel>[] : _getEventsForDay(_selectedDay!);
 
     final backgroundColor = _isDark ? Colors.black : Colors.grey[50];
     final appBarColor = _isDark ? Colors.grey[900] : Colors.blue[700];
@@ -414,10 +449,7 @@ class _AllEventsPageState extends State<AllEventsPage>
             if (!_isCheckingPermissions)
               Text(
                 _isPanchayatMember ? 'Panchayat Member' : 'Viewer',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
           ],
         ),
@@ -451,82 +483,94 @@ class _AllEventsPageState extends State<AllEventsPage>
                 _navigateToYearlyCalendar();
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'year',
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_view_month, color: Colors.blue),
-                    SizedBox(width: 10),
-                    Text(
-                      'Year View',
-                      style: TextStyle(
-                          color: _isDark ? Colors.white : Colors.black87),
+            itemBuilder:
+                (context) => [
+                  PopupMenuItem(
+                    value: 'year',
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_view_month, color: Colors.blue),
+                        SizedBox(width: 10),
+                        Text(
+                          'Year View',
+                          style: TextStyle(
+                            color: _isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Loading events...',
-                    style: TextStyle(color: textColor),
-                  ),
-                ],
-              ),
-            )
-          : ScaleTransition(
-              scale: _scaleAnimation,
-              child: SingleChildScrollView(
+      body:
+          _isLoading
+              ? Center(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: 10),
-
-                    // Quick Date Navigation
-                    _buildQuickNavigation(cardColor!, textColor),
-
-                    SizedBox(height: 10),
-
-                    // Calendar Container
-                    _buildCalendarSection(cardColor, textColor),
-
+                    CircularProgressIndicator(),
                     SizedBox(height: 16),
-
-                    // Toggle View Button
-                    _buildToggleButton(),
-
-                    SizedBox(height: 10),
-
-                    // Events List
-                    AnimatedSwitcher(
-                      duration: Duration(milliseconds: 300),
-                      child: _isExpanded
-                          ? _buildAllEventsList(
-                              cardColor, textColor, subtextColor)
-                          : _buildSelectedEventsList(
-                              selectedEvents, cardColor, textColor, subtextColor),
+                    Text(
+                      'Loading events...',
+                      style: TextStyle(color: textColor),
                     ),
-
-                    SizedBox(height: 80),
                   ],
                 ),
+              )
+              : ScaleTransition(
+                scale: _scaleAnimation,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 10),
+
+                      // Quick Date Navigation
+                      _buildQuickNavigation(cardColor!, textColor),
+
+                      SizedBox(height: 10),
+
+                      // Calendar Container
+                      _buildCalendarSection(cardColor, textColor),
+
+                      SizedBox(height: 16),
+
+                      // Toggle View Button
+                      _buildToggleButton(),
+
+                      SizedBox(height: 10),
+
+                      // Events List
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 300),
+                        child:
+                            _isExpanded
+                                ? _buildAllEventsList(
+                                  cardColor,
+                                  textColor,
+                                  subtextColor,
+                                )
+                                : _buildSelectedEventsList(
+                                  selectedEvents,
+                                  cardColor,
+                                  textColor,
+                                  subtextColor,
+                                ),
+                      ),
+
+                      SizedBox(height: 80),
+                    ],
+                  ),
+                ),
               ),
-            ),
-      
+
       // FAB - Only show if Panchayat member OR show with lock icon
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add_event',
         onPressed: () => _openAddEvent(date: _selectedDay),
-        backgroundColor: _isPanchayatMember ? Colors.blue[700] : Colors.grey[400],
+        backgroundColor:
+            _isPanchayatMember ? Colors.blue[700] : Colors.grey[400],
         icon: Icon(
           _isPanchayatMember ? Icons.add_rounded : Icons.lock_rounded,
           color: Colors.white,
@@ -552,9 +596,10 @@ class _AllEventsPageState extends State<AllEventsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.blue.withOpacity(0.1),
+            color:
+                _isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.blue.withOpacity(0.1),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -564,8 +609,11 @@ class _AllEventsPageState extends State<AllEventsPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left,
-                color: _isDark ? Colors.blue[300] : Colors.blue[700], size: 28),
+            icon: Icon(
+              Icons.chevron_left,
+              color: _isDark ? Colors.blue[300] : Colors.blue[700],
+              size: 28,
+            ),
             onPressed: _goToPreviousMonth,
           ),
           GestureDetector(
@@ -578,9 +626,11 @@ class _AllEventsPageState extends State<AllEventsPage>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_month,
-                      color: _isDark ? Colors.blue[300] : Colors.blue[700],
-                      size: 20),
+                  Icon(
+                    Icons.calendar_month,
+                    color: _isDark ? Colors.blue[300] : Colors.blue[700],
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     _focusedDay.year.toString(),
@@ -595,8 +645,11 @@ class _AllEventsPageState extends State<AllEventsPage>
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right,
-                color: _isDark ? Colors.blue[300] : Colors.blue[700], size: 28),
+            icon: Icon(
+              Icons.chevron_right,
+              color: _isDark ? Colors.blue[300] : Colors.blue[700],
+              size: 28,
+            ),
             onPressed: _goToNextMonth,
           ),
         ],
@@ -612,9 +665,10 @@ class _AllEventsPageState extends State<AllEventsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.blue.withOpacity(0.15),
+            color:
+                _isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.blue.withOpacity(0.15),
             blurRadius: 20,
             offset: Offset(0, 10),
           ),
@@ -783,16 +837,21 @@ class _AllEventsPageState extends State<AllEventsPage>
   }
 
   Widget _buildAllEventsList(
-      Color cardColor, Color textColor, Color? subtextColor) {
-    final allDates = _eventsByDate.keys.toList()..sort((a, b) => a.compareTo(b));
+    Color cardColor,
+    Color textColor,
+    Color? subtextColor,
+  ) {
+    final allDates =
+        _eventsByDate.keys.toList()..sort((a, b) => a.compareTo(b));
 
     if (allDates.isEmpty) {
       return _buildEmptyState(
         icon: Icons.event_busy_rounded,
         title: 'No Events Yet',
-        subtitle: _isPanchayatMember
-            ? 'Tap the + button to create your first event'
-            : 'No events scheduled this month',
+        subtitle:
+            _isPanchayatMember
+                ? 'Tap the + button to create your first event'
+                : 'No events scheduled this month',
         textColor: textColor,
       );
     }
@@ -813,18 +872,17 @@ class _AllEventsPageState extends State<AllEventsPage>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: _isDark
-                    ? Colors.black.withOpacity(0.3)
-                    : Colors.blue.withOpacity(0.08),
+                color:
+                    _isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.blue.withOpacity(0.08),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
             ],
           ),
           child: Theme(
-            data: Theme.of(context).copyWith(
-              dividerColor: Colors.transparent,
-            ),
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               childrenPadding: EdgeInsets.only(bottom: 10),
@@ -834,9 +892,11 @@ class _AllEventsPageState extends State<AllEventsPage>
                   color: _isDark ? Colors.grey[800] : Colors.blue[50],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.calendar_today,
-                    color: _isDark ? Colors.blue[300] : Colors.blue[700],
-                    size: 20),
+                child: Icon(
+                  Icons.calendar_today,
+                  color: _isDark ? Colors.blue[300] : Colors.blue[700],
+                  size: 20,
+                ),
               ),
               title: Text(
                 DateFormat('EEEE, MMM dd, yyyy').format(date),
@@ -850,10 +910,18 @@ class _AllEventsPageState extends State<AllEventsPage>
                 '${events.length} event${events.length > 1 ? "s" : ""}',
                 style: TextStyle(color: subtextColor, fontSize: 13),
               ),
-              children: events
-                  .map((ev) => _buildEventCard(
-                      ev, date, cardColor, textColor, subtextColor))
-                  .toList(),
+              children:
+                  events
+                      .map(
+                        (ev) => _buildEventCard(
+                          ev,
+                          date,
+                          cardColor,
+                          textColor,
+                          subtextColor,
+                        ),
+                      )
+                      .toList(),
             ),
           ),
         );
@@ -861,8 +929,12 @@ class _AllEventsPageState extends State<AllEventsPage>
     );
   }
 
-  Widget _buildSelectedEventsList(List<EventModel> events, Color cardColor,
-      Color textColor, Color? subtextColor) {
+  Widget _buildSelectedEventsList(
+    List<EventModel> events,
+    Color cardColor,
+    Color textColor,
+    Color? subtextColor,
+  ) {
     if (events.isEmpty) {
       return _buildEmptyState(
         icon: Icons.event_note_rounded,
@@ -878,8 +950,14 @@ class _AllEventsPageState extends State<AllEventsPage>
       physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: events.length,
-      itemBuilder: (context, i) => _buildEventCard(
-          events[i], _selectedDay!, cardColor, textColor, subtextColor),
+      itemBuilder:
+          (context, i) => _buildEventCard(
+            events[i],
+            _selectedDay!,
+            cardColor,
+            textColor,
+            subtextColor,
+          ),
     );
   }
 
@@ -900,8 +978,11 @@ class _AllEventsPageState extends State<AllEventsPage>
               color: _isDark ? Colors.grey[800] : Colors.blue[50],
               shape: BoxShape.circle,
             ),
-            child: Icon(icon,
-                size: 60, color: _isDark ? Colors.blue[300] : Colors.blue[300]),
+            child: Icon(
+              icon,
+              size: 60,
+              color: _isDark ? Colors.blue[300] : Colors.blue[300],
+            ),
           ),
           SizedBox(height: 20),
           Text(
@@ -929,20 +1010,28 @@ class _AllEventsPageState extends State<AllEventsPage>
   // ============================================
   // EVENT CARD - VIEW ONLY FOR NORMAL USERS
   // ============================================
-  Widget _buildEventCard(EventModel ev, DateTime date, Color cardColor,
-      Color textColor, Color? subtextColor) {
+  Widget _buildEventCard(
+    EventModel ev,
+    DateTime date,
+    Color cardColor,
+    Color textColor,
+    Color? subtextColor,
+  ) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: _isDark ? Colors.grey[700]! : Colors.blue[100]!, width: 1),
+          color: _isDark ? Colors.grey[700]! : Colors.blue[100]!,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: _isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.blue.withOpacity(0.05),
+            color:
+                _isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.blue.withOpacity(0.05),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -960,53 +1049,57 @@ class _AllEventsPageState extends State<AllEventsPage>
                 // Image or Icon
                 ev.imageUrl != null
                     ? GestureDetector(
-                        onTap: () => _showImageDialog(ev.imageUrl!),
-                        child: Hero(
-                          tag: 'event_image_${ev.imageUrl}',
-                          child: Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CachedNetworkImage(
-                                imageUrl: ev.imageUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.grey[300],
-                                  child: Center(
-                                      child: CircularProgressIndicator()),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey[300],
-                                  child: Icon(Icons.error, color: Colors.red),
-                                ),
+                      onTap: () => _showImageDialog(ev.imageUrl!),
+                      child: Hero(
+                        tag: 'event_image_${ev.imageUrl}',
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
                               ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: ev.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) => Container(
+                                    color: Colors.grey[300],
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  ),
+                              errorWidget:
+                                  (context, url, error) => Container(
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.error, color: Colors.red),
+                                  ),
                             ),
                           ),
                         ),
-                      )
-                    : Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: _isDark ? Colors.grey[800] : Colors.blue[50],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.event,
-                            color:
-                                _isDark ? Colors.blue[300] : Colors.blue[400],
-                            size: 32),
                       ),
+                    )
+                    : Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: _isDark ? Colors.grey[800] : Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.event,
+                        color: _isDark ? Colors.blue[300] : Colors.blue[400],
+                        size: 32,
+                      ),
+                    ),
 
                 SizedBox(width: 16),
 
@@ -1028,10 +1121,7 @@ class _AllEventsPageState extends State<AllEventsPage>
                       SizedBox(height: 4),
                       Text(
                         ev.description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: subtextColor,
-                        ),
+                        style: TextStyle(fontSize: 13, color: subtextColor),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1039,8 +1129,11 @@ class _AllEventsPageState extends State<AllEventsPage>
                         SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on,
-                                size: 14, color: Colors.red[400]),
+                            Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: Colors.red[400],
+                            ),
                             SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -1066,14 +1159,20 @@ class _AllEventsPageState extends State<AllEventsPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit_rounded,
-                            color: Colors.blue[600], size: 20),
+                        icon: Icon(
+                          Icons.edit_rounded,
+                          color: Colors.blue[600],
+                          size: 20,
+                        ),
                         onPressed: () => _openAddEvent(eventToUpdate: ev),
                         tooltip: 'Edit',
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete_rounded,
-                            color: Colors.red[400], size: 20),
+                        icon: Icon(
+                          Icons.delete_rounded,
+                          color: Colors.red[400],
+                          size: 20,
+                        ),
                         onPressed: () => _deleteEvent(date, ev),
                         tooltip: 'Delete',
                       ),
@@ -1082,8 +1181,11 @@ class _AllEventsPageState extends State<AllEventsPage>
                 else
                   // View details button for normal users
                   IconButton(
-                    icon: Icon(Icons.arrow_forward_ios_rounded,
-                        color: Colors.grey[600], size: 16),
+                    icon: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.grey[600],
+                      size: 16,
+                    ),
                     onPressed: () => _viewEventDetails(ev),
                     tooltip: 'View Details',
                   ),
@@ -1098,51 +1200,52 @@ class _AllEventsPageState extends State<AllEventsPage>
   void _showImageDialog(String imageUrl) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Stack(
-          children: [
-            Center(
-              child: Hero(
-                tag: 'event_image_$imageUrl',
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: Offset(0, 10),
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: [
+                Center(
+                  child: Hero(
+                    tag: 'event_image_$imageUrl',
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.contain,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  shape: BoxShape.circle,
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.close, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ),
-                child: IconButton(
-                  icon: Icon(Icons.close, color: Colors.white, size: 28),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
@@ -1158,12 +1261,12 @@ class EventDetailsBottomSheet extends StatelessWidget {
   final VoidCallback onDelete;
 
   const EventDetailsBottomSheet({
-    Key? key,
+    super.key,
     required this.event,
     required this.isPanchayatMember,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1267,8 +1370,9 @@ class EventDetailsBottomSheet extends StatelessWidget {
                         icon: Icons.calendar_today,
                         color: Colors.blue,
                         title: 'Date',
-                        value: DateFormat('EEEE, MMMM dd, yyyy')
-                            .format(event.eventDate),
+                        value: DateFormat(
+                          'EEEE, MMMM dd, yyyy',
+                        ).format(event.eventDate),
                       ),
                       SizedBox(height: 12),
 
@@ -1323,15 +1427,20 @@ class EventDetailsBottomSheet extends StatelessWidget {
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red[50],
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.favorite,
-                                    color: Colors.red, size: 20),
+                                Icon(
+                                  Icons.favorite,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   '${event.likes} likes',
@@ -1346,15 +1455,20 @@ class EventDetailsBottomSheet extends StatelessWidget {
                           SizedBox(width: 12),
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue[50],
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.comment,
-                                    color: Colors.blue, size: 20),
+                                Icon(
+                                  Icons.comment,
+                                  color: Colors.blue,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   '${event.comments.length} comments',

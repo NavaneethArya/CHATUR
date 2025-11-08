@@ -9,14 +9,19 @@ class CloudinaryStoreService {
 
   /// Upload a single store logo image
   static Future<String?> uploadStoreLogo(File imageFile) async {
-    final url =
-        Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+    final url = Uri.parse(
+      "https://api.cloudinary.com/v1_1/$cloudName/image/upload",
+    );
 
     try {
-      final request = http.MultipartRequest("POST", url)
-        ..fields["upload_preset"] = uploadPreset
-        ..fields["folder"] = "Store/Logos" // Organized folder structure
-        ..files.add(await http.MultipartFile.fromPath("file", imageFile.path));
+      final request =
+          http.MultipartRequest("POST", url)
+            ..fields["upload_preset"] = uploadPreset
+            ..fields["folder"] =
+                "Store/Logos" // Organized folder structure
+            ..files.add(
+              await http.MultipartFile.fromPath("file", imageFile.path),
+            );
 
       final response = await request.send();
       final responseData = await response.stream.bytesToString();
@@ -26,7 +31,8 @@ class CloudinaryStoreService {
         return jsonData["secure_url"];
       } else {
         print(
-            "Cloudinary upload failed: ${response.statusCode}, $responseData");
+          "Cloudinary upload failed: ${response.statusCode}, $responseData",
+        );
         return null;
       }
     } catch (e) {
@@ -40,15 +46,19 @@ class CloudinaryStoreService {
     List<String> uploadedUrls = [];
 
     for (File imageFile in imageFiles) {
-      final url =
-          Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+      final url = Uri.parse(
+        "https://api.cloudinary.com/v1_1/$cloudName/image/upload",
+      );
 
       try {
-        final request = http.MultipartRequest("POST", url)
-          ..fields["upload_preset"] = uploadPreset
-          ..fields["folder"] = "Store/Products" // Organized folder for products
-          ..files
-              .add(await http.MultipartFile.fromPath("file", imageFile.path));
+        final request =
+            http.MultipartRequest("POST", url)
+              ..fields["upload_preset"] = uploadPreset
+              ..fields["folder"] =
+                  "Store/Products" // Organized folder for products
+              ..files.add(
+                await http.MultipartFile.fromPath("file", imageFile.path),
+              );
 
         final response = await request.send();
         final responseData = await response.stream.bytesToString();
@@ -58,7 +68,8 @@ class CloudinaryStoreService {
           uploadedUrls.add(jsonData["secure_url"]);
         } else {
           print(
-              "Failed to upload image: ${response.statusCode}, $responseData");
+            "Failed to upload image: ${response.statusCode}, $responseData",
+          );
         }
       } catch (e) {
         print("Error uploading image: $e");

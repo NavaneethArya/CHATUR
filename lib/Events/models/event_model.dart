@@ -46,7 +46,8 @@ class EventModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       likes: data['likes'] ?? 0,
       likedBy: List<String>.from(data['likedBy'] ?? []),
-      comments: (data['comments'] as List?)
+      comments:
+          (data['comments'] as List?)
               ?.map((c) => Comment.fromMap(c))
               .toList() ??
           [],

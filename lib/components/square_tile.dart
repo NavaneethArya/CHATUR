@@ -10,9 +10,8 @@ class SquareTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Tooltip(
-        message: imagePath.contains('google')
-            ? 'Sign in with Google'
-            : 'Sign in',
+        message:
+            imagePath.contains('google') ? 'Sign in with Google' : 'Sign in',
         child: Container(
           width: 70,
           height: 70,
@@ -22,10 +21,7 @@ class SquareTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white),
           ),
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
-          ),
+          child: Image.asset(imagePath, fit: BoxFit.contain),
         ),
       ),
     );

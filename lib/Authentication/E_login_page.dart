@@ -14,8 +14,7 @@ class _E_LoginPageState extends State<E_LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
-   bool isLoading = false;
-
+  bool isLoading = false;
 
   void googleSignIn() async {
     setState(() => isLoading = true);
@@ -23,9 +22,9 @@ class _E_LoginPageState extends State<E_LoginPage> {
     if (userCred != null) {
       Navigator.pushReplacementNamed(context, '/main');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google Sign-in failed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Google Sign-in failed')));
     }
     setState(() => isLoading = false);
   }
@@ -42,9 +41,9 @@ class _E_LoginPageState extends State<E_LoginPage> {
       );
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login failed: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Login failed: ${e.toString()}")));
     }
     setState(() => _loading = false);
   }
@@ -75,11 +74,13 @@ class _E_LoginPageState extends State<E_LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Welcome back to your CHATUR account!",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+              const Text(
+                "Welcome back to your CHATUR account!",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 15),
-            const Text("Email ID"),
-            const SizedBox(height: 15),
+              const Text("Email ID"),
+              const SizedBox(height: 15),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -90,8 +91,8 @@ class _E_LoginPageState extends State<E_LoginPage> {
                 ),
               ),
               const SizedBox(height: 15),
-            const Text("Password"),
-            const SizedBox(height: 15),
+              const Text("Password"),
+              const SizedBox(height: 15),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
@@ -112,48 +113,54 @@ class _E_LoginPageState extends State<E_LoginPage> {
               _loading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(45),
-                        backgroundColor: Colors.deepOrange,
-                      ),
-                      child: const Text("Login"),
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(45),
+                      backgroundColor: Colors.deepOrange,
                     ),
-                    const SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: () {Navigator.pushReplacementNamed(context, '/login');},
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
-              child: const Text('Login with Phone Number'),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Wrap(
-                children: [
-                  const Text('New on CHATUR? '),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, '/Eregister');
-                    },
-                    child: const Text('Register here',
-                        style: TextStyle(color: Colors.blue)),
+                    child: const Text("Login"),
                   ),
-                ],
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/login');
+                },
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(45),
+                ),
+                child: const Text('Login with Phone Number'),
               ),
-            ),
-            const Divider(height: 40),
-            Center(child: const Text('or Login/Register with')),
-            const SizedBox(height: 10),
-            Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              const SizedBox(height: 16),
+              Center(
+                child: Wrap(
                   children: [
-                    SquareTile(
-                      onTap: googleSignIn,
-                      imagePath: 'assets/images/google.png',
+                    const Text('New on CHATUR? '),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacementNamed(context, '/Eregister');
+                      },
+                      child: const Text(
+                        'Register here',
+                        style: TextStyle(color: Colors.blue),
+                      ),
                     ),
-                    const SizedBox(width: 25),
-                    SquareTile(imagePath: 'assets/images/apple.png'),
                   ],
                 ),
+              ),
+              const Divider(height: 40),
+              Center(child: const Text('or Login/Register with')),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SquareTile(
+                    onTap: googleSignIn,
+                    imagePath: 'assets/images/google.png',
+                  ),
+                  const SizedBox(width: 25),
+                  SquareTile(imagePath: 'assets/images/apple.png'),
+                ],
+              ),
             ],
           ),
         ),

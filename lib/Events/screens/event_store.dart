@@ -7,11 +7,7 @@ class Event {
   final String description;
   final String? imageUrl;
 
-  Event({
-    required this.heading,
-    required this.description,
-    this.imageUrl,
-  });
+  Event({required this.heading, required this.description, this.imageUrl});
 
   // Convert to Firebase format
   Map<String, dynamic> toFirestore() {
@@ -44,7 +40,7 @@ class EventStore {
   EventStore._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Keep in-memory cache for offline support
   final Map<DateTime, List<Event>> _localCache = {};
   bool _useFirebase = true; // Toggle for testing
@@ -91,7 +87,7 @@ class EventStore {
           .doc(dateKey)
           .collection('eventsList')
           .add(event.toFirestore());
-      
+
       // Also update local cache
       _addToLocalCache(date, event);
     } catch (e) {
@@ -104,13 +100,14 @@ class EventStore {
   Future<void> _deleteFromFirebase(DateTime date, Event event) async {
     try {
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
-      final querySnapshot = await _firestore
-          .collection('events')
-          .doc(dateKey)
-          .collection('eventsList')
-          .where('heading', isEqualTo: event.heading)
-          .where('description', isEqualTo: event.description)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('events')
+              .doc(dateKey)
+              .collection('eventsList')
+              .where('heading', isEqualTo: event.heading)
+              .where('description', isEqualTo: event.description)
+              .get();
 
       for (var doc in querySnapshot.docs) {
         await doc.reference.delete();
@@ -127,15 +124,15 @@ class EventStore {
   Future<void> loadEventsFromFirebase(DateTime date) async {
     try {
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
-      final snapshot = await _firestore
-          .collection('events')
-          .doc(dateKey)
-          .collection('eventsList')
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('events')
+              .doc(dateKey)
+              .collection('eventsList')
+              .get();
 
-      final events = snapshot.docs
-          .map((doc) => Event.fromFirestore(doc.data()))
-          .toList();
+      final events =
+          snapshot.docs.map((doc) => Event.fromFirestore(doc.data())).toList();
 
       final normalizedDate = _normalizeDate(date);
       _localCache[normalizedDate] = events;

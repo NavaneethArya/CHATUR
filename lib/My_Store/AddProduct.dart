@@ -12,7 +12,8 @@ class AddProductPage extends StatefulWidget {
   final Product? existingProduct;
   final int? productIndex;
 
-  AddProductPage({
+  const AddProductPage({
+    super.key,
     this.isEditMode = false,
     this.existingProduct,
     this.productIndex,
@@ -197,8 +198,9 @@ class _AddProductPageState extends State<AddProductPage>
     if (status.isPermanentlyDenied || status.isDenied) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Microphone permission required'),
-            backgroundColor: Colors.red),
+          content: Text('Microphone permission required'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -207,8 +209,9 @@ class _AddProductPageState extends State<AddProductPage>
     if (!available) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Speech recognition not available'),
-            backgroundColor: Colors.red),
+          content: Text('Speech recognition not available'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -241,12 +244,15 @@ class _AddProductPageState extends State<AddProductPage>
       context: context,
       builder: (context) {
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Container(
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               children: [
                 Container(
@@ -254,8 +260,9 @@ class _AddProductPageState extends State<AddProductPage>
                   decoration: BoxDecoration(
                     color: Colors.deepPurple,
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20)),
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,16 +271,20 @@ class _AddProductPageState extends State<AddProductPage>
                         children: [
                           Icon(Icons.category, color: Colors.white, size: 24),
                           SizedBox(width: 10),
-                          Text('Select Product Type',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
+                          Text(
+                            'Select Product Type',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
                       IconButton(
-                          icon: Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context)),
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
                 ),
@@ -288,35 +299,49 @@ class _AddProductPageState extends State<AddProductPage>
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: Colors.deepPurple.withOpacity(0.2),
-                              width: 1.5),
+                            color: Colors.deepPurple.withOpacity(0.2),
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: Offset(0, 2))
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: ListTile(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 5,
+                          ),
                           leading: Container(
                             width: 45,
                             height: 45,
                             decoration: BoxDecoration(
-                                color: Colors.deepPurple.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10)),
+                              color: Colors.deepPurple.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: Center(
-                                child: Text(productCategories[index]['icon'],
-                                    style: TextStyle(fontSize: 24))),
+                              child: Text(
+                                productCategories[index]['icon'],
+                                style: TextStyle(fontSize: 24),
+                              ),
+                            ),
                           ),
-                          title: Text(productCategories[index]['name'],
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                  color: Colors.black87)),
-                          trailing: Icon(Icons.arrow_forward_ios,
-                              color: Colors.deepPurple, size: 16),
+                          title: Text(
+                            productCategories[index]['name'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.deepPurple,
+                            size: 16,
+                          ),
                           onTap: () {
                             setState(() {
                               _productTypeController.text =
@@ -342,12 +367,15 @@ class _AddProductPageState extends State<AddProductPage>
       context: context,
       builder: (context) {
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Container(
             height: MediaQuery.of(context).size.height * 0.6,
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               children: [
                 Container(
@@ -355,27 +383,35 @@ class _AddProductPageState extends State<AddProductPage>
                   decoration: BoxDecoration(
                     color: Colors.blue[700],
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20)),
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.local_shipping,
-                              color: Colors.white, size: 24),
+                          Icon(
+                            Icons.local_shipping,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                           SizedBox(width: 10),
-                          Text('Shipping Method',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
+                          Text(
+                            'Shipping Method',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
                       IconButton(
-                          icon: Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context)),
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
                 ),
@@ -390,34 +426,49 @@ class _AddProductPageState extends State<AddProductPage>
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: Colors.blue.withOpacity(0.3), width: 1.5),
+                            color: Colors.blue.withOpacity(0.3),
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: Offset(0, 2))
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: ListTile(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 5,
+                          ),
                           leading: Container(
                             width: 45,
                             height: 45,
                             decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10)),
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: Center(
-                                child: Text(shippingMethods[index]['icon'],
-                                    style: TextStyle(fontSize: 24))),
+                              child: Text(
+                                shippingMethods[index]['icon'],
+                                style: TextStyle(fontSize: 24),
+                              ),
+                            ),
                           ),
-                          title: Text(shippingMethods[index]['name'],
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                  color: Colors.black87)),
-                          trailing: Icon(Icons.arrow_forward_ios,
-                              color: Colors.blue[700], size: 16),
+                          title: Text(
+                            shippingMethods[index]['name'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.blue[700],
+                            size: 16,
+                          ),
                           onTap: () {
                             setState(() {
                               _shippingMethodController.text =
@@ -443,12 +494,15 @@ class _AddProductPageState extends State<AddProductPage>
       context: context,
       builder: (context) {
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Container(
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               children: [
                 Container(
@@ -456,8 +510,9 @@ class _AddProductPageState extends State<AddProductPage>
                   decoration: BoxDecoration(
                     color: Colors.orange[700],
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20)),
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -466,16 +521,20 @@ class _AddProductPageState extends State<AddProductPage>
                         children: [
                           Icon(Icons.public, color: Colors.white, size: 24),
                           SizedBox(width: 10),
-                          Text('Shipping Coverage',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
+                          Text(
+                            'Shipping Coverage',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
                       IconButton(
-                          icon: Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context)),
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
                 ),
@@ -491,34 +550,49 @@ class _AddProductPageState extends State<AddProductPage>
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: item['color'].withOpacity(0.3), width: 2),
+                            color: item['color'].withOpacity(0.3),
+                            width: 2,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: Offset(0, 2))
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: ListTile(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 5,
+                          ),
                           leading: Container(
                             width: 45,
                             height: 45,
                             decoration: BoxDecoration(
-                                color: item['color'].withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10)),
+                              color: item['color'].withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: Center(
-                                child: Text(item['icon'],
-                                    style: TextStyle(fontSize: 24))),
+                              child: Text(
+                                item['icon'],
+                                style: TextStyle(fontSize: 24),
+                              ),
+                            ),
                           ),
-                          title: Text(item['name'],
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: item['color'])),
-                          trailing: Icon(Icons.arrow_forward_ios,
-                              color: item['color'], size: 16),
+                          title: Text(
+                            item['name'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: item['color'],
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            color: item['color'],
+                            size: 16,
+                          ),
                           onTap: () {
                             setState(() {
                               _shippingAvailabilityController.text =
@@ -555,33 +629,37 @@ class _AddProductPageState extends State<AddProductPage>
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Center(
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+        builder:
+            (context) => Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.deepPurple),
+                    SizedBox(height: 15),
+                    Text('Uploading images...', style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 5),
+                    Text(
+                      'Please wait',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(color: Colors.deepPurple),
-                SizedBox(height: 15),
-                Text('Uploading images...', style: TextStyle(fontSize: 16)),
-                SizedBox(height: 5),
-                Text('Please wait',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-          ),
-        ),
       );
 
       print('Uploading ${_productImages.length} images to Cloudinary...');
 
       // Upload images to Cloudinary
-      List<String> imageUrls =
-          await CloudinaryStoreService.uploadProductImages(_productImages);
+      List<String> imageUrls = await CloudinaryStoreService.uploadProductImages(
+        _productImages,
+      );
 
       Navigator.pop(context); // Close loading dialog
 
@@ -631,7 +709,7 @@ class _AddProductPageState extends State<AddProductPage>
             colors: [
               Colors.deepPurple.shade50,
               Colors.white,
-              Colors.deepPurple.shade50
+              Colors.deepPurple.shade50,
             ],
           ),
         ),
@@ -691,16 +769,17 @@ class _AddProductPageState extends State<AddProductPage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.3),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: Row(
@@ -713,7 +792,10 @@ class _AddProductPageState extends State<AddProductPage>
           Text(
             widget.isEditMode ? 'Edit Product' : 'Add New Product',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -721,11 +803,14 @@ class _AddProductPageState extends State<AddProductPage>
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title,
-        style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple));
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.deepPurple,
+      ),
+    );
   }
 
   Widget _buildProductTypeField() {
@@ -735,9 +820,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -753,14 +839,17 @@ class _AddProductPageState extends State<AddProductPage>
             onPressed: _showProductTypeDialog,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please select or enter product type'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please select or enter product type'
+                    : null,
       ),
     );
   }
@@ -772,9 +861,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -783,13 +873,17 @@ class _AddProductPageState extends State<AddProductPage>
           labelText: 'Product Name',
           prefixIcon: Icon(Icons.shopping_bag, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter product name' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter product name'
+                    : null,
       ),
     );
   }
@@ -801,9 +895,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -813,19 +908,24 @@ class _AddProductPageState extends State<AddProductPage>
           labelText: 'Product Description',
           prefixIcon: Icon(Icons.description, color: Colors.deepPurple),
           suffixIcon: IconButton(
-            icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
-                color: _isListening ? Colors.red : Colors.deepPurple),
+            icon: Icon(
+              _isListening ? Icons.mic : Icons.mic_none,
+              color: _isListening ? Colors.red : Colors.deepPurple,
+            ),
             onPressed: _isListening ? _stopListening : _startListening,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please enter product description'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter product description'
+                    : null,
       ),
     );
   }
@@ -837,9 +937,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -849,14 +950,16 @@ class _AddProductPageState extends State<AddProductPage>
           labelText: 'Product Price (₹)',
           prefixIcon: Icon(Icons.currency_rupee, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
         validator: (value) {
-          if (value == null || value.isEmpty)
+          if (value == null || value.isEmpty) {
             return 'Please enter product price';
+          }
           if (double.tryParse(value) == null) return 'Please enter valid price';
           return null;
         },
@@ -871,9 +974,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -883,14 +987,16 @@ class _AddProductPageState extends State<AddProductPage>
           labelText: 'Stock Quantity',
           prefixIcon: Icon(Icons.inventory, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
         validator: (value) {
-          if (value == null || value.isEmpty)
+          if (value == null || value.isEmpty) {
             return 'Please enter stock quantity';
+          }
           if (int.tryParse(value) == null) return 'Please enter valid quantity';
           return null;
         },
@@ -907,9 +1013,10 @@ class _AddProductPageState extends State<AddProductPage>
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5)),
+                color: Colors.deepPurple.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
             ],
           ),
           child: InkWell(
@@ -919,17 +1026,25 @@ class _AddProductPageState extends State<AddProductPage>
               padding: EdgeInsets.all(30),
               child: Column(
                 children: [
-                  Icon(Icons.add_photo_alternate,
-                      size: 60, color: Colors.deepPurple),
+                  Icon(
+                    Icons.add_photo_alternate,
+                    size: 60,
+                    color: Colors.deepPurple,
+                  ),
                   SizedBox(height: 15),
-                  Text('Upload Product Images',
-                      style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16)),
+                  Text(
+                    'Upload Product Images',
+                    style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                   SizedBox(height: 5),
-                  Text('Tap to select multiple images',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  Text(
+                    'Tap to select multiple images',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -937,7 +1052,7 @@ class _AddProductPageState extends State<AddProductPage>
         ),
         if (_productImages.isNotEmpty) ...[
           SizedBox(height: 20),
-          Container(
+          SizedBox(
             height: 120,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -949,8 +1064,12 @@ class _AddProductPageState extends State<AddProductPage>
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: Image.file(_productImages[index],
-                            width: 120, height: 120, fit: BoxFit.cover),
+                        child: Image.file(
+                          _productImages[index],
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       Positioned(
                         top: 5,
@@ -960,9 +1079,14 @@ class _AddProductPageState extends State<AddProductPage>
                           child: Container(
                             padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
-                                color: Colors.red, shape: BoxShape.circle),
-                            child: Icon(Icons.close,
-                                color: Colors.white, size: 18),
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -984,9 +1108,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.blue.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1002,14 +1127,17 @@ class _AddProductPageState extends State<AddProductPage>
             onPressed: _showShippingMethodDialog,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please select or enter shipping method'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please select or enter shipping method'
+                    : null,
       ),
     );
   }
@@ -1021,9 +1149,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.orange.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.orange.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1039,14 +1168,17 @@ class _AddProductPageState extends State<AddProductPage>
             onPressed: _showShippingAvailabilityDialog,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please select or enter shipping coverage'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please select or enter shipping coverage'
+                    : null,
       ),
     );
   }
@@ -1059,7 +1191,7 @@ class _AddProductPageState extends State<AddProductPage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -1067,9 +1199,10 @@ class _AddProductPageState extends State<AddProductPage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.4),
-              blurRadius: 15,
-              offset: Offset(0, 8)),
+            color: Colors.deepPurple.withOpacity(0.4),
+            blurRadius: 15,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: ElevatedButton(
@@ -1077,8 +1210,9 @@ class _AddProductPageState extends State<AddProductPage>
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1091,9 +1225,10 @@ class _AddProductPageState extends State<AddProductPage>
             Text(
               widget.isEditMode ? 'Update Product' : 'Add Product',
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ],
         ),

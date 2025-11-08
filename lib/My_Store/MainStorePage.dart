@@ -9,7 +9,7 @@ import 'createStore.dart';
 import 'productDetailMyStore.dart';
 
 class MainStorePage extends StatefulWidget {
-  const MainStorePage({Key? key}) : super(key: key);
+  const MainStorePage({super.key});
 
   @override
   State<MainStorePage> createState() => _MainStorePageState();
@@ -65,11 +65,12 @@ class _MainStorePageState extends State<MainStorePage>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MyStorePage(
-            storeName: data['storeName'] ?? '',
-            storeDescription: data['storeDescription'] ?? '',
-            storeLogo: null,
-          ),
+          builder:
+              (context) => MyStorePage(
+                storeName: data['storeName'] ?? '',
+                storeDescription: data['storeDescription'] ?? '',
+                storeLogo: null,
+              ),
         ),
       );
     } else {
@@ -84,36 +85,39 @@ class _MainStorePageState extends State<MainStorePage>
   void _showLoginDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.deepPurple),
-            SizedBox(width: 10),
-            Text('Login Required'),
-          ],
-        ),
-        content: Text('Please login to access your store.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Navigate to login page
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Text('Login', style: TextStyle(color: Colors.white)),
+            title: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.deepPurple),
+                SizedBox(width: 10),
+                Text('Login Required'),
+              ],
+            ),
+            content: Text('Please login to access your store.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Navigate to login page
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Login', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -143,7 +147,7 @@ class _MainStorePageState extends State<MainStorePage>
             colors: [
               Colors.deepPurple,
               Colors.deepPurple[300]!,
-              Colors.purple[200]!
+              Colors.purple[200]!,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -152,21 +156,22 @@ class _MainStorePageState extends State<MainStorePage>
       ),
       title: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
-        child: _showSearch
-            ? Container()
-            : Row(
-                children: [
-                  Icon(Icons.storefront, size: 28),
-                  SizedBox(width: 10),
-                  Text(
-                    'Village Marketplace',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
+        child:
+            _showSearch
+                ? Container()
+                : Row(
+                  children: [
+                    Icon(Icons.storefront, size: 28),
+                    SizedBox(width: 10),
+                    Text(
+                      'Village Marketplace',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
       ),
       actions: [
         IconButton(
@@ -264,16 +269,15 @@ class _MainStorePageState extends State<MainStorePage>
 
   Widget _buildStoreGrid() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore
-          .collection('stores')
-          .where('status', isEqualTo: 'active')
-          .snapshots(),
+      stream:
+          _firestore
+              .collection('stores')
+              .where('status', isEqualTo: 'active')
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
-            child: CircularProgressIndicator(
-              color: Colors.deepPurple,
-            ),
+            child: CircularProgressIndicator(color: Colors.deepPurple),
           );
         }
 
@@ -306,14 +310,16 @@ class _MainStorePageState extends State<MainStorePage>
 
         // Filter by search query
         if (_searchQuery.isNotEmpty) {
-          stores = stores.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final storeName = data['storeName']?.toString().toLowerCase() ?? '';
-            final description =
-                data['storeDescription']?.toString().toLowerCase() ?? '';
-            return storeName.contains(_searchQuery) ||
-                description.contains(_searchQuery);
-          }).toList();
+          stores =
+              stores.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final storeName =
+                    data['storeName']?.toString().toLowerCase() ?? '';
+                final description =
+                    data['storeDescription']?.toString().toLowerCase() ?? '';
+                return storeName.contains(_searchQuery) ||
+                    description.contains(_searchQuery);
+              }).toList();
         }
 
         if (stores.isEmpty) {
@@ -391,35 +397,34 @@ class _MainStorePageState extends State<MainStorePage>
                 ),
               ),
               child: Center(
-                child: storeData['storeLogoUrl'] != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                        child: CachedNetworkImage(
-                          imageUrl: storeData['storeLogoUrl'],
-                          width: double.infinity,
-                          height: 120,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
+                child:
+                    storeData['storeLogoUrl'] != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
                           ),
-                          errorWidget: (context, url, error) => Icon(
-                            Icons.store,
-                            size: 50,
-                            color: Colors.white,
+                          child: CachedNetworkImage(
+                            imageUrl: storeData['storeLogoUrl'],
+                            width: double.infinity,
+                            height: 120,
+                            fit: BoxFit.cover,
+                            placeholder:
+                                (context, url) => Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                            errorWidget:
+                                (context, url, error) => Icon(
+                                  Icons.store,
+                                  size: 50,
+                                  color: Colors.white,
+                                ),
                           ),
-                        ),
-                      )
-                    : Icon(
-                        Icons.store,
-                        size: 50,
-                        color: Colors.white,
-                      ),
+                        )
+                        : Icon(Icons.store, size: 50, color: Colors.white),
               ),
             ),
             // Store Info
@@ -442,18 +447,18 @@ class _MainStorePageState extends State<MainStorePage>
                     SizedBox(height: 4),
                     Text(
                       storeData['storeDescription'] ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Spacer(),
                     Row(
                       children: [
-                        Icon(Icons.location_on,
-                            size: 14, color: Colors.deepPurple),
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.deepPurple,
+                        ),
                         SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -556,10 +561,7 @@ class _MainStorePageState extends State<MainStorePage>
       onPressed: _navigateToMyStore,
       backgroundColor: Colors.deepPurple,
       icon: Icon(Icons.add_business),
-      label: Text(
-        'My Store',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      label: Text('My Store', style: TextStyle(fontWeight: FontWeight.bold)),
       elevation: 8,
     );
   }
@@ -572,10 +574,7 @@ class _MainStorePageState extends State<MainStorePage>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.deepPurple.shade50,
-              Colors.white,
-            ],
+            colors: [Colors.deepPurple.shade50, Colors.white],
           ),
         ),
         child: ListView(
@@ -670,10 +669,7 @@ class _MainStorePageState extends State<MainStorePage>
                     );
                   },
                   icon: Icon(Icons.logout, color: Colors.white),
-                  label: Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  label: Text('Logout', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
@@ -707,11 +703,7 @@ class _MainStorePageState extends State<MainStorePage>
           CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
-            child: Icon(
-              Icons.person,
-              size: 45,
-              color: Colors.deepPurple,
-            ),
+            child: Icon(Icons.person, size: 45, color: Colors.deepPurple),
           ),
           SizedBox(height: 15),
           Text(
@@ -725,10 +717,7 @@ class _MainStorePageState extends State<MainStorePage>
           SizedBox(height: 5),
           Text(
             user?.email ?? 'Please login to continue',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
@@ -784,54 +773,60 @@ class _MainStorePageState extends State<MainStorePage>
   void _showAboutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.storefront, color: Colors.deepPurple, size: 28),
-            SizedBox(width: 10),
-            Text('Village Marketplace'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Version 1.0.0',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 10),
-            Text(
-              'Connecting villages, empowering local businesses.',
-              style: TextStyle(color: Colors.grey[700]),
+            title: Row(
+              children: [
+                Icon(Icons.storefront, color: Colors.deepPurple, size: 28),
+                SizedBox(width: 10),
+                Text('Village Marketplace'),
+              ],
             ),
-            SizedBox(height: 20),
-            Text(
-              '© 2024 Chatur. All rights reserved.',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Version 1.0.0',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Connecting villages, empowering local businesses.',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  '© 2024 Chatur. All rights reserved.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _navigateToStoreProducts(
-      Map<String, dynamic> storeData, String storeId) async {
+    Map<String, dynamic> storeData,
+    String storeId,
+  ) async {
     // Fetch products for this store
-    final productsSnapshot = await _firestore
-        .collection('stores')
-        .doc(storeId)
-        .collection('products')
-        .where('status', isEqualTo: 'active')
-        .get();
+    final productsSnapshot =
+        await _firestore
+            .collection('stores')
+            .doc(storeId)
+            .collection('products')
+            .where('status', isEqualTo: 'active')
+            .get();
 
     if (productsSnapshot.docs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -847,10 +842,9 @@ class _MainStorePageState extends State<MainStorePage>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => StoreProductsPage(
-          storeData: storeData,
-          storeId: storeId,
-        ),
+        builder:
+            (context) =>
+                StoreProductsPage(storeData: storeData, storeId: storeId),
       ),
     );
   }
@@ -862,10 +856,10 @@ class StoreProductsPage extends StatelessWidget {
   final String storeId;
 
   const StoreProductsPage({
-    Key? key,
+    super.key,
     required this.storeData,
     required this.storeId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -895,24 +889,30 @@ class StoreProductsPage extends StatelessWidget {
                 children: [
                   storeData['storeLogoUrl'] != null
                       ? CachedNetworkImage(
-                          imageUrl: storeData['storeLogoUrl'],
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.deepPurple.withOpacity(0.3),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.deepPurple.withOpacity(0.3),
-                            child: Icon(Icons.store, size: 80, color: Colors.white),
-                          ),
-                        )
-                      : Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.deepPurple, Colors.purple[300]!],
+                        imageUrl: storeData['storeLogoUrl'],
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (context, url) => Container(
+                              color: Colors.deepPurple.withOpacity(0.3),
                             ),
+                        errorWidget:
+                            (context, url, error) => Container(
+                              color: Colors.deepPurple.withOpacity(0.3),
+                              child: Icon(
+                                Icons.store,
+                                size: 80,
+                                color: Colors.white,
+                              ),
+                            ),
+                      )
+                      : Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.deepPurple, Colors.purple[300]!],
                           ),
-                          child: Icon(Icons.store, size: 80, color: Colors.white),
                         ),
+                        child: Icon(Icons.store, size: 80, color: Colors.white),
+                      ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -944,7 +944,11 @@ class StoreProductsPage extends StatelessWidget {
                   SizedBox(height: 15),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 18, color: Colors.deepPurple),
+                      Icon(
+                        Icons.location_on,
+                        size: 18,
+                        color: Colors.deepPurple,
+                      ),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -972,12 +976,13 @@ class StoreProductsPage extends StatelessWidget {
           SliverPadding(
             padding: EdgeInsets.all(16),
             sliver: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('stores')
-                  .doc(storeId)
-                  .collection('products')
-                  .where('status', isEqualTo: 'active')
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('stores')
+                      .doc(storeId)
+                      .collection('products')
+                      .where('status', isEqualTo: 'active')
+                      .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return SliverToBoxAdapter(
@@ -1003,14 +1008,12 @@ class StoreProductsPage extends StatelessWidget {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final productData =
-                          snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                      return _buildProductCard(context, productData, storeData);
-                    },
-                    childCount: snapshot.data!.docs.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final productData =
+                        snapshot.data!.docs[index].data()
+                            as Map<String, dynamic>;
+                    return _buildProductCard(context, productData, storeData);
+                  }, childCount: snapshot.data!.docs.length),
                 );
               },
             ),
@@ -1021,7 +1024,10 @@ class StoreProductsPage extends StatelessWidget {
   }
 
   Widget _buildProductCard(
-      BuildContext context, Map<String, dynamic> productData, Map<String, dynamic> storeData) {
+    BuildContext context,
+    Map<String, dynamic> productData,
+    Map<String, dynamic> storeData,
+  ) {
     final imageUrls = List<String>.from(productData['productImageUrls'] ?? []);
 
     return GestureDetector(
@@ -1053,10 +1059,9 @@ class StoreProductsPage extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => StoreDetailView(
-              product: product,
-              storeData: store,
-            ),
+            builder:
+                (context) =>
+                    StoreDetailView(product: product, storeData: store),
           ),
         );
       },
@@ -1089,35 +1094,33 @@ class StoreProductsPage extends StatelessWidget {
                 children: [
                   imageUrls.isNotEmpty
                       ? ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                          child: CachedNetworkImage(
-                            imageUrl: imageUrls[0],
-                            width: double.infinity,
-                            height: 140,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.deepPurple,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Icon(
-                              Icons.image,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(
-                            Icons.image,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrls[0],
+                          width: double.infinity,
+                          height: 140,
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.deepPurple,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Icon(
+                                Icons.image,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                        ),
+                      )
+                      : Center(
+                        child: Icon(Icons.image, size: 50, color: Colors.grey),
+                      ),
                   if (productData['stockQuantity'] != null &&
                       productData['stockQuantity'] == 0)
                     Container(
@@ -1130,8 +1133,10 @@ class StoreProductsPage extends StatelessWidget {
                       ),
                       child: Center(
                         child: Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(20),
@@ -1191,12 +1196,15 @@ class StoreProductsPage extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: (productData['stockQuantity'] ?? 0) > 0
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
+                            color:
+                                (productData['stockQuantity'] ?? 0) > 0
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -1206,9 +1214,10 @@ class StoreProductsPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: (productData['stockQuantity'] ?? 0) > 0
-                                  ? Colors.green
-                                  : Colors.red,
+                              color:
+                                  (productData['stockQuantity'] ?? 0) > 0
+                                      ? Colors.green
+                                      : Colors.red,
                             ),
                           ),
                         ),

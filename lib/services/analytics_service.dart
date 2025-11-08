@@ -2,7 +2,7 @@
 
 // class AnalyticsService {
 //   static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  
+
 //   // Skill Events
 //   static Future<void> logSkillPosted({
 //     required String category,
@@ -16,7 +16,7 @@
 //       },
 //     );
 //   }
-  
+
 //   static Future<void> logSkillViewed({
 //     required String skillId,
 //     required String category,
@@ -29,7 +29,7 @@
 //       },
 //     );
 //   }
-  
+
 //   static Future<void> logSkillSaved({
 //     required String skillId,
 //     required bool isSaving,
@@ -39,7 +39,7 @@
 //       parameters: {'skill_id': skillId},
 //     );
 //   }
-  
+
 //   // Booking Events
 //   static Future<void> logBookingInitiated({
 //     required String skillId,
@@ -53,7 +53,7 @@
 //       },
 //     );
 //   }
-  
+
 //   static Future<void> logBookingCompleted({
 //     required String skillId,
 //     required String bookingId,
@@ -66,7 +66,7 @@
 //       },
 //     );
 //   }
-  
+
 //   // Search Events
 //   static Future<void> logSearch({
 //     required String query,
@@ -80,7 +80,7 @@
 //       },
 //     );
 //   }
-  
+
 //   static Future<void> logFilterApplied({
 //     required String filterType,
 //     required String filterValue,
@@ -93,7 +93,7 @@
 //       },
 //     );
 //   }
-  
+
 //   // Contact Events
 //   static Future<void> logContactAttempt({
 //     required String contactType, // 'phone', 'whatsapp', 'chat'
@@ -107,14 +107,14 @@
 //       },
 //     );
 //   }
-  
+
 //   // Screen Views
 //   static Future<void> logScreenView(String screenName) async {
 //     await _analytics.logScreenView(
 //       screenName: screenName,
 //     );
 //   }
-  
+
 //   // User Properties
 //   static Future<void> setUserRole(String role) async {
 //     await _analytics.setUserProperty(

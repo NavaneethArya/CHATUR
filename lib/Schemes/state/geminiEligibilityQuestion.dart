@@ -10,7 +10,9 @@ class GeminiEligibilityQuestions {
   static const String apiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
   static Future<bool> generateAndStoreQuestions(
-      BuildContext context, String language) async {
+    BuildContext context,
+    String language,
+  ) async {
     final GlobalKey dialogKey = GlobalKey();
     bool dialogIsOpen = true;
 
@@ -49,7 +51,8 @@ class GeminiEligibilityQuestions {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('No schemes found to generate questions')),
+              content: Text('No schemes found to generate questions'),
+            ),
           );
         }
         return false;
@@ -71,7 +74,8 @@ class GeminiEligibilityQuestions {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('No eligibility criteria found in schemes')),
+              content: Text('No eligibility criteria found in schemes'),
+            ),
           );
         }
         return false;
@@ -95,7 +99,8 @@ class GeminiEligibilityQuestions {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Failed to generate questions. Check logs.')),
+              content: Text('Failed to generate questions. Check logs.'),
+            ),
           );
         }
         return false;
@@ -107,9 +112,13 @@ class GeminiEligibilityQuestions {
 
       // Store all 30 questions
       await prefs.setString(
-          'eligibility_questions', jsonEncode(finalQuestions));
-      await prefs.setInt('questions_generated_timestamp',
-          DateTime.now().millisecondsSinceEpoch);
+        'eligibility_questions',
+        jsonEncode(finalQuestions),
+      );
+      await prefs.setInt(
+        'questions_generated_timestamp',
+        DateTime.now().millisecondsSinceEpoch,
+      );
 
       if (dialogIsOpen && context.mounted) Navigator.of(context).pop();
 
@@ -117,7 +126,8 @@ class GeminiEligibilityQuestions {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '${finalQuestions.length} eligibility questions generated successfully!'),
+              '${finalQuestions.length} eligibility questions generated successfully!',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -128,20 +138,22 @@ class GeminiEligibilityQuestions {
       if (dialogIsOpen && context.mounted) Navigator.of(context).pop();
       print('Fatal Error in generateAndStoreQuestions: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
       return false;
     }
   }
 
   static Future<List<Map<String, dynamic>>> _fetchSchemes(
-      String language) async {
+    String language,
+  ) async {
     try {
-      final languageCode = language == 'English'
-          ? 'en'
-          : language == 'Kannada'
+      final languageCode =
+          language == 'English'
+              ? 'en'
+              : language == 'Kannada'
               ? 'kn'
               : 'hi';
       final url = 'https://navarasa-chathur-api.hf.space/$languageCode/schemes';
@@ -177,7 +189,8 @@ class GeminiEligibilityQuestions {
   }
 
   static Future<List<Map<String, String>>> _generateQuestionsWithGemini(
-      List<String> eligibilityCriteria) async {
+    List<String> eligibilityCriteria,
+  ) async {
     try {
       // STRICT JSON PROMPT - Forces Gemini to output only valid JSON
       final prompt = '''
@@ -216,14 +229,14 @@ Generate ONLY pure, valid JSON now:
         'contents': [
           {
             'parts': [
-              {'text': prompt}
-            ]
-          }
+              {'text': prompt},
+            ],
+          },
         ],
         'generationConfig': {
           'temperature': 0.2, // Lower temperature for more consistent output
           'maxOutputTokens': 4096,
-        }
+        },
       });
 
       final response = await http.post(
@@ -243,7 +256,8 @@ Generate ONLY pure, valid JSON now:
             data['candidates'][0]['content']['parts'] == null ||
             data['candidates'][0]['content']['parts'].isEmpty) {
           print(
-              'API response failed safety check (Likely blocked or incomplete): ${response.body}');
+            'API response failed safety check (Likely blocked or incomplete): ${response.body}',
+          );
           return [];
         }
 
@@ -256,10 +270,11 @@ Generate ONLY pure, valid JSON now:
         String jsonText = _extractJson(generatedText.trim());
 
         // Additional cleanup - remove markdown wrappers if present
-        jsonText = jsonText
-            .replaceAll(RegExp(r'^\s*```json\s*'), '')
-            .replaceAll(RegExp(r'\s*```\s*$'), '')
-            .trim();
+        jsonText =
+            jsonText
+                .replaceAll(RegExp(r'^\s*```json\s*'), '')
+                .replaceAll(RegExp(r'\s*```\s*$'), '')
+                .trim();
 
         print('Extracted JSON: $jsonText');
 
@@ -341,7 +356,8 @@ Generate ONLY pure, valid JSON now:
 
   // Remove duplicate questions based on similarity
   static List<Map<String, String>> _removeDuplicateQuestions(
-      List<Map<String, String>> questions) {
+    List<Map<String, String>> questions,
+  ) {
     final seen = <String>{};
     final unique = <Map<String, String>>[];
 

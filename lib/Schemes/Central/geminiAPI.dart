@@ -10,7 +10,9 @@ class GeminiService {
 
   // Generate questions based on eligibility and documents
   static Future<List<Map<String, dynamic>>> generateEligibilityQuestions(
-      List<String> eligibility, List<String> documentsRequired) async {
+    List<String> eligibility,
+    List<String> documentsRequired,
+  ) async {
     try {
       final prompt = '''
 You are a government scheme eligibility officer. Generate questions to verify eligibility for THIS SPECIFIC SCHEME.
@@ -76,16 +78,16 @@ Return ONLY valid JSON.
           'contents': [
             {
               'parts': [
-                {'text': prompt}
-              ]
-            }
+                {'text': prompt},
+              ],
+            },
           ],
           'generationConfig': {
             'temperature': 0.3,
             'topK': 40,
             'topP': 0.95,
             'maxOutputTokens': 3500,
-          }
+          },
         }),
       );
 
@@ -107,20 +109,22 @@ Return ONLY valid JSON.
         cleanedText = cleanedText.trim();
 
         final questionsData = jsonDecode(cleanedText);
-        List<Map<String, dynamic>> questions =
-            List<Map<String, dynamic>>.from(questionsData['questions']);
+        List<Map<String, dynamic>> questions = List<Map<String, dynamic>>.from(
+          questionsData['questions'],
+        );
 
         // Remove duplicates based on question text
         Set<String> seenQuestions = {};
-        questions = questions.where((q) {
-          String normalizedQuestion =
-              q['question'].toString().toLowerCase().trim();
-          if (seenQuestions.contains(normalizedQuestion)) {
-            return false;
-          }
-          seenQuestions.add(normalizedQuestion);
-          return true;
-        }).toList();
+        questions =
+            questions.where((q) {
+              String normalizedQuestion =
+                  q['question'].toString().toLowerCase().trim();
+              if (seenQuestions.contains(normalizedQuestion)) {
+                return false;
+              }
+              seenQuestions.add(normalizedQuestion);
+              return true;
+            }).toList();
 
         // Re-assign IDs and enforce 'yesno' type
         for (int i = 0; i < questions.length; i++) {
@@ -195,7 +199,7 @@ Return ONLY valid JSON.
         finalRecommendations = [
           'Proceed to submit your application immediately.',
           'Keep all original documents ready for verification.',
-          'Track your application status regularly through the official portal.'
+          'Track your application status regularly through the official portal.',
         ];
       } else {
         finalMessage =
@@ -203,7 +207,7 @@ Return ONLY valid JSON.
         finalRecommendations = [
           'Submit your application now to secure your place.',
           'Provide the missing document (${missingDocuments.map((d) => d.replaceFirst('Required Documents: ', '').replaceFirst('Required Document: ', '')).join(', ')}) within 7 days.',
-          'Keep photocopies of all submitted documents for your records.'
+          'Keep photocopies of all submitted documents for your records.',
         ];
       }
     }
@@ -212,12 +216,12 @@ Return ONLY valid JSON.
       finalStatus = 'maybe_eligible';
       finalConfidence = 'medium';
       finalMessage =
-          'You meet all core eligibility criteria, which is excellent! However, multiple required documents are missing (${documentNoCount} documents). You must provide these documents to complete your eligibility.';
+          'You meet all core eligibility criteria, which is excellent! However, multiple required documents are missing ($documentNoCount documents). You must provide these documents to complete your eligibility.';
       finalRecommendations = [
         'Immediately gather the following missing documents: ${missingDocuments.map((d) => d.replaceFirst('Required Documents: ', '').replaceFirst('Required Document: ', '')).join(', ')}.',
         'Visit the nearest government office or CSC center for assistance in obtaining these documents.',
         'Once all documents are arranged, resubmit your application.',
-        'Keep track of document validity periods and renewal dates.'
+        'Keep track of document validity periods and renewal dates.',
       ];
     }
     // Rule 3: 1+ "No" in eligibility AND any "No" in documents -> NOT ELIGIBLE
@@ -230,7 +234,7 @@ Return ONLY valid JSON.
         'Review the unmet criteria: ${failedCriteria.join(', ')}.',
         'Explore other government schemes that may better match your current situation.',
         'Contact the scheme office at the toll-free helpline for guidance on alternative schemes.',
-        'Consider reapplying in the future if your circumstances change.'
+        'Consider reapplying in the future if your circumstances change.',
       ];
     }
     // Rule 4: 1+ "No" in eligibility AND all "Yes" in documents -> NOT ELIGIBLE
@@ -244,7 +248,7 @@ Return ONLY valid JSON.
         'Check if you can fulfill these criteria in the near future and reapply.',
         'Explore similar schemes with different eligibility requirements.',
         'Visit your nearest Jan Seva Kendra for personalized guidance.',
-        'Keep your documents safe for future applications.'
+        'Keep your documents safe for future applications.',
       ];
     }
     // Fallback (should not occur with proper logic)
@@ -256,7 +260,7 @@ Return ONLY valid JSON.
       finalRecommendations = [
         'Contact the scheme helpline for assistance.',
         'Visit the nearest government office with all your documents.',
-        'Request a manual eligibility verification.'
+        'Request a manual eligibility verification.',
       ];
     }
 
@@ -274,13 +278,15 @@ Return ONLY valid JSON.
         'documentNoCount': documentNoCount,
         'totalEligibilityQuestions': totalEligibilityQuestions,
         'totalDocumentQuestions': totalDocumentQuestions,
-      }
+      },
     };
   }
 
   // Fallback Questions - All Yes/No only, No numeric questions
   static List<Map<String, dynamic>> _getFallbackQuestions(
-      List<String> eligibility, List<String> documentsRequired) {
+    List<String> eligibility,
+    List<String> documentsRequired,
+  ) {
     List<Map<String, dynamic>> questions = [];
     Set<String> addedQuestions = {};
     int id = 1;

@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1015460904025',
     projectId: 'chatur-689f5',
     storageBucket: 'chatur-689f5.firebasestorage.app',
-    androidClientId: '1015460904025-ega3erj4dlu3eoif41ivsn87ob30uf1o.apps.googleusercontent.com',
-    iosClientId: '1015460904025-ge7cp6p1pq5dthr9rimpvuiluures279.apps.googleusercontent.com',
+    androidClientId:
+        '1015460904025-ega3erj4dlu3eoif41ivsn87ob30uf1o.apps.googleusercontent.com',
+    iosClientId:
+        '1015460904025-ge7cp6p1pq5dthr9rimpvuiluures279.apps.googleusercontent.com',
     iosBundleId: 'com.example.chaturFrontend',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1015460904025',
     projectId: 'chatur-689f5',
     storageBucket: 'chatur-689f5.firebasestorage.app',
-    androidClientId: '1015460904025-ega3erj4dlu3eoif41ivsn87ob30uf1o.apps.googleusercontent.com',
-    iosClientId: '1015460904025-ge7cp6p1pq5dthr9rimpvuiluures279.apps.googleusercontent.com',
+    androidClientId:
+        '1015460904025-ega3erj4dlu3eoif41ivsn87ob30uf1o.apps.googleusercontent.com',
+    iosClientId:
+        '1015460904025-ge7cp6p1pq5dthr9rimpvuiluures279.apps.googleusercontent.com',
     iosBundleId: 'com.example.chaturFrontend',
   );
 
@@ -89,5 +93,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'chatur-689f5.firebasestorage.app',
     measurementId: 'G-WHYM44MKDQ',
   );
-
 }

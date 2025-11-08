@@ -18,14 +18,22 @@ class FirebaseStoreService {
   static String? get currentUserId => _auth.currentUser?.uid;
 
   // Upload image to Cloudinary
-  static Future<String?> _uploadToCloudinary(File imageFile, String folder) async {
-    final url = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+  static Future<String?> _uploadToCloudinary(
+    File imageFile,
+    String folder,
+  ) async {
+    final url = Uri.parse(
+      "https://api.cloudinary.com/v1_1/$cloudName/image/upload",
+    );
 
     try {
-      final request = http.MultipartRequest("POST", url)
-        ..fields["upload_preset"] = uploadPreset
-        ..fields["folder"] = folder
-        ..files.add(await http.MultipartFile.fromPath("file", imageFile.path));
+      final request =
+          http.MultipartRequest("POST", url)
+            ..fields["upload_preset"] = uploadPreset
+            ..fields["folder"] = folder
+            ..files.add(
+              await http.MultipartFile.fromPath("file", imageFile.path),
+            );
 
       final response = await request.send();
       final responseData = await response.stream.bytesToString();
@@ -53,15 +61,15 @@ class FirebaseStoreService {
       // Upload logo to Cloudinary if exists
       String? logoUrl;
       if (storeData.storeLogo != null) {
-        logoUrl = await _uploadToCloudinary(storeData.storeLogo!, "Store/Logos");
+        logoUrl = await _uploadToCloudinary(
+          storeData.storeLogo!,
+          "Store/Logos",
+        );
         if (logoUrl == null) return false;
       }
 
       // Create store document
-      await _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .set({
+      await _firestore.collection('stores').doc(currentUserId).set({
         'userId': currentUserId,
         'storeName': storeData.storeName,
         'storeDescription': storeData.storeDescription,
@@ -88,7 +96,8 @@ class FirebaseStoreService {
     if (currentUserId == null) return null;
 
     try {
-      final doc = await _firestore.collection('stores').doc(currentUserId).get();
+      final doc =
+          await _firestore.collection('stores').doc(currentUserId).get();
 
       if (!doc.exists) return null;
 
@@ -124,13 +133,19 @@ class FirebaseStoreService {
 
       // Upload new logo if changed
       if (storeData.storeLogo != null) {
-        final logoUrl = await _uploadToCloudinary(storeData.storeLogo!, "Store/Logos");
+        final logoUrl = await _uploadToCloudinary(
+          storeData.storeLogo!,
+          "Store/Logos",
+        );
         if (logoUrl != null) {
           updateData['storeLogoUrl'] = logoUrl;
         }
       }
 
-      await _firestore.collection('stores').doc(currentUserId).update(updateData);
+      await _firestore
+          .collection('stores')
+          .doc(currentUserId)
+          .update(updateData);
       print('Store updated successfully');
       return true;
     } catch (e) {
@@ -144,7 +159,8 @@ class FirebaseStoreService {
     if (currentUserId == null) return false;
 
     try {
-      final doc = await _firestore.collection('stores').doc(currentUserId).get();
+      final doc =
+          await _firestore.collection('stores').doc(currentUserId).get();
       return doc.exists;
     } catch (e) {
       print('Error checking store: $e');
@@ -158,11 +174,12 @@ class FirebaseStoreService {
 
     try {
       // Delete all products first
-      final productsSnapshot = await _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .collection('products')
-          .get();
+      final productsSnapshot =
+          await _firestore
+              .collection('stores')
+              .doc(currentUserId)
+              .collection('products')
+              .get();
 
       for (var doc in productsSnapshot.docs) {
         await doc.reference.delete();
@@ -232,11 +249,12 @@ class FirebaseStoreService {
       }
 
       // Create product document
-      final productRef = _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .collection('products')
-          .doc();
+      final productRef =
+          _firestore
+              .collection('stores')
+              .doc(currentUserId)
+              .collection('products')
+              .doc();
 
       await productRef.set({
         'productId': productRef.id,
@@ -267,12 +285,13 @@ class FirebaseStoreService {
     if (currentUserId == null) return [];
 
     try {
-      final snapshot = await _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .collection('products')
-          .orderBy('createdAt', descending: true)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('stores')
+              .doc(currentUserId)
+              .collection('products')
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -362,11 +381,12 @@ class FirebaseStoreService {
     if (currentUserId == null) return false;
 
     try {
-      final snapshot = await _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .collection('products')
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('stores')
+              .doc(currentUserId)
+              .collection('products')
+              .get();
 
       for (var doc in snapshot.docs) {
         await doc.reference.delete();
@@ -385,12 +405,13 @@ class FirebaseStoreService {
     if (currentUserId == null) return 0;
 
     try {
-      final snapshot = await _firestore
-          .collection('stores')
-          .doc(currentUserId)
-          .collection('products')
-          .count()
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('stores')
+              .doc(currentUserId)
+              .collection('products')
+              .count()
+              .get();
 
       return snapshot.count ?? 0;
     } catch (e) {
@@ -405,7 +426,9 @@ class FirebaseStoreService {
   static Stream<StoreData?> streamStore() {
     if (currentUserId == null) return Stream.value(null);
 
-    return _firestore.collection('stores').doc(currentUserId).snapshots().map((doc) {
+    return _firestore.collection('stores').doc(currentUserId).snapshots().map((
+      doc,
+    ) {
       if (!doc.exists) return null;
 
       final data = doc.data()!;
@@ -432,20 +455,22 @@ class FirebaseStoreService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Product(
-          productName: data['productName'] ?? '',
-          productDescription: data['productDescription'] ?? '',
-          productType: data['productType'] ?? '',
-          productPrice: (data['productPrice'] ?? 0.0).toDouble(),
-          stockQuantity: data['stockQuantity'] ?? 0,
-          shippingMethod: data['shippingMethod'] ?? '',
-          shippingAvailability: data['shippingAvailability'] ?? '',
-          productImages: [],
-          productImageUrls: List<String>.from(data['productImageUrls'] ?? []),
-        );
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Product(
+              productName: data['productName'] ?? '',
+              productDescription: data['productDescription'] ?? '',
+              productType: data['productType'] ?? '',
+              productPrice: (data['productPrice'] ?? 0.0).toDouble(),
+              stockQuantity: data['stockQuantity'] ?? 0,
+              shippingMethod: data['shippingMethod'] ?? '',
+              shippingAvailability: data['shippingAvailability'] ?? '',
+              productImages: [],
+              productImageUrls: List<String>.from(
+                data['productImageUrls'] ?? [],
+              ),
+            );
+          }).toList();
+        });
   }
 }

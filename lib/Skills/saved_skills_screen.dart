@@ -17,10 +17,12 @@ class AdvancedSkillDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<AdvancedSkillDetailScreen> createState() => _AdvancedSkillDetailScreenState();
+  State<AdvancedSkillDetailScreen> createState() =>
+      _AdvancedSkillDetailScreenState();
 }
 
-class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> with SingleTickerProviderStateMixin {
+class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Map<String, dynamic>? _skillData;
   Map<String, dynamic>? _providerProfile;
@@ -44,12 +46,13 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
   Future<void> _loadData() async {
     try {
       // Fetch skill data
-      final skillDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('skills')
-          .doc(widget.skillId)
-          .get();
+      final skillDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .collection('skills')
+              .doc(widget.skillId)
+              .get();
 
       if (!skillDoc.exists) {
         if (mounted) Navigator.pop(context);
@@ -57,33 +60,36 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
       }
 
       // Fetch provider profile
-      final profileDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('Profile')
-          .doc('main')
-          .get();
+      final profileDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .collection('Profile')
+              .doc('main')
+              .get();
 
       // Fetch reviews
-      final reviewsSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('skills')
-          .doc(widget.skillId)
-          .collection('reviews')
-          .orderBy('createdAt', descending: true)
-          .limit(10)
-          .get();
+      final reviewsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .collection('skills')
+              .doc(widget.skillId)
+              .collection('reviews')
+              .orderBy('createdAt', descending: true)
+              .limit(10)
+              .get();
 
       // Check if saved
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
-        final savedDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .collection('savedSkills')
-            .doc(widget.skillId)
-            .get();
+        final savedDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid)
+                .collection('savedSkills')
+                .doc(widget.skillId)
+                .get();
         _isSaved = savedDoc.exists;
       }
 
@@ -110,9 +116,9 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
   Future<void> _toggleSave() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to save')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to save')));
       return;
     }
 
@@ -142,21 +148,20 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => BookingSheet(
-        skillData: _skillData!,
-        providerProfile: _providerProfile!,
-        providerId: widget.userId,
-        skillId: widget.skillId,
-      ),
+      builder:
+          (context) => BookingSheet(
+            skillData: _skillData!,
+            providerProfile: _providerProfile!,
+            providerId: widget.userId,
+            skillId: widget.skillId,
+          ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_skillData == null) {
@@ -191,22 +196,28 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: images.isNotEmpty
-                  ? PageView.builder(
-                      itemCount: images.length,
-                      itemBuilder: (context, index) => Image.network(
-                        images[index],
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 80),
-                        ),
+              background:
+                  images.isNotEmpty
+                      ? PageView.builder(
+                        itemCount: images.length,
+                        itemBuilder:
+                            (context, index) => Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 80,
+                                    ),
+                                  ),
+                            ),
+                      )
+                      : Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image, size: 80),
                       ),
-                    )
-                  : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 80),
-                    ),
             ),
           ),
 
@@ -234,7 +245,10 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.green[50],
                               borderRadius: BorderRadius.circular(20),
@@ -254,14 +268,20 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange[50],
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               _skillData!['category'] ?? 'General',
-                              style: TextStyle(color: Colors.orange[700], fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -274,7 +294,10 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                           const Spacer(),
                           Text(
                             '${_skillData!['viewCount'] ?? 0} views',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
@@ -297,7 +320,8 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                           CircleAvatar(
                             radius: 32,
                             backgroundImage: NetworkImage(
-                              _providerProfile?['photoUrl'] ?? 'https://via.placeholder.com/100',
+                              _providerProfile?['photoUrl'] ??
+                                  'https://via.placeholder.com/100',
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -306,7 +330,8 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _providerProfile?['name'] ?? 'Service Provider',
+                                  _providerProfile?['name'] ??
+                                      'Service Provider',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -323,12 +348,24 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                           Column(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.phone, color: Colors.green),
-                                onPressed: () => _launchPhone(_providerProfile?['phone'] ?? ''),
+                                icon: const Icon(
+                                  Icons.phone,
+                                  color: Colors.green,
+                                ),
+                                onPressed:
+                                    () => _launchPhone(
+                                      _providerProfile?['phone'] ?? '',
+                                    ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.chat, color: Colors.blue),
-                                onPressed: () => _launchWhatsApp(_providerProfile?['phone'] ?? ''),
+                                icon: const Icon(
+                                  Icons.chat,
+                                  color: Colors.blue,
+                                ),
+                                onPressed:
+                                    () => _launchWhatsApp(
+                                      _providerProfile?['phone'] ?? '',
+                                    ),
                               ),
                             ],
                           ),
@@ -374,19 +411,26 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                       children: [
                         const Text(
                           'Service Location',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
                           height: 200,
                           child: FlutterMap(
                             options: MapOptions(
-                              initialCenter: LatLng(geo.latitude, geo.longitude),
+                              initialCenter: LatLng(
+                                geo.latitude,
+                                geo.longitude,
+                              ),
                               initialZoom: 14,
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               ),
                               CircleLayer(
                                 circles: [
@@ -395,7 +439,10 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                                     color: Colors.blue.withOpacity(0.2),
                                     borderColor: Colors.blue,
                                     borderStrokeWidth: 2,
-                                    radius: _skillData!['serviceRadiusMeters']?.toDouble() ?? 5000,
+                                    radius:
+                                        _skillData!['serviceRadiusMeters']
+                                            ?.toDouble() ??
+                                        5000,
                                     useRadiusInMeter: true,
                                   ),
                                 ],
@@ -406,7 +453,11 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                                     point: LatLng(geo.latitude, geo.longitude),
                                     width: 60,
                                     height: 60,
-                                    child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                                    child: const Icon(
+                                      Icons.location_pin,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -440,14 +491,18 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                   label: const Text('Book Now'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _launchPhone(_providerProfile?['phone'] ?? ''),
+                  onPressed:
+                      () => _launchPhone(_providerProfile?['phone'] ?? ''),
                   icon: const Icon(Icons.phone),
                   label: const Text('Call'),
                   style: OutlinedButton.styleFrom(
@@ -475,7 +530,11 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
           const SizedBox(height: 8),
           Text(
             _skillData!['description'] ?? 'No description available',
-            style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.5),
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[800],
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
@@ -483,9 +542,21 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(Icons.category, 'Category', _skillData!['category'] ?? 'General'),
-          _buildInfoRow(Icons.location_on, 'Service Area', '${(_skillData!['serviceRadiusMeters'] ?? 5000) / 1000} km radius'),
-          _buildInfoRow(Icons.access_time, 'Posted', _formatDate(_skillData!['createdAt'])),
+          _buildInfoRow(
+            Icons.category,
+            'Category',
+            _skillData!['category'] ?? 'General',
+          ),
+          _buildInfoRow(
+            Icons.location_on,
+            'Service Area',
+            '${(_skillData!['serviceRadiusMeters'] ?? 5000) / 1000} km radius',
+          ),
+          _buildInfoRow(
+            Icons.access_time,
+            'Posted',
+            _formatDate(_skillData!['createdAt']),
+          ),
         ],
       ),
     );
@@ -513,11 +584,16 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: days.map((day) => Chip(
-              label: Text(day),
-              backgroundColor: Colors.green[50],
-              labelStyle: TextStyle(color: Colors.green[700]),
-            )).toList(),
+            children:
+                days
+                    .map(
+                      (day) => Chip(
+                        label: Text(day),
+                        backgroundColor: Colors.green[50],
+                        labelStyle: TextStyle(color: Colors.green[700]),
+                      ),
+                    )
+                    .toList(),
           ),
           const SizedBox(height: 20),
           const Text(
@@ -545,7 +621,10 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
           children: [
             Icon(Icons.rate_review_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No reviews yet', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Text(
+              'No reviews yet',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -564,7 +643,9 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundImage: NetworkImage(review['userPhoto'] ?? 'https://via.placeholder.com/50'),
+                  backgroundImage: NetworkImage(
+                    review['userPhoto'] ?? 'https://via.placeholder.com/50',
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -577,15 +658,23 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
                       ),
                       Row(
                         children: [
-                          ...List.generate(5, (i) => Icon(
-                            i < (review['rating'] ?? 0) ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 16,
-                          )),
+                          ...List.generate(
+                            5,
+                            (i) => Icon(
+                              i < (review['rating'] ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             _formatDate(review['createdAt']),
-                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -613,7 +702,9 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
           Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
-          Expanded(child: Text(value, style: TextStyle(color: Colors.grey[700]))),
+          Expanded(
+            child: Text(value, style: TextStyle(color: Colors.grey[700])),
+          ),
         ],
       ),
     );
@@ -633,7 +724,7 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
       final date = (timestamp as Timestamp).toDate();
       final now = DateTime.now();
       final diff = now.difference(date);
-      
+
       if (diff.inDays > 30) return DateFormat('MMM d, yyyy').format(date);
       if (diff.inDays > 0) return '${diff.inDays}d ago';
       if (diff.inHours > 0) return '${diff.inHours}h ago';
@@ -661,8 +752,11 @@ class _AdvancedSkillDetailScreenState extends State<AdvancedSkillDetailScreen> w
       );
       return;
     }
-    final message = 'Hi, I found your ${_skillData!['skillTitle']} service on Chatur. I would like to know more.';
-    final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+    final message =
+        'Hi, I found your ${_skillData!['skillTitle']} service on Chatur. I would like to know more.';
+    final uri = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+    );
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 }
@@ -708,16 +802,17 @@ class _BookingSheetState extends State<BookingSheet> {
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to book')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to book')));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final bookingId = FirebaseFirestore.instance.collection('bookings').doc().id;
+      final bookingId =
+          FirebaseFirestore.instance.collection('bookings').doc().id;
       final bookingData = {
         'bookingId': bookingId,
         'skillId': widget.skillId,
@@ -733,7 +828,8 @@ class _BookingSheetState extends State<BookingSheet> {
         'notes': _notesController.text.trim(),
         'status': 'pending', // pending, confirmed, completed, cancelled
         'createdAt': FieldValue.serverTimestamp(),
-        'price': widget.skillData['flatPrice'] ?? widget.skillData['perKmPrice'],
+        'price':
+            widget.skillData['flatPrice'] ?? widget.skillData['perKmPrice'],
       };
 
       // Create booking in provider's collection
@@ -772,9 +868,9 @@ class _BookingSheetState extends State<BookingSheet> {
     } catch (e) {
       debugPrint('Booking error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to book: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to book: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -788,195 +884,213 @@ class _BookingSheetState extends State<BookingSheet> {
       minChildSize: 0.5,
       maxChildSize: 0.9,
       expand: false,
-      builder: (context, scrollController) => SingleChildScrollView(
-        controller: scrollController,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Book This Service',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.skillData['skillTitle'] ?? '',
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 24),
-            
-            // Date Selection
-            const Text(
-              'Select Date',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 1)),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 90)),
-                );
-                if (date != null) setState(() => _selectedDate = date);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_today, color: Colors.blue),
-                    const SizedBox(width: 12),
-                    Text(
-                      _selectedDate != null
-                          ? DateFormat('EEEE, MMM d, yyyy').format(_selectedDate!)
-                          : 'Choose a date',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: _selectedDate != null ? Colors.black : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Time Selection
-            const Text(
-              'Select Time',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (time != null) setState(() => _selectedTime = time);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time, color: Colors.blue),
-                    const SizedBox(width: 12),
-                    Text(
-                      _selectedTime != null
-                          ? _selectedTime!.format(context)
-                          : 'Choose a time',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: _selectedTime != null ? Colors.black : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Additional Notes
-            const Text(
-              'Additional Notes (Optional)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Any specific requirements or instructions...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Price Summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Estimated Cost',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    _getPriceDisplay(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
+      builder:
+          (context, scrollController) => SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitBooking,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Book This Service',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.skillData['skillTitle'] ?? '',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                ),
+                const SizedBox(height: 24),
+
+                // Date Selection
+                const Text(
+                  'Select Date',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 90)),
+                    );
+                    if (date != null) setState(() => _selectedDate = date);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Text(
+                          _selectedDate != null
+                              ? DateFormat(
+                                'EEEE, MMM d, yyyy',
+                              ).format(_selectedDate!)
+                              : 'Choose a date',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color:
+                                _selectedDate != null
+                                    ? Colors.black
+                                    : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Time Selection
+                const Text(
+                  'Select Time',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (time != null) setState(() => _selectedTime = time);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Text(
+                          _selectedTime != null
+                              ? _selectedTime!.format(context)
+                              : 'Choose a time',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color:
+                                _selectedTime != null
+                                    ? Colors.black
+                                    : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Additional Notes
+                const Text(
+                  'Additional Notes (Optional)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _notesController,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Any specific requirements or instructions...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Price Summary
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Estimated Cost',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
-                      )
-                    : const Text(
-                        'Confirm Booking',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-              ),
+                      Text(
+                        _getPriceDisplay(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Submit Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitBooking,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child:
+                        _isSubmitting
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Text(
+                              'Confirm Booking',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Provider will confirm your booking request',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                'Provider will confirm your booking request',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 

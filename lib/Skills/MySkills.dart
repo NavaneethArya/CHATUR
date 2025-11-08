@@ -9,7 +9,8 @@ class MySkillsScreen extends StatefulWidget {
   State<MySkillsScreen> createState() => _MySkillsScreenState();
 }
 
-class _MySkillsScreenState extends State<MySkillsScreen> with SingleTickerProviderStateMixin {
+class _MySkillsScreenState extends State<MySkillsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -67,13 +68,14 @@ class _MySkillsScreenState extends State<MySkillsScreen> with SingleTickerProvid
 
   Widget _buildSkillsList(String userId, String status) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('skills')
-          .where('status', isEqualTo: status)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('skills')
+              .where('status', isEqualTo: status)
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -91,7 +93,7 @@ class _MySkillsScreenState extends State<MySkillsScreen> with SingleTickerProvid
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No ${status} skills',
+                  'No $status skills',
                   style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
               ],
@@ -153,30 +155,39 @@ class MySkillCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: images.isNotEmpty
-                    ? Image.network(
-                        images.first,
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                child:
+                    images.isNotEmpty
+                        ? Image.network(
+                          images.first,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                height: 150,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.broken_image, size: 50),
+                              ),
+                        )
+                        : Container(
                           height: 150,
                           color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 50),
+                          child: const Center(
+                            child: Icon(Icons.image, size: 50),
+                          ),
                         ),
-                      )
-                    : Container(
-                        height: 150,
-                        color: Colors.grey[300],
-                        child: const Center(child: Icon(Icons.image, size: 50)),
-                      ),
               ),
               Positioned(
                 top: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status),
                     borderRadius: BorderRadius.circular(20),
@@ -221,7 +232,10 @@ class MySkillCard extends StatelessWidget {
                   children: [
                     _buildStatChip(Icons.visibility, '$viewCount views'),
                     const SizedBox(width: 12),
-                    _buildStatChip(Icons.shopping_bag, '$bookingCount bookings'),
+                    _buildStatChip(
+                      Icons.shopping_bag,
+                      '$bookingCount bookings',
+                    ),
                     const SizedBox(width: 12),
                     _buildStatChip(Icons.star, rating.toStringAsFixed(1)),
                   ],
@@ -251,7 +265,8 @@ class MySkillCard extends StatelessWidget {
                         ),
                         label: Text(status == 'active' ? 'Pause' : 'Activate'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: status == 'active' ? Colors.orange : Colors.green,
+                          backgroundColor:
+                              status == 'active' ? Colors.orange : Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
@@ -278,10 +293,7 @@ class MySkillCard extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: Colors.grey[700]),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
         ],
       ),
     );
@@ -306,65 +318,72 @@ class MySkillCard extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.blue),
+                  title: const Text('Edit Details'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to edit screen
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Colors.purple,
+                  ),
+                  title: const Text('Change Photos'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to photo editor
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.location_on, color: Colors.red),
+                  title: const Text('Update Location'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to location editor
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.schedule, color: Colors.orange),
+                  title: const Text('Edit Availability'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to availability editor
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Delete Skill',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmDelete(context);
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.edit, color: Colors.blue),
-              title: const Text('Edit Details'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to edit screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.purple),
-              title: const Text('Change Photos'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to photo editor
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.location_on, color: Colors.red),
-              title: const Text('Update Location'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to location editor
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.schedule, color: Colors.orange),
-              title: const Text('Edit Availability'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to availability editor
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Skill', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _confirmDelete(context);
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -379,14 +398,16 @@ class MySkillCard extends StatelessWidget {
           .collection('skills')
           .doc(skillId)
           .update({
-        'status': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'status': newStatus,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skill ${newStatus == 'active' ? 'activated' : 'paused'}'),
+            content: Text(
+              'Skill ${newStatus == 'active' ? 'activated' : 'paused'}',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -394,9 +415,9 @@ class MySkillCard extends StatelessWidget {
       onUpdate();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -404,26 +425,27 @@ class MySkillCard extends StatelessWidget {
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Skill?'),
-        content: const Text(
-          'This will permanently delete this skill and all associated data. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Skill?'),
+            content: const Text(
+              'This will permanently delete this skill and all associated data. This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _deleteSkill(context);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteSkill(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -455,9 +477,9 @@ class MySkillCard extends StatelessWidget {
       onUpdate();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting skill: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting skill: $e')));
       }
     }
   }
@@ -472,12 +494,13 @@ class SkillAnalyticsDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('skills')
-          .where('status', isEqualTo: 'active')
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('skills')
+              .where('status', isEqualTo: 'active')
+              .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -583,10 +606,7 @@ class SkillAnalyticsDashboard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],

@@ -13,7 +13,7 @@ import 'cloudinaryForStore.dart';
 class EditStorePage extends StatefulWidget {
   final StoreData storeData;
 
-  EditStorePage({required this.storeData});
+  const EditStorePage({super.key, required this.storeData});
 
   @override
   _EditStorePageState createState() => _EditStorePageState();
@@ -34,7 +34,6 @@ class _EditStorePageState extends State<EditStorePage>
   late TextEditingController _addressController;
 
   File? _storeLogo;
-  List<String> _products = [];
   final ImagePicker _picker = ImagePicker();
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -45,14 +44,18 @@ class _EditStorePageState extends State<EditStorePage>
     super.initState();
 
     // Initialize controllers with existing data
-    _storeNameController =
-        TextEditingController(text: widget.storeData.storeName);
-    _descriptionController =
-        TextEditingController(text: widget.storeData.storeDescription);
-    _ownerNameController =
-        TextEditingController(text: widget.storeData.ownerName);
-    _phoneController =
-        TextEditingController(text: widget.storeData.phoneNumber);
+    _storeNameController = TextEditingController(
+      text: widget.storeData.storeName,
+    );
+    _descriptionController = TextEditingController(
+      text: widget.storeData.storeDescription,
+    );
+    _ownerNameController = TextEditingController(
+      text: widget.storeData.ownerName,
+    );
+    _phoneController = TextEditingController(
+      text: widget.storeData.phoneNumber,
+    );
     _addressController = TextEditingController(text: widget.storeData.address);
     _storeLogo = widget.storeData.storeLogo;
 
@@ -98,58 +101,59 @@ class _EditStorePageState extends State<EditStorePage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Choose Image Source',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildSourceOption(
-                  icon: Icons.camera_alt,
-                  label: 'Camera',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                _buildSourceOption(
-                  icon: Icons.photo_library,
-                  label: 'Gallery',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
+                SizedBox(height: 20),
+                Text(
+                  'Choose Image Source',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
                 ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSourceOption(
+                      icon: Icons.camera_alt,
+                      label: 'Camera',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage(ImageSource.camera);
+                      },
+                    ),
+                    _buildSourceOption(
+                      icon: Icons.photo_library,
+                      label: 'Gallery',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage(ImageSource.gallery);
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
               ],
             ),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -193,7 +197,8 @@ class _EditStorePageState extends State<EditStorePage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Microphone permission is permanently denied. Please enable it in settings.'),
+            'Microphone permission is permanently denied. Please enable it in settings.',
+          ),
           backgroundColor: Colors.red,
           action: SnackBarAction(
             label: 'Settings',
@@ -223,8 +228,9 @@ class _EditStorePageState extends State<EditStorePage>
           setState(() => _isListening = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Error: ${error.errorMsg}'),
-                backgroundColor: Colors.red),
+              content: Text('Error: ${error.errorMsg}'),
+              backgroundColor: Colors.red,
+            ),
           );
         },
         onStatus: (status) {
@@ -238,8 +244,9 @@ class _EditStorePageState extends State<EditStorePage>
     if (!_speechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Speech recognition not available'),
-            backgroundColor: Colors.red),
+          content: Text('Speech recognition not available'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -267,44 +274,30 @@ class _EditStorePageState extends State<EditStorePage>
     }
   }
 
-  void _addProduct() {
-    if (_productController.text.isNotEmpty) {
-      setState(() {
-        _products.add(_productController.text);
-        _productController.clear();
-      });
-    }
-  }
-
-  void _removeProduct(int index) {
-    setState(() {
-      _products.removeAt(index);
-    });
-  }
-
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Center(
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+        builder:
+            (context) => Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.deepPurple),
+                    SizedBox(height: 15),
+                    Text('Updating store...', style: TextStyle(fontSize: 16)),
+                  ],
+                ),
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(color: Colors.deepPurple),
-                SizedBox(height: 15),
-                Text('Updating store...', style: TextStyle(fontSize: 16)),
-              ],
-            ),
-          ),
-        ),
       );
 
       // Upload new logo if changed
@@ -406,7 +399,7 @@ class _EditStorePageState extends State<EditStorePage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -429,7 +422,10 @@ class _EditStorePageState extends State<EditStorePage>
           Text(
             'Edit Store',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -440,7 +436,10 @@ class _EditStorePageState extends State<EditStorePage>
     return Text(
       title,
       style: TextStyle(
-          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.deepPurple,
+      ),
     );
   }
 
@@ -451,9 +450,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -462,13 +462,17 @@ class _EditStorePageState extends State<EditStorePage>
           labelText: 'Store Name',
           prefixIcon: Icon(Icons.store, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter store name' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter store name'
+                    : null,
       ),
     );
   }
@@ -480,9 +484,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: InkWell(
@@ -495,8 +500,12 @@ class _EditStorePageState extends State<EditStorePage>
               if (_storeLogo != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.file(_storeLogo!,
-                      height: 150, width: 150, fit: BoxFit.cover),
+                  child: Image.file(
+                    _storeLogo!,
+                    height: 150,
+                    width: 150,
+                    fit: BoxFit.cover,
+                  ),
                 )
               else
                 Container(
@@ -506,16 +515,20 @@ class _EditStorePageState extends State<EditStorePage>
                     color: Colors.deepPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Icon(Icons.add_photo_alternate,
-                      size: 60, color: Colors.deepPurple),
+                  child: Icon(
+                    Icons.add_photo_alternate,
+                    size: 60,
+                    color: Colors.deepPurple,
+                  ),
                 ),
               SizedBox(height: 15),
               Text(
                 _storeLogo != null ? 'Tap to change logo' : 'Upload Store Logo',
                 style: TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16),
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
@@ -531,9 +544,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -543,18 +557,24 @@ class _EditStorePageState extends State<EditStorePage>
           labelText: 'Store Description',
           prefixIcon: Icon(Icons.description, color: Colors.deepPurple),
           suffixIcon: IconButton(
-            icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
-                color: _isListening ? Colors.red : Colors.deepPurple),
+            icon: Icon(
+              _isListening ? Icons.mic : Icons.mic_none,
+              color: _isListening ? Colors.red : Colors.deepPurple,
+            ),
             onPressed: _isListening ? _stopListening : _startListening,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter description' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter description'
+                    : null,
       ),
     );
   }
@@ -566,9 +586,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -577,13 +598,17 @@ class _EditStorePageState extends State<EditStorePage>
           labelText: 'Owner Name',
           prefixIcon: Icon(Icons.person, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter owner name' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter owner name'
+                    : null,
       ),
     );
   }
@@ -595,9 +620,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -607,16 +633,19 @@ class _EditStorePageState extends State<EditStorePage>
           labelText: 'Phone Number',
           prefixIcon: Icon(Icons.phone, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
         validator: (value) {
-          if (value == null || value.isEmpty)
+          if (value == null || value.isEmpty) {
             return 'Please enter phone number';
-          if (value.length != 10)
+          }
+          if (value.length != 10) {
             return 'Please enter valid 10 digit phone number';
+          }
           return null;
         },
       ),
@@ -630,9 +659,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -642,14 +672,17 @@ class _EditStorePageState extends State<EditStorePage>
           labelText: 'Store Address',
           prefixIcon: Icon(Icons.location_on, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please enter store address'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter store address'
+                    : null,
       ),
     );
   }
@@ -662,7 +695,7 @@ class _EditStorePageState extends State<EditStorePage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -670,9 +703,10 @@ class _EditStorePageState extends State<EditStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.4),
-              blurRadius: 15,
-              offset: Offset(0, 8)),
+            color: Colors.deepPurple.withOpacity(0.4),
+            blurRadius: 15,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: ElevatedButton(
@@ -680,19 +714,23 @@ class _EditStorePageState extends State<EditStorePage>
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.check_circle_outline, size: 28, color: Colors.white),
             SizedBox(width: 10),
-            Text('Update Store',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+            Text(
+              'Update Store',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),
@@ -701,6 +739,8 @@ class _EditStorePageState extends State<EditStorePage>
 }
 
 class CreateStorePage extends StatefulWidget {
+  const CreateStorePage({super.key});
+
   @override
   _CreateStorePageState createState() => _CreateStorePageState();
 }
@@ -722,7 +762,7 @@ class _CreateStorePageState extends State<CreateStorePage>
   final TextEditingController _addressController = TextEditingController();
 
   File? _storeLogo;
-  List<String> _products = [];
+  final List<String> _products = [];
   final ImagePicker _picker = ImagePicker();
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -756,67 +796,75 @@ class _CreateStorePageState extends State<CreateStorePage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.deepPurple, size: 28),
-            SizedBox(width: 10),
-            Text('Already Created'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'You have already created your store!',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 10),
-            Text(
-              'Store Name: ${_productManager.storeData?.storeName ?? ""}',
-              style: TextStyle(color: Colors.grey[700]),
+            title: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.deepPurple, size: 28),
+                SizedBox(width: 10),
+                Text('Already Created'),
+              ],
             ),
-            SizedBox(height: 15),
-            Text(
-              'You can only create one store per account. Would you like to view your store?',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You have already created your store!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Store Name: ${_productManager.storeData?.storeName ?? ""}',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'You can only create one store per account. Would you like to view your store?',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text('Go Back', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MyStorePage(
-                    storeName: _productManager.storeData!.storeName,
-                    storeDescription:
-                        _productManager.storeData!.storeDescription,
-                    storeLogo: _productManager.storeData!.storeLogo,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text('Go Back', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => MyStorePage(
+                            storeName: _productManager.storeData!.storeName,
+                            storeDescription:
+                                _productManager.storeData!.storeDescription,
+                            storeLogo: _productManager.storeData!.storeLogo,
+                          ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text('View My Store', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'View My Store',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -849,58 +897,59 @@ class _CreateStorePageState extends State<CreateStorePage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Choose Image Source',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildSourceOption(
-                  icon: Icons.camera_alt,
-                  label: 'Camera',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                _buildSourceOption(
-                  icon: Icons.photo_library,
-                  label: 'Gallery',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
+                SizedBox(height: 20),
+                Text(
+                  'Choose Image Source',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
                 ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSourceOption(
+                      icon: Icons.camera_alt,
+                      label: 'Camera',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage(ImageSource.camera);
+                      },
+                    ),
+                    _buildSourceOption(
+                      icon: Icons.photo_library,
+                      label: 'Gallery',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage(ImageSource.gallery);
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
               ],
             ),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -944,7 +993,8 @@ class _CreateStorePageState extends State<CreateStorePage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Microphone permission is permanently denied. Please enable it in settings.'),
+            'Microphone permission is permanently denied. Please enable it in settings.',
+          ),
           backgroundColor: Colors.red,
           action: SnackBarAction(
             label: 'Settings',
@@ -974,8 +1024,9 @@ class _CreateStorePageState extends State<CreateStorePage>
           setState(() => _isListening = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Error: ${error.errorMsg}'),
-                backgroundColor: Colors.red),
+              content: Text('Error: ${error.errorMsg}'),
+              backgroundColor: Colors.red,
+            ),
           );
         },
         onStatus: (status) {
@@ -989,8 +1040,9 @@ class _CreateStorePageState extends State<CreateStorePage>
     if (!_speechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Speech recognition not available'),
-            backgroundColor: Colors.red),
+          content: Text('Speech recognition not available'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -1034,70 +1086,72 @@ class _CreateStorePageState extends State<CreateStorePage>
   }
 
   void _submitForm() async {
-  if (_formKey.currentState!.validate()) {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: Colors.deepPurple),
-              SizedBox(height: 15),
-              Text('Creating store...', style: TextStyle(fontSize: 16)),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    // Create store data object
-    final storeData = StoreData(
-      storeName: _storeNameController.text,
-      storeDescription: _descriptionController.text,
-      storeLogo: _storeLogo,
-      storeLogoUrl: null, // Will be set by Firebase service
-      ownerName: _ownerNameController.text,
-      phoneNumber: _phoneController.text,
-      address: _addressController.text,
-    );
-
-    // Save store data to Firebase
-    final success = await _productManager.createStore(storeData);
-    
-    Navigator.pop(context); // Close loading dialog
-
-    if (success) {
-      print('Store created successfully');
-      
-      // Navigate to MyStore page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MyStorePage(
-            storeName: _storeNameController.text,
-            storeDescription: _descriptionController.text,
-            storeLogo: _storeLogo,
-          ),
-        ),
+    if (_formKey.currentState!.validate()) {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.deepPurple),
+                    SizedBox(height: 15),
+                    Text('Creating store...', style: TextStyle(fontSize: 16)),
+                  ],
+                ),
+              ),
+            ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create store. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
+
+      // Create store data object
+      final storeData = StoreData(
+        storeName: _storeNameController.text,
+        storeDescription: _descriptionController.text,
+        storeLogo: _storeLogo,
+        storeLogoUrl: null, // Will be set by Firebase service
+        ownerName: _ownerNameController.text,
+        phoneNumber: _phoneController.text,
+        address: _addressController.text,
       );
+
+      // Save store data to Firebase
+      final success = await _productManager.createStore(storeData);
+
+      Navigator.pop(context); // Close loading dialog
+
+      if (success) {
+        print('Store created successfully');
+
+        // Navigate to MyStore page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => MyStorePage(
+                  storeName: _storeNameController.text,
+                  storeDescription: _descriptionController.text,
+                  storeLogo: _storeLogo,
+                ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create store. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -1170,7 +1224,7 @@ class _CreateStorePageState extends State<CreateStorePage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1193,7 +1247,10 @@ class _CreateStorePageState extends State<CreateStorePage>
           Text(
             'Create Your Store',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -1204,7 +1261,10 @@ class _CreateStorePageState extends State<CreateStorePage>
     return Text(
       title,
       style: TextStyle(
-          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.deepPurple,
+      ),
     );
   }
 
@@ -1215,9 +1275,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1226,13 +1287,17 @@ class _CreateStorePageState extends State<CreateStorePage>
           labelText: 'Store Name',
           prefixIcon: Icon(Icons.store, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter store name' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter store name'
+                    : null,
       ),
     );
   }
@@ -1244,9 +1309,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: InkWell(
@@ -1259,8 +1325,12 @@ class _CreateStorePageState extends State<CreateStorePage>
               if (_storeLogo != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.file(_storeLogo!,
-                      height: 150, width: 150, fit: BoxFit.cover),
+                  child: Image.file(
+                    _storeLogo!,
+                    height: 150,
+                    width: 150,
+                    fit: BoxFit.cover,
+                  ),
                 )
               else
                 Container(
@@ -1270,16 +1340,20 @@ class _CreateStorePageState extends State<CreateStorePage>
                     color: Colors.deepPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Icon(Icons.add_photo_alternate,
-                      size: 60, color: Colors.deepPurple),
+                  child: Icon(
+                    Icons.add_photo_alternate,
+                    size: 60,
+                    color: Colors.deepPurple,
+                  ),
                 ),
               SizedBox(height: 15),
               Text(
                 _storeLogo != null ? 'Tap to change logo' : 'Upload Store Logo',
                 style: TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16),
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
@@ -1295,9 +1369,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1307,18 +1382,24 @@ class _CreateStorePageState extends State<CreateStorePage>
           labelText: 'Store Description',
           prefixIcon: Icon(Icons.description, color: Colors.deepPurple),
           suffixIcon: IconButton(
-            icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
-                color: _isListening ? Colors.red : Colors.deepPurple),
+            icon: Icon(
+              _isListening ? Icons.mic : Icons.mic_none,
+              color: _isListening ? Colors.red : Colors.deepPurple,
+            ),
             onPressed: _isListening ? _stopListening : _startListening,
           ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter description' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter description'
+                    : null,
       ),
     );
   }
@@ -1330,9 +1411,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: Row(
@@ -1344,8 +1426,9 @@ class _CreateStorePageState extends State<CreateStorePage>
                 labelText: 'Product Names',
                 prefixIcon: Icon(Icons.shopping_bag, color: Colors.deepPurple),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none),
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
                 filled: true,
                 fillColor: Colors.white,
               ),
@@ -1355,12 +1438,14 @@ class _CreateStorePageState extends State<CreateStorePage>
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                  colors: [Colors.deepPurple, Colors.deepPurple.shade300]),
+                colors: [Colors.deepPurple, Colors.deepPurple.shade300],
+              ),
               borderRadius: BorderRadius.circular(15),
             ),
             child: IconButton(
-                icon: Icon(Icons.add, color: Colors.white),
-                onPressed: _addProduct),
+              icon: Icon(Icons.add, color: Colors.white),
+              onPressed: _addProduct,
+            ),
           ),
         ],
       ),
@@ -1376,14 +1461,18 @@ class _CreateStorePageState extends State<CreateStorePage>
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-                color: Colors.deepPurple.withOpacity(0.1),
-                blurRadius: 10,
-                offset: Offset(0, 5)),
+              color: Colors.deepPurple.withOpacity(0.1),
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
           ],
         ),
         child: Center(
-            child: Text('No products added yet',
-                style: TextStyle(color: Colors.grey))),
+          child: Text(
+            'No products added yet',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
       );
     }
 
@@ -1393,9 +1482,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: ReorderableListView.builder(
@@ -1417,7 +1507,7 @@ class _CreateStorePageState extends State<CreateStorePage>
               gradient: LinearGradient(
                 colors: [
                   Colors.deepPurple.withOpacity(0.1),
-                  Colors.deepPurple.withOpacity(0.05)
+                  Colors.deepPurple.withOpacity(0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
@@ -1425,11 +1515,15 @@ class _CreateStorePageState extends State<CreateStorePage>
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.deepPurple,
-                child:
-                    Text('${index + 1}', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-              title: Text(_products[index],
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(
+                _products[index],
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               trailing: IconButton(
                 icon: Icon(Icons.delete, color: Colors.red),
                 onPressed: () => _removeProduct(index),
@@ -1448,9 +1542,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1459,13 +1554,17 @@ class _CreateStorePageState extends State<CreateStorePage>
           labelText: 'Owner Name',
           prefixIcon: Icon(Icons.person, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Please enter owner name' : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter owner name'
+                    : null,
       ),
     );
   }
@@ -1477,9 +1576,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1489,16 +1589,19 @@ class _CreateStorePageState extends State<CreateStorePage>
           labelText: 'Phone Number',
           prefixIcon: Icon(Icons.phone, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
         validator: (value) {
-          if (value == null || value.isEmpty)
+          if (value == null || value.isEmpty) {
             return 'Please enter phone number';
-          if (value.length != 10)
+          }
+          if (value.length != 10) {
             return 'Please enter valid 10 digit phone number';
+          }
           return null;
         },
       ),
@@ -1512,9 +1615,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: TextFormField(
@@ -1524,14 +1628,17 @@ class _CreateStorePageState extends State<CreateStorePage>
           labelText: 'Store Address',
           prefixIcon: Icon(Icons.location_on, color: Colors.deepPurple),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
-        validator: (value) => value == null || value.isEmpty
-            ? 'Please enter store address'
-            : null,
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter store address'
+                    : null,
       ),
     );
   }
@@ -1544,7 +1651,7 @@ class _CreateStorePageState extends State<CreateStorePage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -1552,9 +1659,10 @@ class _CreateStorePageState extends State<CreateStorePage>
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.4),
-              blurRadius: 15,
-              offset: Offset(0, 8)),
+            color: Colors.deepPurple.withOpacity(0.4),
+            blurRadius: 15,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: ElevatedButton(
@@ -1562,19 +1670,23 @@ class _CreateStorePageState extends State<CreateStorePage>
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.check_circle_outline, size: 28),
             SizedBox(width: 10),
-            Text('Create Store',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+            Text(
+              'Create Store',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),

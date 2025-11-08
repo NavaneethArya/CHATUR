@@ -31,10 +31,11 @@ class SkillDetailScreen extends StatefulWidget {
   State<SkillDetailScreen> createState() => _SkillDetailScreenState();
 }
 
-class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTickerProviderStateMixin {
+class _SkillDetailScreenState extends State<SkillDetailScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Map<String, dynamic>? _providerProfile;
-  List<Map<String, dynamic>> _reviews = [];
+  final List<Map<String, dynamic>> _reviews = [];
   bool _isLoading = true;
   bool _isSaved = false;
 
@@ -57,12 +58,13 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
 
       // Fetch provider profile
       if (userId != null) {
-        final profileDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('Profile')
-            .doc('main')
-            .get();
+        final profileDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .collection('Profile')
+                .doc('main')
+                .get();
 
         if (profileDoc.exists) {
           _providerProfile = profileDoc.data();
@@ -72,12 +74,13 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
       // Check if saved
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null && widget.skillId != null) {
-        final savedDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .collection('savedSkills')
-            .doc(widget.skillId)
-            .get();
+        final savedDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid)
+                .collection('savedSkills')
+                .doc(widget.skillId)
+                .get();
         _isSaved = savedDoc.exists;
       }
 
@@ -91,9 +94,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
   Future<void> _toggleSave() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to save')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to save')));
       return;
     }
 
@@ -110,17 +113,17 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
         await docRef.delete();
         setState(() => _isSaved = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Removed from saved')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Removed from saved')));
         }
       } else {
         await docRef.set(widget.skillData);
         setState(() => _isSaved = true);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Saved successfully')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Saved successfully')));
         }
       }
     } catch (e) {
@@ -154,8 +157,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
       return;
     }
 
-    final message = 'Hi, I found your ${widget.skillData['skillTitle']} service on CHATUR. I would like to know more.';
-    final Uri whatsappUri = Uri.parse('https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}');
+    final message =
+        'Hi, I found your ${widget.skillData['skillTitle']} service on CHATUR. I would like to know more.';
+    final Uri whatsappUri = Uri.parse(
+      'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}',
+    );
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
@@ -170,11 +176,12 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => BookingSheet(
-        skillData: widget.skillData,
-        providerId: widget.userId ?? widget.skillData['userId'],
-        skillId: widget.skillId,
-      ),
+      builder:
+          (context) => BookingSheet(
+            skillData: widget.skillData,
+            providerId: widget.userId ?? widget.skillData['userId'],
+            skillId: widget.skillId,
+          ),
     );
   }
 
@@ -182,14 +189,19 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
     final images = List<String>.from(widget.skillData['images'] ?? []);
     final GeoPoint? geo = widget.skillData['coordinates'];
-    final availability = widget.skillData['availability'] as Map<String, dynamic>?;
-    final profile = widget.skillData['profile'] as Map<String, dynamic>? ?? _providerProfile;
+    final availability =
+        widget.skillData['availability'] as Map<String, dynamic>?;
+    final profile =
+        widget.skillData['profile'] as Map<String, dynamic>? ??
+        _providerProfile;
 
     return Scaffold(
       body: CustomScrollView(
@@ -213,22 +225,28 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: images.isNotEmpty
-                  ? PageView.builder(
-                      itemCount: images.length,
-                      itemBuilder: (context, index) => Image.network(
-                        images[index],
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 80),
-                        ),
+              background:
+                  images.isNotEmpty
+                      ? PageView.builder(
+                        itemCount: images.length,
+                        itemBuilder:
+                            (context, index) => Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 80,
+                                    ),
+                                  ),
+                            ),
+                      )
+                      : Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image, size: 80),
                       ),
-                    )
-                  : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 80),
-                    ),
             ),
           ),
 
@@ -260,7 +278,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
@@ -280,22 +301,34 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.accent.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 widget.skillData['category'] ?? 'General',
-                                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Icon(Icons.star, color: Colors.amber, size: 20),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${(widget.skillData['rating'] ?? 0.0).toStringAsFixed(1)} (${widget.skillData['reviewCount'] ?? 0} reviews)',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -314,7 +347,8 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                         CircleAvatar(
                           radius: 32,
                           backgroundImage: NetworkImage(
-                            profile?['photoUrl'] ?? 'https://via.placeholder.com/100',
+                            profile?['photoUrl'] ??
+                                'https://via.placeholder.com/100',
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -324,7 +358,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                             children: [
                               Text(
                                 profile?['name'] ?? 'Service Provider',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -337,7 +374,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                         Column(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.phone, color: AppColors.secondary),
+                              icon: const Icon(
+                                Icons.phone,
+                                color: AppColors.secondary,
+                              ),
                               onPressed: () => _makeCall(profile?['phone']),
                             ),
                             IconButton(
@@ -410,7 +450,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -442,7 +485,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
         children: [
           const Text(
             'Description',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -452,16 +499,28 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
           const SizedBox(height: 24),
           const Text(
             'Service Details',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(Icons.category, 'Category', widget.skillData['category'] ?? 'General'),
+          _buildInfoRow(
+            Icons.category,
+            'Category',
+            widget.skillData['category'] ?? 'General',
+          ),
           _buildInfoRow(
             Icons.location_on,
             'Service Area',
             '${(widget.skillData['serviceRadiusMeters'] ?? 5000) / 1000} km radius',
           ),
-          _buildInfoRow(Icons.access_time, 'Posted', _formatDate(widget.skillData['createdAt'])),
+          _buildInfoRow(
+            Icons.access_time,
+            'Posted',
+            _formatDate(widget.skillData['createdAt']),
+          ),
         ],
       ),
     );
@@ -483,22 +542,38 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
         children: [
           const Text(
             'Available Days',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: days.map((day) => Chip(
-              label: Text(day),
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              labelStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
-            )).toList(),
+            children:
+                days
+                    .map(
+                      (day) => Chip(
+                        label: Text(day),
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        labelStyle: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                    .toList(),
           ),
           const SizedBox(height: 24),
           const Text(
             'Working Hours',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -509,14 +584,27 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
             ),
             child: Row(
               children: [
-                const Icon(Icons.access_time, color: AppColors.accent, size: 32),
+                const Icon(
+                  Icons.access_time,
+                  color: AppColors.accent,
+                  size: 32,
+                ),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Daily Working Hours', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Daily Working Hours',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 4),
-                    Text('$startTime - $endTime', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      '$startTime - $endTime',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -552,7 +640,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                     color: AppColors.primary.withOpacity(0.2),
                     borderColor: AppColors.primary,
                     borderStrokeWidth: 2,
-                    radius: (widget.skillData['serviceRadiusMeters'] ?? 5000).toDouble(),
+                    radius:
+                        (widget.skillData['serviceRadiusMeters'] ?? 5000)
+                            .toDouble(),
                     useRadiusInMeter: true,
                   ),
                 ],
@@ -563,7 +653,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
                     point: LatLng(geo.latitude, geo.longitude),
                     width: 50,
                     height: 50,
-                    child: const Icon(Icons.location_pin, color: AppColors.primary, size: 40),
+                    child: const Icon(
+                      Icons.location_pin,
+                      color: AppColors.primary,
+                      size: 40,
+                    ),
                   ),
                 ],
               ),
@@ -576,7 +670,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Address', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Address',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 8),
               Text(
                 widget.skillData['address'] ?? 'Address not specified',
@@ -597,7 +694,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> with SingleTicker
           Icon(icon, size: 20, color: AppColors.textLight),
           const SizedBox(width: 12),
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
-          Expanded(child: Text(value, style: TextStyle(color: AppColors.textLight))),
+          Expanded(
+            child: Text(value, style: TextStyle(color: AppColors.textLight)),
+          ),
         ],
       ),
     );
@@ -661,16 +760,17 @@ class _BookingSheetState extends State<BookingSheet> {
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to book')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to book')));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final bookingId = FirebaseFirestore.instance.collection('bookings').doc().id;
+      final bookingId =
+          FirebaseFirestore.instance.collection('bookings').doc().id;
       final bookingData = {
         'bookingId': bookingId,
         'skillId': widget.skillId,
@@ -686,7 +786,8 @@ class _BookingSheetState extends State<BookingSheet> {
         'notes': _notesController.text.trim(),
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
-        'price': widget.skillData['flatPrice'] ?? widget.skillData['perKmPrice'],
+        'price':
+            widget.skillData['flatPrice'] ?? widget.skillData['perKmPrice'],
       };
 
       // Create booking in provider's collection
@@ -717,9 +818,9 @@ class _BookingSheetState extends State<BookingSheet> {
     } catch (e) {
       debugPrint('Booking error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to book: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to book: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -755,7 +856,11 @@ class _BookingSheetState extends State<BookingSheet> {
             const SizedBox(height: 20),
             const Text(
               'Book This Service',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -763,7 +868,10 @@ class _BookingSheetState extends State<BookingSheet> {
               style: TextStyle(fontSize: 16, color: AppColors.textLight),
             ),
             const SizedBox(height: 24),
-            const Text('Select Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text(
+              'Select Date',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 12),
             InkWell(
               onTap: () async {
@@ -787,11 +895,16 @@ class _BookingSheetState extends State<BookingSheet> {
                     const SizedBox(width: 12),
                     Text(
                       _selectedDate != null
-                          ? DateFormat('EEEE, MMM d, yyyy').format(_selectedDate!)
+                          ? DateFormat(
+                            'EEEE, MMM d, yyyy',
+                          ).format(_selectedDate!)
                           : 'Choose a date',
                       style: TextStyle(
                         fontSize: 15,
-                        color: _selectedDate != null ? AppColors.text : AppColors.textLight,
+                        color:
+                            _selectedDate != null
+                                ? AppColors.text
+                                : AppColors.textLight,
                       ),
                     ),
                   ],
@@ -799,11 +912,17 @@ class _BookingSheetState extends State<BookingSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Select Time', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text(
+              'Select Time',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 12),
             InkWell(
               onTap: () async {
-                final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
                 if (time != null) setState(() => _selectedTime = time);
               },
               child: Container(
@@ -817,10 +936,15 @@ class _BookingSheetState extends State<BookingSheet> {
                     const Icon(Icons.access_time, color: AppColors.primary),
                     const SizedBox(width: 12),
                     Text(
-                      _selectedTime != null ? _selectedTime!.format(context) : 'Choose a time',
+                      _selectedTime != null
+                          ? _selectedTime!.format(context)
+                          : 'Choose a time',
                       style: TextStyle(
                         fontSize: 15,
-                        color: _selectedTime != null ? AppColors.text : AppColors.textLight,
+                        color:
+                            _selectedTime != null
+                                ? AppColors.text
+                                : AppColors.textLight,
                       ),
                     ),
                   ],
@@ -828,14 +952,19 @@ class _BookingSheetState extends State<BookingSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Additional Notes (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text(
+              'Additional Notes (Optional)',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _notesController,
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: 'Any specific requirements...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -846,15 +975,27 @@ class _BookingSheetState extends State<BookingSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Confirm Booking', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child:
+                    _isSubmitting
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : const Text(
+                          'Confirm Booking',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
               ),
             ),
           ],

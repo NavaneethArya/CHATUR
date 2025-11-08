@@ -20,7 +20,9 @@ class _E_RegisterPageState extends State<E_RegisterPage> {
 
     if (!email.contains("@") || password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter a valid email and password (6+ chars)")),
+        const SnackBar(
+          content: Text("Enter a valid email and password (6+ chars)"),
+        ),
       );
       return;
     }
@@ -66,11 +68,13 @@ class _E_RegisterPageState extends State<E_RegisterPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Lets create your new CHATUR account",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+              const Text(
+                "Lets create your new CHATUR account",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 15),
-            const Text("Enter a valid Email ID"),
-            const SizedBox(height: 15),
+              const Text("Enter a valid Email ID"),
+              const SizedBox(height: 15),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -81,8 +85,8 @@ class _E_RegisterPageState extends State<E_RegisterPage> {
                 ),
               ),
               const SizedBox(height: 15),
-            const Text("Enter a Strong Password"),
-            const SizedBox(height: 15),
+              const Text("Enter a Strong Password"),
+              const SizedBox(height: 15),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
@@ -118,25 +122,32 @@ class _E_RegisterPageState extends State<E_RegisterPage> {
               _loading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
-                      onPressed: _agree ? _register : null,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(45),
-                        backgroundColor: Colors.deepOrange,
-                      ),
-                      child: const Text("Register"),
+                    onPressed: _agree ? _register : null,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(45),
+                      backgroundColor: Colors.deepOrange,
                     ),
+                    child: const Text("Register"),
+                  ),
               const SizedBox(height: 16),
               Center(
                 child: Wrap(
                   children: [
                     const Text("Already have an account? "),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/Elogin'),
-                      child: const Text("Login here", style: TextStyle(color: Colors.blue)),
+                      onTap:
+                          () => Navigator.pushReplacementNamed(
+                            context,
+                            '/Elogin',
+                          ),
+                      child: const Text(
+                        "Login here",
+                        style: TextStyle(color: Colors.blue),
+                      ),
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),

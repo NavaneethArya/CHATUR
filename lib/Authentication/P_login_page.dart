@@ -27,22 +27,25 @@ class _P_loginpageState extends State<P_loginpage> {
     setState(() => _loading = true);
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc('+91$phone')
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc('+91$phone')
+              .get();
 
       if (doc.exists && doc['mpin'] == mpin) {
         Navigator.pushReplacementNamed(context, '/main');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Incorrect MPIN or user not registered")),
+          const SnackBar(
+            content: Text("Incorrect MPIN or user not registered"),
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login failed: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Login failed: ${e.toString()}")));
     }
 
     setState(() => _loading = false);
@@ -62,7 +65,11 @@ class _P_loginpageState extends State<P_loginpage> {
             height: MediaQuery.of(context).size.height,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFE6F2FE), Color(0xFFFDFDFD), Color(0xFFFEF5F0)],
+                colors: [
+                  Color(0xFFE6F2FE),
+                  Color(0xFFFDFDFD),
+                  Color(0xFFFEF5F0),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -79,8 +86,10 @@ class _P_loginpageState extends State<P_loginpage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Welcome back to your CHATUR account!",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                  const Text(
+                    "Welcome back to your CHATUR account!",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(height: 15),
                   const Text("Mobile Number"),
                   const SizedBox(height: 15),
@@ -113,25 +122,29 @@ class _P_loginpageState extends State<P_loginpage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                        onPressed: () {}, child: const Text('Forgot MPIN?')),
+                      onPressed: () {},
+                      child: const Text('Forgot MPIN?'),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _loading
                       ? const Center(child: CircularProgressIndicator())
                       : ElevatedButton(
-                          onPressed: _loginWithMpin,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(45),
-                            backgroundColor: Colors.deepOrange,
-                          ),
-                          child: const Text('Login'),
+                        onPressed: _loginWithMpin,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(45),
+                          backgroundColor: Colors.deepOrange,
                         ),
+                        child: const Text('Login'),
+                      ),
                   const SizedBox(height: 10),
                   OutlinedButton(
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, '/Elogin');
                     },
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(45),
+                    ),
                     child: const Text('Login with E-mail'),
                   ),
                   const SizedBox(height: 16),
@@ -141,10 +154,15 @@ class _P_loginpageState extends State<P_loginpage> {
                         const Text('New on CHATUR? '),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushReplacementNamed(context, '/register');
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/register',
+                            );
                           },
-                          child: const Text('Register here',
-                              style: TextStyle(color: Colors.blue)),
+                          child: const Text(
+                            'Register here',
+                            style: TextStyle(color: Colors.blue),
+                          ),
                         ),
                       ],
                     ),
@@ -154,7 +172,9 @@ class _P_loginpageState extends State<P_loginpage> {
                   const SizedBox(height: 10),
                   OutlinedButton(
                     onPressed: () {},
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(45),
+                    ),
                     child: const Text('GramPramukh'),
                   ),
                   const SizedBox(height: 10),
@@ -162,7 +182,7 @@ class _P_loginpageState extends State<P_loginpage> {
                     'GramPramukh – A dedicated login for village coordinators and panchayat members to post official updates, health camps, and welfare activities for the local community.',
                     style: TextStyle(fontSize: 13, color: Colors.black54),
                     textAlign: TextAlign.left,
-                  )
+                  ),
                 ],
               ),
             ),

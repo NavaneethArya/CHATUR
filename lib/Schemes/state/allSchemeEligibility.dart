@@ -12,7 +12,8 @@ class AllSchemeEligibility extends StatefulWidget {
   final double textSizeMultiplier;
   final String selectedLanguage;
 
-  AllSchemeEligibility({
+  const AllSchemeEligibility({
+    super.key,
     required this.userAnswers,
     required this.questions,
     this.isDarkMode = false,
@@ -54,9 +55,9 @@ class _AllSchemeEligibilityState extends State<AllSchemeEligibility> {
       }
     } else {
       // Hide header when scrolling down
-      if (_scrollController.position.userScrollDirection
-          .toString()
-          .contains('reverse')) {
+      if (_scrollController.position.userScrollDirection.toString().contains(
+        'reverse',
+      )) {
         if (_showHeader) {
           setState(() {
             _showHeader = false;
@@ -98,16 +99,18 @@ class _AllSchemeEligibilityState extends State<AllSchemeEligibility> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Error evaluating eligibility: ${e.toString()}')),
+          content: Text('Error evaluating eligibility: ${e.toString()}'),
+        ),
       );
     }
   }
 
   Future<List<Scheme>> _fetchSchemes() async {
     try {
-      final languageCode = widget.selectedLanguage == 'English'
-          ? 'en'
-          : widget.selectedLanguage == 'Kannada'
+      final languageCode =
+          widget.selectedLanguage == 'English'
+              ? 'en'
+              : widget.selectedLanguage == 'Kannada'
               ? 'kn'
               : 'hi';
       final url = 'https://navarasa-chathur-api.hf.space/$languageCode/schemes';
@@ -178,14 +181,11 @@ Your response:
         'contents': [
           {
             'parts': [
-              {'text': prompt}
-            ]
-          }
+              {'text': prompt},
+            ],
+          },
         ],
-        'generationConfig': {
-          'temperature': 0.3,
-          'maxOutputTokens': 1024,
-        }
+        'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1024},
       });
 
       final response = await http.post(
@@ -199,14 +199,15 @@ Your response:
         final generatedText =
             data['candidates'][0]['content']['parts'][0]['text'];
 
-        final eligibleIndices = generatedText
-            .replaceAll(RegExp(r'[^\d,]'), '')
-            .split(',')
-            .where((s) => s.isNotEmpty)
-            .map((s) => int.tryParse(s.trim()))
-            .where((i) => i != null && i > 0 && i <= allSchemes.length)
-            .map((i) => i! - 1)
-            .toList();
+        final eligibleIndices =
+            generatedText
+                .replaceAll(RegExp(r'[^\d,]'), '')
+                .split(',')
+                .where((s) => s.isNotEmpty)
+                .map((s) => int.tryParse(s.trim()))
+                .where((i) => i != null && i > 0 && i <= allSchemes.length)
+                .map((i) => i! - 1)
+                .toList();
 
         return eligibleIndices.map((i) => allSchemes[i]).toList();
       } else {
@@ -222,12 +223,14 @@ Your response:
   List<Scheme> _fallbackEligibilityCheck(List<Scheme> allSchemes) {
     int yesCount = widget.userAnswers.values.where((a) => a == 'yes').length;
 
-    List<Scheme> filtered = allSchemes.where((scheme) {
-      return scheme.eligibility.isNotEmpty;
-    }).toList();
+    List<Scheme> filtered =
+        allSchemes.where((scheme) {
+          return scheme.eligibility.isNotEmpty;
+        }).toList();
 
-    filtered
-        .sort((a, b) => a.eligibility.length.compareTo(b.eligibility.length));
+    filtered.sort(
+      (a, b) => a.eligibility.length.compareTo(b.eligibility.length),
+    );
 
     int returnCount =
         (yesCount / widget.questions.length * filtered.length).ceil();
@@ -238,23 +241,25 @@ Your response:
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SchemeInformationPage(
-          scheme: scheme,
-          isDarkMode: widget.isDarkMode,
-          textSizeMultiplier: widget.textSizeMultiplier,
-          isBookmarked: false,
-          onBookmarkToggle: () {},
-        ),
+        builder:
+            (context) => SchemeInformationPage(
+              scheme: scheme,
+              isDarkMode: widget.isDarkMode,
+              textSizeMultiplier: widget.textSizeMultiplier,
+              isBookmarked: false,
+              onBookmarkToggle: () {},
+            ),
       ),
     );
   }
 
   List<String> _getUniqueTags(String tagsString) {
-    final tagList = tagsString
-        .split(',')
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toList();
+    final tagList =
+        tagsString
+            .split(',')
+            .map((tag) => tag.trim())
+            .where((tag) => tag.isNotEmpty)
+            .toList();
 
     final uniqueTags = <String>{};
     final result = <String>[];
@@ -278,9 +283,10 @@ Your response:
     final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
     final secondaryTextColor =
         widget.isDarkMode ? Colors.grey[400] : Colors.grey[600];
-    final cardGradient = widget.isDarkMode
-        ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
-        : [Colors.white, Colors.blue.shade50.withOpacity(0.6)];
+    final cardGradient =
+        widget.isDarkMode
+            ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
+            : [Colors.white, Colors.blue.shade50.withOpacity(0.6)];
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -298,263 +304,286 @@ Your response:
         elevation: 4,
         iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: Colors.blueAccent),
-                  SizedBox(height: 20),
-                  Text(
-                    'Evaluating your eligibility...',
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 16 * widget.textSizeMultiplier,
+      body:
+          _isLoading
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Colors.blueAccent),
+                    SizedBox(height: 20),
+                    Text(
+                      'Evaluating your eligibility...',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 16 * widget.textSizeMultiplier,
+                      ),
                     ),
+                  ],
+                ),
+              )
+              : Column(
+                children: [
+                  // Animated Header with scheme count
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    height: _showHeader ? null : 0,
+                    curve: Curves.easeInOut,
+                    child: AnimatedOpacity(
+                      duration: Duration(milliseconds: 300),
+                      opacity: _showHeader ? 1.0 : 0.0,
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue.shade400,
+                              Colors.blue.shade600,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.verified, color: Colors.white, size: 48),
+                            SizedBox(height: 12),
+                            Text(
+                              'You are eligible for',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16 * widget.textSizeMultiplier,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '${_eligibleSchemes.length} ${_eligibleSchemes.length == 1 ? 'Scheme' : 'Schemes'}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 32 * widget.textSizeMultiplier,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Schemes list
+                  Expanded(
+                    child:
+                        _eligibleSchemes.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 64,
+                                    color: secondaryTextColor,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No eligible schemes found',
+                                    style: TextStyle(
+                                      color: secondaryTextColor,
+                                      fontSize: 18 * widget.textSizeMultiplier,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                    ),
+                                    child: Text(
+                                      'Based on your answers, we couldn\'t find matching schemes. Please try again or contact support.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: secondaryTextColor,
+                                        fontSize:
+                                            14 * widget.textSizeMultiplier,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : ListView.builder(
+                              controller: _scrollController,
+                              padding: EdgeInsets.all(16),
+                              itemCount: _eligibleSchemes.length,
+                              itemBuilder: (context, index) {
+                                final scheme = _eligibleSchemes[index];
+                                final tagList = _getUniqueTags(scheme.tags);
+
+                                return GestureDetector(
+                                  onTap: () => _openSchemeDetails(scheme),
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(vertical: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: cardGradient,
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              widget.isDarkMode
+                                                  ? Colors.black.withOpacity(
+                                                    0.3,
+                                                  )
+                                                  : Colors.blueAccent
+                                                      .withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                        color: Colors.green.withOpacity(0.3),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green
+                                                      .withOpacity(0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Icon(
+                                                  Icons.check_circle,
+                                                  color: Colors.green,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  scheme.title,
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        17 *
+                                                        widget
+                                                            .textSizeMultiplier,
+                                                    fontWeight: FontWeight.w700,
+                                                    color:
+                                                        widget.isDarkMode
+                                                            ? Colors
+                                                                .blue
+                                                                .shade300
+                                                            : Colors
+                                                                .blue
+                                                                .shade900,
+                                                  ),
+                                                ),
+                                              ),
+                                              Icon(
+                                                Icons.arrow_forward_ios,
+                                                color: Colors.blueAccent,
+                                                size: 16,
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            scheme.description,
+                                            style: TextStyle(
+                                              fontSize:
+                                                  15 *
+                                                  widget.textSizeMultiplier,
+                                              color: textColor,
+                                              height: 1.4,
+                                            ),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          SizedBox(height: 12),
+                                          if (tagList.isNotEmpty)
+                                            Wrap(
+                                              spacing: 4,
+                                              runSpacing: 4,
+                                              children:
+                                                  tagList.take(5).map((tag) {
+                                                    return Chip(
+                                                      label: Text(
+                                                        tag,
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize:
+                                                              12 *
+                                                              widget
+                                                                  .textSizeMultiplier,
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.blueAccent,
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 4,
+                                                            vertical: 0,
+                                                          ),
+                                                    );
+                                                  }).toList(),
+                                            ),
+                                          SizedBox(height: 8),
+                                          Divider(
+                                            color: secondaryTextColor
+                                                ?.withOpacity(0.3),
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.verified_user,
+                                                color: Colors.green,
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                'You are eligible for this scheme',
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontSize:
+                                                      13 *
+                                                      widget.textSizeMultiplier,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                   ),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                // Animated Header with scheme count
-                AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  height: _showHeader ? null : 0,
-                  curve: Curves.easeInOut,
-                  child: AnimatedOpacity(
-                    duration: Duration(milliseconds: 300),
-                    opacity: _showHeader ? 1.0 : 0.0,
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.blue.shade400, Colors.blue.shade600],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.verified,
-                            color: Colors.white,
-                            size: 48,
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'You are eligible for',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16 * widget.textSizeMultiplier,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            '${_eligibleSchemes.length} ${_eligibleSchemes.length == 1 ? 'Scheme' : 'Schemes'}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 32 * widget.textSizeMultiplier,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Schemes list
-                Expanded(
-                  child: _eligibleSchemes.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 64,
-                                color: secondaryTextColor,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No eligible schemes found',
-                                style: TextStyle(
-                                  color: secondaryTextColor,
-                                  fontSize: 18 * widget.textSizeMultiplier,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 40),
-                                child: Text(
-                                  'Based on your answers, we couldn\'t find matching schemes. Please try again or contact support.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: secondaryTextColor,
-                                    fontSize: 14 * widget.textSizeMultiplier,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.all(16),
-                          itemCount: _eligibleSchemes.length,
-                          itemBuilder: (context, index) {
-                            final scheme = _eligibleSchemes[index];
-                            final tagList = _getUniqueTags(scheme.tags);
-
-                            return GestureDetector(
-                              onTap: () => _openSchemeDetails(scheme),
-                              child: Container(
-                                margin: EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: cardGradient,
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: widget.isDarkMode
-                                          ? Colors.black.withOpacity(0.3)
-                                          : Colors.blueAccent.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                  border: Border.all(
-                                    color: Colors.green.withOpacity(0.3),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.green.withOpacity(0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Icon(
-                                              Icons.check_circle,
-                                              color: Colors.green,
-                                              size: 24,
-                                            ),
-                                          ),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              scheme.title,
-                                              style: TextStyle(
-                                                fontSize: 17 *
-                                                    widget.textSizeMultiplier,
-                                                fontWeight: FontWeight.w700,
-                                                color: widget.isDarkMode
-                                                    ? Colors.blue.shade300
-                                                    : Colors.blue.shade900,
-                                              ),
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.arrow_forward_ios,
-                                            color: Colors.blueAccent,
-                                            size: 16,
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        scheme.description,
-                                        style: TextStyle(
-                                          fontSize:
-                                              15 * widget.textSizeMultiplier,
-                                          color: textColor,
-                                          height: 1.4,
-                                        ),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      SizedBox(height: 12),
-                                      if (tagList.isNotEmpty)
-                                        Wrap(
-                                          spacing: 4,
-                                          runSpacing: 4,
-                                          children: tagList.take(5).map((tag) {
-                                            return Chip(
-                                              label: Text(
-                                                tag,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 12 *
-                                                      widget.textSizeMultiplier,
-                                                ),
-                                              ),
-                                              backgroundColor:
-                                                  Colors.blueAccent,
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 4,
-                                                vertical: 0,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      SizedBox(height: 8),
-                                      Divider(
-                                          color: secondaryTextColor
-                                              ?.withOpacity(0.3)),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.verified_user,
-                                            color: Colors.green,
-                                            size: 16,
-                                          ),
-                                          SizedBox(width: 6),
-                                          Text(
-                                            'You are eligible for this scheme',
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontSize: 13 *
-                                                  widget.textSizeMultiplier,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
     );
   }
 }

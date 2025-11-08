@@ -10,8 +10,7 @@ class AddEventPage extends StatefulWidget {
   final Event? event;
   final DateTime? initialDate;
 
-  const AddEventPage({Key? key, this.event, this.initialDate})
-      : super(key: key);
+  const AddEventPage({super.key, this.event, this.initialDate});
 
   @override
   _AddEventPageState createState() => _AddEventPageState();
@@ -68,16 +67,20 @@ class _AddEventPageState extends State<AddEventPage>
   }
 
   Future<void> _pickImage() async {
-    final pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+    );
     if (pickedFile != null) {
       setState(() => _selectedImage = File(pickedFile.path));
     }
   }
 
   Future<void> _captureImage() async {
-    final pickedFile =
-        await _picker.pickImage(source: ImageSource.camera, imageQuality: 75);
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 75,
+    );
     if (pickedFile != null) {
       setState(() => _selectedImage = File(pickedFile.path));
     }
@@ -87,60 +90,61 @@ class _AddEventPageState extends State<AddEventPage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Add Event Photo',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildImageSourceButton(
-                  icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage();
-                  },
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                _buildImageSourceButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _captureImage();
-                  },
+                SizedBox(height: 20),
+                Text(
+                  'Add Event Photo',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildImageSourceButton(
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage();
+                      },
+                    ),
+                    _buildImageSourceButton(
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _captureImage();
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
               ],
             ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -201,8 +205,9 @@ class _AddEventPageState extends State<AddEventPage>
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text =
-            DateFormat('MMM dd, yyyy').format(_selectedDate!);
+        _dateController.text = DateFormat(
+          'MMM dd, yyyy',
+        ).format(_selectedDate!);
       });
     }
   }
@@ -222,8 +227,9 @@ class _AddEventPageState extends State<AddEventPage>
           ),
           backgroundColor: Colors.orange[700],
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -246,8 +252,9 @@ class _AddEventPageState extends State<AddEventPage>
             ),
             backgroundColor: Colors.red[700],
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         setState(() => _isUploading = false);
@@ -310,10 +317,7 @@ class _AddEventPageState extends State<AddEventPage>
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.event != null ? "Update Event" : "Create Event",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               background: Container(
                 decoration: BoxDecoration(
@@ -390,17 +394,17 @@ class _AddEventPageState extends State<AddEventPage>
                 children: [
                   _selectedImage != null
                       ? Image.file(
-                          _selectedImage!,
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
+                        _selectedImage!,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
                       : Image.network(
-                          _originalEvent!.imageUrl!,
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                        _originalEvent!.imageUrl!,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                   // Overlay gradient
                   Positioned.fill(
                     child: Container(
@@ -446,9 +450,10 @@ class _AddEventPageState extends State<AddEventPage>
             onTap: _showImageSourceDialog,
             borderRadius: BorderRadius.vertical(
               bottom: Radius.circular(20),
-              top: _selectedImage != null || _originalEvent?.imageUrl != null
-                  ? Radius.zero
-                  : Radius.circular(20),
+              top:
+                  _selectedImage != null || _originalEvent?.imageUrl != null
+                      ? Radius.zero
+                      : Radius.circular(20),
             ),
             child: Container(
               padding: EdgeInsets.symmetric(vertical: 20),
@@ -536,8 +541,10 @@ class _AddEventPageState extends State<AddEventPage>
             hint: 'Select date',
             readOnly: true,
             onTap: _pickDate,
-            suffixIcon:
-                Icon(Icons.arrow_drop_down_rounded, color: Colors.deepPurple),
+            suffixIcon: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: Colors.deepPurple,
+            ),
           ),
         ],
       ),
@@ -626,37 +633,38 @@ class _AddEventPageState extends State<AddEventPage>
           onTap: _isUploading ? null : _saveEvent,
           borderRadius: BorderRadius.circular(16),
           child: Center(
-            child: _isUploading
-                ? SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        widget.event != null
-                            ? Icons.update_rounded
-                            : Icons.save_rounded,
+            child:
+                _isUploading
+                    ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
                         color: Colors.white,
-                        size: 24,
+                        strokeWidth: 3,
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        widget.event != null ? "Update Event" : "Save Event",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    )
+                    : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          widget.event != null
+                              ? Icons.update_rounded
+                              : Icons.save_rounded,
                           color: Colors.white,
-                          letterSpacing: 0.5,
+                          size: 24,
                         ),
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 12),
+                        Text(
+                          widget.event != null ? "Update Event" : "Save Event",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
           ),
         ),
       ),

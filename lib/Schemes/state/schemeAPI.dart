@@ -45,10 +45,12 @@ class Scheme {
       details: parseList(json['Details'] ?? json['details']),
       benefits: parseList(json['Benefits'] ?? json['benefits']),
       eligibility: parseList(json['Eligibility'] ?? json['eligibility']),
-      applicationProcess:
-          parseList(json['Application Process'] ?? json['applicationProcess']),
-      documentsRequired:
-          parseList(json['Documents Required'] ?? json['documentsRequired']),
+      applicationProcess: parseList(
+        json['Application Process'] ?? json['applicationProcess'],
+      ),
+      documentsRequired: parseList(
+        json['Documents Required'] ?? json['documentsRequired'],
+      ),
       link: json['Link'] ?? json['link'] ?? '',
       id: json['id'] ?? '',
     );
@@ -71,8 +73,9 @@ class Scheme {
   }
 }
 
-Future<List<Scheme>> fetchKarnatakaSchemes(
-    {String language = 'English'}) async {
+Future<List<Scheme>> fetchKarnatakaSchemes({
+  String language = 'English',
+}) async {
   // Determine the language code based on the selected language
   String langCode = 'en'; // Default to English
 
@@ -88,7 +91,7 @@ Future<List<Scheme>> fetchKarnatakaSchemes(
 
   try {
     final response = await http.get(
-      Uri.parse(apiUrl), 
+      Uri.parse(apiUrl),
       headers: {"Accept": "application/json"},
     );
 
@@ -107,7 +110,8 @@ Future<List<Scheme>> fetchKarnatakaSchemes(
       return schemesList.map((item) => Scheme.fromJson(item)).toList();
     } else {
       throw Exception(
-          "Failed to load schemes. Status code: ${response.statusCode}");
+        "Failed to load schemes. Status code: ${response.statusCode}",
+      );
     }
   } catch (e) {
     print("Error: $e");

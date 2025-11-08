@@ -1,5 +1,3 @@
-
-
 import 'dart:io';
 import 'package:chatur_frontend/Events/models/event_model.dart';
 import 'package:chatur_frontend/Events/services/cloudinary_service.dart';
@@ -18,10 +16,10 @@ class AddEventWithLocationPage extends StatefulWidget {
   final EventModel? existingEvent;
 
   const AddEventWithLocationPage({
-    Key? key,
+    super.key,
     this.panchayatData,
     this.existingEvent,
-  }) : super(key: key);
+  });
 
   @override
   _AddEventWithLocationPageState createState() =>
@@ -64,11 +62,9 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
       _headingController.text = widget.existingEvent!.heading;
       _descriptionController.text = widget.existingEvent!.description;
       _selectedDate = widget.existingEvent!.eventDate;
-      _dateController.text =
-          DateFormat('MMM dd, yyyy').format(_selectedDate!);
+      _dateController.text = DateFormat('MMM dd, yyyy').format(_selectedDate!);
       _selectedLocation = widget.existingEvent!.location;
-      _locationNameController.text =
-          widget.existingEvent!.locationName ?? '';
+      _locationNameController.text = widget.existingEvent!.locationName ?? '';
     }
   }
 
@@ -96,60 +92,61 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Add Event Photo',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildImageSourceButton(
-                  icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage();
-                  },
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                _buildImageSourceButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _captureImage();
-                  },
+                SizedBox(height: 20),
+                Text(
+                  'Add Event Photo',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildImageSourceButton(
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImage();
+                      },
+                    ),
+                    _buildImageSourceButton(
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _captureImage();
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
               ],
             ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -210,7 +207,9 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text = DateFormat('MMM dd, yyyy').format(_selectedDate!);
+        _dateController.text = DateFormat(
+          'MMM dd, yyyy',
+        ).format(_selectedDate!);
       });
     }
   }
@@ -219,9 +218,8 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (_) => LocationPickerScreen(
-          initialLocation: _selectedLocation,
-        ),
+        builder:
+            (_) => LocationPickerScreen(initialLocation: _selectedLocation),
       ),
     );
 
@@ -265,14 +263,16 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
       }
 
       // Get panchayat member info
-      final memberName = widget.panchayatData?['name'] ?? 
-                        widget.existingEvent?.createdBy ?? 
-                        FirebaseAuth.instance.currentUser?.displayName ??
-                        'Panchayat Member';
-      final memberEmail = widget.panchayatData?['email'] ?? 
-                         widget.existingEvent?.createdByEmail ?? 
-                         FirebaseAuth.instance.currentUser?.email ??
-                         'admin@chatur.com';
+      final memberName =
+          widget.panchayatData?['name'] ??
+          widget.existingEvent?.createdBy ??
+          FirebaseAuth.instance.currentUser?.displayName ??
+          'Panchayat Member';
+      final memberEmail =
+          widget.panchayatData?['email'] ??
+          widget.existingEvent?.createdByEmail ??
+          FirebaseAuth.instance.currentUser?.email ??
+          'admin@chatur.com';
 
       final event = EventModel(
         id: widget.existingEvent?.id ?? '',
@@ -283,9 +283,10 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
         createdByEmail: memberEmail,
         eventDate: _selectedDate!,
         location: _selectedLocation, // Can be null
-        locationName: _locationNameController.text.trim().isEmpty
-            ? null
-            : _locationNameController.text.trim(),
+        locationName:
+            _locationNameController.text.trim().isEmpty
+                ? null
+                : _locationNameController.text.trim(),
         createdAt: widget.existingEvent?.createdAt ?? DateTime.now(),
         likes: widget.existingEvent?.likes ?? 0,
         likedBy: widget.existingEvent?.likedBy ?? [],
@@ -427,25 +428,24 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
       ),
       child: Column(
         children: [
-          if (_selectedImage != null ||
-              widget.existingEvent?.imageUrl != null)
+          if (_selectedImage != null || widget.existingEvent?.imageUrl != null)
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               child: Stack(
                 children: [
                   _selectedImage != null
                       ? Image.file(
-                          _selectedImage!,
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
+                        _selectedImage!,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
                       : Image.network(
-                          widget.existingEvent!.imageUrl!,
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                        widget.existingEvent!.imageUrl!,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                   Positioned(
                     top: 10,
                     right: 10,
@@ -457,8 +457,11 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
                         borderRadius: BorderRadius.circular(30),
                         child: Padding(
                           padding: EdgeInsets.all(8),
-                          child: Icon(Icons.delete_outline_rounded,
-                              color: Colors.white, size: 20),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -470,10 +473,11 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
             onTap: _showImageSourceDialog,
             borderRadius: BorderRadius.vertical(
               bottom: Radius.circular(20),
-              top: _selectedImage != null ||
-                      widget.existingEvent?.imageUrl != null
-                  ? Radius.zero
-                  : Radius.circular(20),
+              top:
+                  _selectedImage != null ||
+                          widget.existingEvent?.imageUrl != null
+                      ? Radius.zero
+                      : Radius.circular(20),
             ),
             child: Container(
               padding: EdgeInsets.symmetric(vertical: 20),
@@ -554,7 +558,10 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
             hint: 'Select date',
             readOnly: true,
             onTap: _pickDate,
-            suffixIcon: Icon(Icons.arrow_drop_down_rounded, color: Colors.deepPurple),
+            suffixIcon: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: Colors.deepPurple,
+            ),
           ),
           SizedBox(height: 20),
           _buildTextField(
@@ -636,24 +643,29 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _selectedLocation != null
-              ? Colors.deepPurple.withOpacity(0.1)
-              : Colors.grey[50],
+          color:
+              _selectedLocation != null
+                  ? Colors.deepPurple.withOpacity(0.1)
+                  : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _selectedLocation != null
-                ? Colors.deepPurple
-                : Colors.grey[300]!,
+            color:
+                _selectedLocation != null
+                    ? Colors.deepPurple
+                    : Colors.grey[300]!,
             width: 1.5,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              _selectedLocation != null ? Icons.check_circle : Icons.map_rounded,
-              color: _selectedLocation != null
-                  ? Colors.deepPurple
-                  : Colors.grey[600],
+              _selectedLocation != null
+                  ? Icons.check_circle
+                  : Icons.map_rounded,
+              color:
+                  _selectedLocation != null
+                      ? Colors.deepPurple
+                      : Colors.grey[600],
             ),
             SizedBox(width: 12),
             Expanded(
@@ -663,12 +675,14 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
                     : 'Pick location on map (Optional)',
                 style: TextStyle(
                   fontSize: 15,
-                  color: _selectedLocation != null
-                      ? Colors.deepPurple
-                      : Colors.grey[600],
-                  fontWeight: _selectedLocation != null
-                      ? FontWeight.w600
-                      : FontWeight.normal,
+                  color:
+                      _selectedLocation != null
+                          ? Colors.deepPurple
+                          : Colors.grey[600],
+                  fontWeight:
+                      _selectedLocation != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                 ),
               ),
             ),
@@ -706,39 +720,40 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
           onTap: _isUploading ? null : _saveEvent,
           borderRadius: BorderRadius.circular(16),
           child: Center(
-            child: _isUploading
-                ? SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        widget.existingEvent != null
-                            ? Icons.update_rounded
-                            : Icons.save_rounded,
+            child:
+                _isUploading
+                    ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
                         color: Colors.white,
-                        size: 24,
+                        strokeWidth: 3,
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        widget.existingEvent != null
-                            ? "Update Event"
-                            : "Create Event",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    )
+                    : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          widget.existingEvent != null
+                              ? Icons.update_rounded
+                              : Icons.save_rounded,
                           color: Colors.white,
-                          letterSpacing: 0.5,
+                          size: 24,
                         ),
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 12),
+                        Text(
+                          widget.existingEvent != null
+                              ? "Update Event"
+                              : "Create Event",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
           ),
         ),
       ),
@@ -753,7 +768,7 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
 class LocationPickerScreen extends StatefulWidget {
   final GeoPoint? initialLocation;
 
-  const LocationPickerScreen({Key? key, this.initialLocation}) : super(key: key);
+  const LocationPickerScreen({super.key, this.initialLocation});
 
   @override
   _LocationPickerScreenState createState() => _LocationPickerScreenState();
@@ -825,10 +840,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -948,13 +960,19 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       decoration: InputDecoration(
                         labelText: 'Location Name',
                         hintText: 'e.g., Village Community Hall',
-                        prefixIcon: Icon(Icons.location_on, color: Colors.deepPurple),
+                        prefixIcon: Icon(
+                          Icons.location_on,
+                          color: Colors.deepPurple,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -968,7 +986,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue[700],
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1009,10 +1031,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     Center(
                       child: Text(
                         'Tap anywhere on the map to select location',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ),
                   ],

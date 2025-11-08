@@ -6,7 +6,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
-import 'dart:math' as math;
 
 // Enhanced Color Theme with Gradients
 class AppColors {
@@ -21,19 +20,19 @@ class AppColors {
   static const Color success = Color(0xFF00C896);
   static const Color warning = Color(0xFFFFAB00);
   static const Color danger = Color(0xFFFF5252);
- 
+
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFF6C63FF), Color(0xFF5548E0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
- 
+
   static const LinearGradient accentGradient = LinearGradient(
     colors: [Color(0xFFFF6584), Color(0xFFFF8A80)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
- 
+
   static const LinearGradient successGradient = LinearGradient(
     colors: [Color(0xFF00C896), Color(0xFF00E5A0)],
     begin: Alignment.topLeft,
@@ -65,26 +64,31 @@ class SkillPost {
   final bool verified;
 
   SkillPost.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc)
-      : id = doc.id,
-        userId = doc.data()?['userId'] ?? '',
-        title = doc.data()?['skillTitle'] ?? 'Service',
-        category = doc.data()?['category'] ?? 'General',
-        description = doc.data()?['description'] ?? '',
-        flatPrice = doc.data()?['flatPrice'] as int?,
-        perKmPrice = doc.data()?['perKmPrice'] as int?,
-        imageUrls = (doc.data()?['images'] is List) ? List<String>.from(doc.data()!['images']) : [],
-        address = doc.data()?['address'] ?? '',
-        coordinates = doc.data()?['coordinates'] ?? const GeoPoint(0, 0),
-        serviceRadiusMeters = (doc.data()?['serviceRadiusMeters'] ?? 5000).toDouble(),
-        createdAt = (doc.data()?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        rating = (doc.data()?['rating'] ?? 0.0).toDouble(),
-        reviewCount = doc.data()?['reviewCount'] ?? 0,
-        viewCount = doc.data()?['viewCount'] ?? 0,
-        bookingCount = doc.data()?['bookingCount'] ?? 0,
-        status = doc.data()?['status'] ?? 'active',
-        availability = doc.data()?['availability'] as Map<String, dynamic>?,
-        profile = doc.data()?['profile'] as Map<String, dynamic>?,
-        verified = doc.data()?['verified'] ?? false;
+    : id = doc.id,
+      userId = doc.data()?['userId'] ?? '',
+      title = doc.data()?['skillTitle'] ?? 'Service',
+      category = doc.data()?['category'] ?? 'General',
+      description = doc.data()?['description'] ?? '',
+      flatPrice = doc.data()?['flatPrice'] as int?,
+      perKmPrice = doc.data()?['perKmPrice'] as int?,
+      imageUrls =
+          (doc.data()?['images'] is List)
+              ? List<String>.from(doc.data()!['images'])
+              : [],
+      address = doc.data()?['address'] ?? '',
+      coordinates = doc.data()?['coordinates'] ?? const GeoPoint(0, 0),
+      serviceRadiusMeters =
+          (doc.data()?['serviceRadiusMeters'] ?? 5000).toDouble(),
+      createdAt =
+          (doc.data()?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      rating = (doc.data()?['rating'] ?? 0.0).toDouble(),
+      reviewCount = doc.data()?['reviewCount'] ?? 0,
+      viewCount = doc.data()?['viewCount'] ?? 0,
+      bookingCount = doc.data()?['bookingCount'] ?? 0,
+      status = doc.data()?['status'] ?? 'active',
+      availability = doc.data()?['availability'] as Map<String, dynamic>?,
+      profile = doc.data()?['profile'] as Map<String, dynamic>?,
+      verified = doc.data()?['verified'] ?? false;
 
   String get priceDisplay {
     if (flatPrice != null && flatPrice! > 0) return '₹$flatPrice';
@@ -105,27 +109,27 @@ class SkillPost {
   bool get isVerified => verified || (rating >= 4.5 && reviewCount >= 10);
 
   Map<String, dynamic> toMap() => {
-        'skillId': id,
-        'skillTitle': title,
-        'category': category,
-        'description': description,
-        'flatPrice': flatPrice,
-        'perKmPrice': perKmPrice,
-        'images': imageUrls,
-        'address': address,
-        'coordinates': coordinates,
-        'serviceRadiusMeters': serviceRadiusMeters,
-        'createdAt': Timestamp.fromDate(createdAt),
-        'rating': rating,
-        'reviewCount': reviewCount,
-        'viewCount': viewCount,
-        'bookingCount': bookingCount,
-        'userId': userId,
-        'status': status,
-        'availability': availability,
-        'profile': profile,
-        'verified': verified,
-      };
+    'skillId': id,
+    'skillTitle': title,
+    'category': category,
+    'description': description,
+    'flatPrice': flatPrice,
+    'perKmPrice': perKmPrice,
+    'images': imageUrls,
+    'address': address,
+    'coordinates': coordinates,
+    'serviceRadiusMeters': serviceRadiusMeters,
+    'createdAt': Timestamp.fromDate(createdAt),
+    'rating': rating,
+    'reviewCount': reviewCount,
+    'viewCount': viewCount,
+    'bookingCount': bookingCount,
+    'userId': userId,
+    'status': status,
+    'availability': availability,
+    'profile': profile,
+    'verified': verified,
+  };
 }
 
 // Main Skills Screen with Enhanced UI
@@ -142,14 +146,14 @@ class _SkillsScreenState extends State<SkillsScreen>
   late AnimationController _fabAnimController;
   late Animation<double> _headerSlideAnim;
   late Animation<double> _fabScaleAnim;
- 
+
   String _searchQuery = '';
   String _selectedCategory = 'All';
   String _sortBy = 'recent';
   RangeValues _priceRange = const RangeValues(0, 5000);
   double _maxDistance = 50;
   bool _showVerifiedOnly = false;
- 
+
   final Set<String> _savedSkillIds = {};
   LatLng? _userLocation;
   Timer? _searchDebounce;
@@ -157,9 +161,21 @@ class _SkillsScreenState extends State<SkillsScreen>
   bool _isSearchFocused = false;
 
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'All', 'icon': Icons.grid_view_rounded, 'color': AppColors.primary},
-    {'name': 'Carpenter', 'icon': Icons.carpenter_outlined, 'color': Color(0xFFFF6B6B)},
-    {'name': 'Electrician', 'icon': Icons.electric_bolt, 'color': Color(0xFFFFD93D)},
+    {
+      'name': 'All',
+      'icon': Icons.grid_view_rounded,
+      'color': AppColors.primary,
+    },
+    {
+      'name': 'Carpenter',
+      'icon': Icons.carpenter_outlined,
+      'color': Color(0xFFFF6B6B),
+    },
+    {
+      'name': 'Electrician',
+      'icon': Icons.electric_bolt,
+      'color': Color(0xFFFFD93D),
+    },
     {'name': 'Plumber', 'icon': Icons.plumbing, 'color': Color(0xFF4ECDC4)},
     {'name': 'Cook', 'icon': Icons.restaurant, 'color': Color(0xFFFF6584)},
     {'name': 'Painter', 'icon': Icons.palette, 'color': Color(0xFF95E1D3)},
@@ -181,19 +197,22 @@ class _SkillsScreenState extends State<SkillsScreen>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-   
+
     _headerSlideAnim = Tween<double>(begin: -100, end: 0).animate(
-      CurvedAnimation(parent: _headerAnimController, curve: Curves.easeOutCubic),
+      CurvedAnimation(
+        parent: _headerAnimController,
+        curve: Curves.easeOutCubic,
+      ),
     );
     _fabScaleAnim = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _fabAnimController, curve: Curves.elasticOut),
     );
-   
+
     _headerAnimController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
       _fabAnimController.forward();
     });
-   
+
     _loadSavedSkills();
     _getUserLocation();
   }
@@ -223,7 +242,8 @@ class _SkillsScreenState extends State<SkillsScreen>
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         setState(() {
           _userLocation = const LatLng(12.9716, 77.5946);
           _isLoadingLocation = false;
@@ -249,11 +269,12 @@ class _SkillsScreenState extends State<SkillsScreen>
     if (user == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('savedSkills')
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('savedSkills')
+              .get();
 
       setState(() {
         _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id));
@@ -280,11 +301,19 @@ class _SkillsScreenState extends State<SkillsScreen>
       if (_savedSkillIds.contains(skill.id)) {
         await docRef.delete();
         setState(() => _savedSkillIds.remove(skill.id));
-        _showModernSnackBar('Removed from saved', AppColors.warning, Icons.bookmark_remove);
+        _showModernSnackBar(
+          'Removed from saved',
+          AppColors.warning,
+          Icons.bookmark_remove,
+        );
       } else {
         await docRef.set(skill.toMap());
         setState(() => _savedSkillIds.add(skill.id));
-        _showModernSnackBar('Saved successfully', AppColors.success, Icons.bookmark_added);
+        _showModernSnackBar(
+          'Saved successfully',
+          AppColors.success,
+          Icons.bookmark_added,
+        );
       }
     } catch (e) {
       _showModernSnackBar('Error: $e', AppColors.danger, Icons.error);
@@ -293,7 +322,11 @@ class _SkillsScreenState extends State<SkillsScreen>
 
   Future<void> _makeCall(String? phoneNumber, String skillTitle) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
-      _showModernSnackBar('Phone number not available', AppColors.danger, Icons.phone_disabled);
+      _showModernSnackBar(
+        'Phone number not available',
+        AppColors.danger,
+        Icons.phone_disabled,
+      );
       return;
     }
 
@@ -309,7 +342,11 @@ class _SkillsScreenState extends State<SkillsScreen>
 
   Future<void> _openWhatsApp(String? phoneNumber, String skillTitle) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
-      _showModernSnackBar('Phone number not available', AppColors.danger, Icons.phone_disabled);
+      _showModernSnackBar(
+        'Phone number not available',
+        AppColors.danger,
+        Icons.phone_disabled,
+      );
       return;
     }
 
@@ -318,19 +355,28 @@ class _SkillsScreenState extends State<SkillsScreen>
       cleanNumber = '+91$cleanNumber';
     }
 
-    final message = 'Hi! I found your $skillTitle service on CHATUR. I would like to know more about it.';
+    final message =
+        'Hi! I found your $skillTitle service on CHATUR. I would like to know more about it.';
     final Uri whatsappUri = Uri.parse(
-      'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}'
+      'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
     );
 
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
       } else {
-        _showModernSnackBar('WhatsApp not installed', AppColors.danger, Icons.error);
+        _showModernSnackBar(
+          'WhatsApp not installed',
+          AppColors.danger,
+          Icons.error,
+        );
       }
     } catch (e) {
-      _showModernSnackBar('Cannot open WhatsApp', AppColors.danger, Icons.error);
+      _showModernSnackBar(
+        'Cannot open WhatsApp',
+        AppColors.danger,
+        Icons.error,
+      );
     }
   }
 
@@ -342,45 +388,67 @@ class _SkillsScreenState extends State<SkillsScreen>
   }
 
   List<SkillPost> _filterAndSortSkills(List<SkillPost> skills) {
-    var filtered = skills.where((skill) {
-      final matchesSearch = _searchQuery.isEmpty ||
-          skill.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          skill.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          skill.description.toLowerCase().contains(_searchQuery.toLowerCase());
+    var filtered =
+        skills.where((skill) {
+          final matchesSearch =
+              _searchQuery.isEmpty ||
+              skill.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              skill.category.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              skill.description.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              );
 
-      final matchesCategory = _selectedCategory == 'All' || skill.category == _selectedCategory;
-      final price = skill.flatPrice ?? skill.perKmPrice ?? 0;
-      final matchesPrice = price == 0 || (price >= _priceRange.start && price <= _priceRange.end);
+          final matchesCategory =
+              _selectedCategory == 'All' || skill.category == _selectedCategory;
+          final price = skill.flatPrice ?? skill.perKmPrice ?? 0;
+          final matchesPrice =
+              price == 0 ||
+              (price >= _priceRange.start && price <= _priceRange.end);
 
-      bool matchesDistance = true;
-      if (_userLocation != null && !_isLoadingLocation && _maxDistance < 100) {
-        try {
-          final distance = const Distance().as(
-            LengthUnit.Kilometer,
-            _userLocation!,
-            LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
-          );
-          matchesDistance = distance <= _maxDistance;
-        } catch (e) {
-          matchesDistance = true;
-        }
-      }
+          bool matchesDistance = true;
+          if (_userLocation != null &&
+              !_isLoadingLocation &&
+              _maxDistance < 100) {
+            try {
+              final distance = const Distance().as(
+                LengthUnit.Kilometer,
+                _userLocation!,
+                LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
+              );
+              matchesDistance = distance <= _maxDistance;
+            } catch (e) {
+              matchesDistance = true;
+            }
+          }
 
-      final matchesVerified = !_showVerifiedOnly || skill.isVerified;
-      final isActive = skill.status == 'active';
+          final matchesVerified = !_showVerifiedOnly || skill.isVerified;
+          final isActive = skill.status == 'active';
 
-      return matchesSearch && matchesCategory && matchesPrice && matchesDistance && matchesVerified && isActive;
-    }).toList();
+          return matchesSearch &&
+              matchesCategory &&
+              matchesPrice &&
+              matchesDistance &&
+              matchesVerified &&
+              isActive;
+        }).toList();
 
     filtered.sort((a, b) {
       switch (_sortBy) {
         case 'nearby':
           if (_userLocation == null) return 0;
           try {
-            final distA = const Distance().as(LengthUnit.Kilometer, _userLocation!,
-                LatLng(a.coordinates.latitude, a.coordinates.longitude));
-            final distB = const Distance().as(LengthUnit.Kilometer, _userLocation!,
-                LatLng(b.coordinates.latitude, b.coordinates.longitude));
+            final distA = const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(a.coordinates.latitude, a.coordinates.longitude),
+            );
+            final distB = const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(b.coordinates.latitude, b.coordinates.longitude),
+            );
             return distA.compareTo(distB);
           } catch (e) {
             return 0;
@@ -421,11 +489,12 @@ class _SkillsScreenState extends State<SkillsScreen>
       Navigator.push(
         context,
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => SkillDetailScreen(
-            skillData: skill.toMap(),
-            skillId: skill.id,
-            userId: skill.userId,
-          ),
+          pageBuilder:
+              (context, animation, secondaryAnimation) => SkillDetailScreen(
+                skillData: skill.toMap(),
+                skillId: skill.id,
+                userId: skill.userId,
+              ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -433,10 +502,12 @@ class _SkillsScreenState extends State<SkillsScreen>
                 position: Tween<Offset>(
                   begin: const Offset(0, 0.1),
                   end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
                 child: child,
               ),
             );
@@ -449,34 +520,41 @@ class _SkillsScreenState extends State<SkillsScreen>
   void _showLoginPrompt() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
-            Icon(Icons.lock_outline, color: AppColors.primary),
-            SizedBox(width: 12),
-            Text('Login Required'),
-          ],
-        ),
-        content: const Text('Please login to save skills and book services.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/login');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text('Login'),
+            title: Row(
+              children: const [
+                Icon(Icons.lock_outline, color: AppColors.primary),
+                SizedBox(width: 12),
+                Text('Login Required'),
+              ],
+            ),
+            content: const Text(
+              'Please login to save skills and book services.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/login');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Login'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -488,12 +566,19 @@ class _SkillsScreenState extends State<SkillsScreen>
             children: [
               Icon(icon, color: Colors.white),
               const SizedBox(width: 12),
-              Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.w600))),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
             ],
           ),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
           duration: const Duration(seconds: 2),
         ),
@@ -550,7 +635,11 @@ class _SkillsScreenState extends State<SkillsScreen>
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.miscellaneous_services_rounded, color: Colors.white, size: 28),
+                  child: const Icon(
+                    Icons.miscellaneous_services_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -597,7 +686,11 @@ class _SkillsScreenState extends State<SkillsScreen>
     );
   }
 
-  Widget _buildHeaderAction({required IconData icon, int? badge, required VoidCallback onTap}) {
+  Widget _buildHeaderAction({
+    required IconData icon,
+    int? badge,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -606,13 +699,14 @@ class _SkillsScreenState extends State<SkillsScreen>
           color: Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: badge != null && badge > 0
-            ? Badge(
-                label: Text('$badge'),
-                backgroundColor: AppColors.accent,
-                child: Icon(icon, color: Colors.white, size: 22),
-              )
-            : Icon(icon, color: Colors.white, size: 22),
+        child:
+            badge != null && badge > 0
+                ? Badge(
+                  label: Text('$badge'),
+                  backgroundColor: AppColors.accent,
+                  child: Icon(icon, color: Colors.white, size: 22),
+                )
+                : Icon(icon, color: Colors.white, size: 22),
       ),
     );
   }
@@ -644,14 +738,21 @@ class _SkillsScreenState extends State<SkillsScreen>
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+            child: const Icon(
+              Icons.search_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildSearchAction(
                 icon: Icons.tune_rounded,
-                hasBadge: _maxDistance != 50 || _priceRange != const RangeValues(0, 5000) || _showVerifiedOnly,
+                hasBadge:
+                    _maxDistance != 50 ||
+                    _priceRange != const RangeValues(0, 5000) ||
+                    _showVerifiedOnly,
                 onTap: _showModernFilterSheet,
               ),
               _buildSearchAction(
@@ -667,14 +768,21 @@ class _SkillsScreenState extends State<SkillsScreen>
     );
   }
 
-  Widget _buildSearchAction({required IconData icon, bool hasBadge = false, required VoidCallback onTap}) {
+  Widget _buildSearchAction({
+    required IconData icon,
+    bool hasBadge = false,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: hasBadge ? AppColors.primary.withOpacity(0.1) : AppColors.background,
+          color:
+              hasBadge
+                  ? AppColors.primary.withOpacity(0.1)
+                  : AppColors.background,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
@@ -697,28 +805,32 @@ class _SkillsScreenState extends State<SkillsScreen>
         itemBuilder: (context, index) {
           final category = _categories[index];
           final isSelected = _selectedCategory == category['name'];
-         
+
           return TweenAnimationBuilder(
             duration: Duration(milliseconds: 300 + (index * 50)),
             tween: Tween<double>(begin: 0, end: 1),
             builder: (context, double value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
+              return Transform.scale(scale: value, child: child);
             },
             child: GestureDetector(
-              onTap: () => setState(() => _selectedCategory = category['name'] as String),
+              onTap:
+                  () => setState(
+                    () => _selectedCategory = category['name'] as String,
+                  ),
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppColors.primaryGradient : null,
                   color: isSelected ? null : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: (isSelected ? AppColors.primary : Colors.black).withOpacity(0.15),
+                      color: (isSelected ? AppColors.primary : Colors.black)
+                          .withOpacity(0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -730,14 +842,18 @@ class _SkillsScreenState extends State<SkillsScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.white.withOpacity(0.2)
-                            : (category['color'] as Color).withOpacity(0.1),
+                        color:
+                            isSelected
+                                ? Colors.white.withOpacity(0.2)
+                                : (category['color'] as Color).withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         category['icon'] as IconData,
-                        color: isSelected ? Colors.white : category['color'] as Color,
+                        color:
+                            isSelected
+                                ? Colors.white
+                                : category['color'] as Color,
                         size: 24,
                       ),
                     ),
@@ -773,20 +889,24 @@ class _SkillsScreenState extends State<SkillsScreen>
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildModernEmptyState('No services available', 'Be the first to post a service!');
+          return _buildModernEmptyState(
+            'No services available',
+            'Be the first to post a service!',
+          );
         }
 
         try {
-          var skills = snapshot.data!.docs
-              .map((doc) {
-                try {
-                  return SkillPost.fromFirestore(doc);
-                } catch (e) {
-                  return null;
-                }
-              })
-              .whereType<SkillPost>()
-              .toList();
+          var skills =
+              snapshot.data!.docs
+                  .map((doc) {
+                    try {
+                      return SkillPost.fromFirestore(doc);
+                    } catch (e) {
+                      return null;
+                    }
+                  })
+                  .whereType<SkillPost>()
+                  .toList();
 
           final filteredSkills = _filterAndSortSkills(skills);
 
@@ -815,10 +935,7 @@ class _SkillsScreenState extends State<SkillsScreen>
                   builder: (context, double value, child) {
                     return Transform.translate(
                       offset: Offset(0, 50 * (1 - value)),
-                      child: Opacity(
-                        opacity: value,
-                        child: child,
-                      ),
+                      child: Opacity(opacity: value, child: child),
                     );
                   },
                   child: _buildModernSkillCard(filteredSkills[index]),
@@ -835,13 +952,14 @@ class _SkillsScreenState extends State<SkillsScreen>
 
   Widget _buildModernSkillCard(SkillPost skill) {
     final isSaved = _savedSkillIds.contains(skill.id);
-    final distance = _userLocation != null
-        ? const Distance().as(
-            LengthUnit.Kilometer,
-            _userLocation!,
-            LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
-          )
-        : null;
+    final distance =
+        _userLocation != null
+            ? const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
+            )
+            : null;
 
     return GestureDetector(
       onTap: () => _openSkillDetails(skill),
@@ -867,64 +985,96 @@ class _SkillsScreenState extends State<SkillsScreen>
                 Hero(
                   tag: 'skill_${skill.id}',
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: skill.imageUrls.isNotEmpty
-                        ? Image.network(
-                            skill.imageUrls.first,
-                            height: 220,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                height: 220,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [Colors.grey.shade200, Colors.grey.shade100],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                    child:
+                        skill.imageUrls.isNotEmpty
+                            ? Image.network(
+                              skill.imageUrls.first,
+                              height: 220,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  height: 220,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.grey.shade200,
+                                        Colors.grey.shade100,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
                                   ),
-                                ),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                        : null,
-                                    color: AppColors.primary,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (_, __, ___) => Container(
+                                );
+                              },
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    height: 220,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.grey.shade200,
+                                          Colors.grey.shade100,
+                                        ],
+                                      ),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.broken_image_outlined,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                            )
+                            : Container(
                               height: 220,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.grey.shade200, Colors.grey.shade100],
+                                  colors: [
+                                    AppColors.primary.withOpacity(0.1),
+                                    AppColors.secondary.withOpacity(0.1),
+                                  ],
                                 ),
                               ),
                               child: const Center(
-                                child: Icon(Icons.broken_image_outlined, size: 60, color: Colors.grey),
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ),
-                          )
-                        : Container(
-                            height: 220,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [AppColors.primary.withOpacity(0.1), AppColors.secondary.withOpacity(0.1)],
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.image_outlined, size: 60, color: Colors.grey),
-                            ),
-                          ),
                   ),
                 ),
                 // Gradient Overlay
                 Container(
                   height: 220,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -947,7 +1097,10 @@ class _SkillsScreenState extends State<SkillsScreen>
                         children: [
                           if (skill.isVerified)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: AppColors.successGradient,
                                 borderRadius: BorderRadius.circular(20),
@@ -962,7 +1115,11 @@ class _SkillsScreenState extends State<SkillsScreen>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
-                                  Icon(Icons.verified_rounded, color: Colors.white, size: 16),
+                                  Icon(
+                                    Icons.verified_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     'Verified',
@@ -978,16 +1135,25 @@ class _SkillsScreenState extends State<SkillsScreen>
                           if (skill.rating > 0) ...[
                             if (skill.isVerified) const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.6),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    color: Colors.amber,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     skill.rating.toStringAsFixed(1),
@@ -1001,7 +1167,10 @@ class _SkillsScreenState extends State<SkillsScreen>
                                     const SizedBox(width: 4),
                                     Text(
                                       '(${skill.reviewCount})',
-                                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -1026,8 +1195,13 @@ class _SkillsScreenState extends State<SkillsScreen>
                             ],
                           ),
                           child: Icon(
-                            isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            color: isSaved ? AppColors.danger : AppColors.textLight,
+                            isSaved
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color:
+                                isSaved
+                                    ? AppColors.danger
+                                    : AppColors.textLight,
                             size: 22,
                           ),
                         ),
@@ -1050,10 +1224,7 @@ class _SkillsScreenState extends State<SkillsScreen>
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           shadows: [
-                            Shadow(
-                              color: Colors.black54,
-                              blurRadius: 8,
-                            ),
+                            Shadow(color: Colors.black54, blurRadius: 8),
                           ],
                         ),
                         maxLines: 1,
@@ -1063,7 +1234,10 @@ class _SkillsScreenState extends State<SkillsScreen>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(12),
@@ -1079,7 +1253,10 @@ class _SkillsScreenState extends State<SkillsScreen>
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               gradient: AppColors.accentGradient,
                               borderRadius: BorderRadius.circular(12),
@@ -1129,7 +1306,10 @@ class _SkillsScreenState extends State<SkillsScreen>
                     children: [
                       _buildStatChip(
                         icon: Icons.location_on_rounded,
-                        text: distance != null ? '${distance.toStringAsFixed(1)} km' : skill.address.split(',').first,
+                        text:
+                            distance != null
+                                ? '${distance.toStringAsFixed(1)} km'
+                                : skill.address.split(',').first,
                         color: AppColors.secondary,
                       ),
                       const SizedBox(width: 8),
@@ -1159,9 +1339,13 @@ class _SkillsScreenState extends State<SkillsScreen>
                           icon: Icons.phone_rounded,
                           label: 'Call',
                           gradient: LinearGradient(
-                            colors: [AppColors.secondary, AppColors.secondary.withOpacity(0.7)],
+                            colors: [
+                              AppColors.secondary,
+                              AppColors.secondary.withOpacity(0.7),
+                            ],
                           ),
-                          onTap: () => _makeCall(skill.phoneNumber, skill.title),
+                          onTap:
+                              () => _makeCall(skill.phoneNumber, skill.title),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -1170,7 +1354,9 @@ class _SkillsScreenState extends State<SkillsScreen>
                           icon: Icons.chat_rounded,
                           label: 'Chat',
                           gradient: AppColors.successGradient,
-                          onTap: () => _openWhatsApp(skill.phoneNumber, skill.title),
+                          onTap:
+                              () =>
+                                  _openWhatsApp(skill.phoneNumber, skill.title),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -1193,7 +1379,11 @@ class _SkillsScreenState extends State<SkillsScreen>
     );
   }
 
-  Widget _buildStatChip({required IconData icon, required String text, required Color color}) {
+  Widget _buildStatChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -1272,10 +1462,7 @@ class _SkillsScreenState extends State<SkillsScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
             ],
           ),
           child: Column(
@@ -1288,7 +1475,9 @@ class _SkillsScreenState extends State<SkillsScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                 ),
               ),
               Padding(
@@ -1329,11 +1518,18 @@ class _SkillsScreenState extends State<SkillsScreen>
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.1), AppColors.secondary.withOpacity(0.1)],
+                colors: [
+                  AppColors.primary.withOpacity(0.1),
+                  AppColors.secondary.withOpacity(0.1),
+                ],
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.search_off_rounded, size: 80, color: AppColors.primary.withOpacity(0.5)),
+            child: Icon(
+              Icons.search_off_rounded,
+              size: 80,
+              color: AppColors.primary.withOpacity(0.5),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -1352,19 +1548,22 @@ class _SkillsScreenState extends State<SkillsScreen>
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () => setState(() {
-              _searchQuery = '';
-              _selectedCategory = 'All';
-              _maxDistance = 50;
-              _priceRange = const RangeValues(0, 5000);
-              _showVerifiedOnly = false;
-            }),
+            onPressed:
+                () => setState(() {
+                  _searchQuery = '';
+                  _selectedCategory = 'All';
+                  _maxDistance = 50;
+                  _priceRange = const RangeValues(0, 5000);
+                  _showVerifiedOnly = false;
+                }),
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Reset Filters'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -1383,7 +1582,11 @@ class _SkillsScreenState extends State<SkillsScreen>
               color: AppColors.danger.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.error_outline_rounded, size: 80, color: AppColors.danger),
+            child: const Icon(
+              Icons.error_outline_rounded,
+              size: 80,
+              color: AppColors.danger,
+            ),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -1407,7 +1610,9 @@ class _SkillsScreenState extends State<SkillsScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -1424,7 +1629,10 @@ class _SkillsScreenState extends State<SkillsScreen>
           if (user == null) {
             _showLoginPrompt();
           } else {
-            Navigator.pushNamed(context, '/SkillPost').then((_) => setState(() {}));
+            Navigator.pushNamed(
+              context,
+              '/SkillPost',
+            ).then((_) => setState(() {}));
           }
         },
         backgroundColor: AppColors.primary,
@@ -1454,25 +1662,26 @@ class _SkillsScreenState extends State<SkillsScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ModernFilterSheet(
-        maxDistance: _maxDistance,
-        priceRange: _priceRange,
-        showVerifiedOnly: _showVerifiedOnly,
-        onApply: (distance, price, verified) {
-          setState(() {
-            _maxDistance = distance;
-            _priceRange = price;
-            _showVerifiedOnly = verified;
-          });
-        },
-        onReset: () {
-          setState(() {
-            _maxDistance = 50;
-            _priceRange = const RangeValues(0, 5000);
-            _showVerifiedOnly = false;
-          });
-        },
-      ),
+      builder:
+          (context) => ModernFilterSheet(
+            maxDistance: _maxDistance,
+            priceRange: _priceRange,
+            showVerifiedOnly: _showVerifiedOnly,
+            onApply: (distance, price, verified) {
+              setState(() {
+                _maxDistance = distance;
+                _priceRange = price;
+                _showVerifiedOnly = verified;
+              });
+            },
+            onReset: () {
+              setState(() {
+                _maxDistance = 50;
+                _priceRange = const RangeValues(0, 5000);
+                _showVerifiedOnly = false;
+              });
+            },
+          ),
     );
   }
 
@@ -1480,84 +1689,121 @@ class _SkillsScreenState extends State<SkillsScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.swap_vert_rounded, color: Colors.white, size: 24),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Sort By',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ],
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 24),
-            ...[
-              {'key': 'recent', 'label': 'Most Recent', 'icon': Icons.access_time_rounded},
-              {'key': 'nearby', 'label': 'Nearest First', 'icon': Icons.location_on_rounded},
-              {'key': 'rating', 'label': 'Highest Rated', 'icon': Icons.star_rounded},
-              {'key': 'popular', 'label': 'Most Popular', 'icon': Icons.trending_up_rounded},
-              {'key': 'price_low', 'label': 'Price: Low to High', 'icon': Icons.arrow_upward_rounded},
-              {'key': 'price_high', 'label': 'Price: High to Low', 'icon': Icons.arrow_downward_rounded},
-            ].map((option) {
-              final isSelected = _sortBy == option['key'];
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _sortBy = option['key'] as String);
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: isSelected ? AppColors.primaryGradient : null,
-                    color: isSelected ? null : AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        option['icon'] as IconData,
-                        color: isSelected ? Colors.white : AppColors.primary,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.swap_vert_rounded,
+                        color: Colors.white,
                         size: 24,
                       ),
-                      const SizedBox(width: 16),
-                      Text(
-                        option['label'] as String,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.text,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Sort By',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const Spacer(),
-                      if (isSelected)
-                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+                const SizedBox(height: 24),
+                ...[
+                  {
+                    'key': 'recent',
+                    'label': 'Most Recent',
+                    'icon': Icons.access_time_rounded,
+                  },
+                  {
+                    'key': 'nearby',
+                    'label': 'Nearest First',
+                    'icon': Icons.location_on_rounded,
+                  },
+                  {
+                    'key': 'rating',
+                    'label': 'Highest Rated',
+                    'icon': Icons.star_rounded,
+                  },
+                  {
+                    'key': 'popular',
+                    'label': 'Most Popular',
+                    'icon': Icons.trending_up_rounded,
+                  },
+                  {
+                    'key': 'price_low',
+                    'label': 'Price: Low to High',
+                    'icon': Icons.arrow_upward_rounded,
+                  },
+                  {
+                    'key': 'price_high',
+                    'label': 'Price: High to Low',
+                    'icon': Icons.arrow_downward_rounded,
+                  },
+                ].map((option) {
+                  final isSelected = _sortBy == option['key'];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _sortBy = option['key'] as String);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: isSelected ? AppColors.primaryGradient : null,
+                        color: isSelected ? null : AppColors.background,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            option['icon'] as IconData,
+                            color:
+                                isSelected ? Colors.white : AppColors.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            option['label'] as String,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppColors.text,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
     );
   }
 }
@@ -1608,160 +1854,191 @@ class _ModernFilterSheetState extends State<ModernFilterSheet> {
         minChildSize: 0.5,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
+        builder:
+            (context, scrollController) => SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.tune_rounded, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('Filters', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: () {
-                      widget.onReset();
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.restart_alt_rounded),
-                    label: const Text('Reset'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              _buildFilterSection(
-                title: 'Max Distance',
-                subtitle: '${_maxDistance.toInt()} km away',
-                child: Slider(
-                  value: _maxDistance,
-                  min: 1,
-                  max: 100,
-                  divisions: 99,
-                  activeColor: AppColors.primary,
-                  inactiveColor: AppColors.primary.withOpacity(0.2),
-                  onChanged: (val) => setState(() => _maxDistance = val),
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildFilterSection(
-                title: 'Price Range',
-                subtitle: '₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}',
-                child: RangeSlider(
-                  values: _priceRange,
-                  min: 0,
-                  max: 10000,
-                  divisions: 100,
-                  activeColor: AppColors.primary,
-                  inactiveColor: AppColors.primary.withOpacity(0.2),
-                  onChanged: (val) => setState(() => _priceRange = val),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: _showVerifiedOnly ? AppColors.successGradient : null,
-                  color: _showVerifiedOnly ? null : AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.verified_rounded,
-                      color: _showVerifiedOnly ? Colors.white : AppColors.success,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Verified Providers',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: _showVerifiedOnly ? Colors.white : AppColors.text,
-                            ),
-                          ),
-                          Text(
-                            '4.5+ stars & 10+ reviews',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _showVerifiedOnly ? Colors.white70 : AppColors.textLight,
-                            ),
-                          ),
-                        ],
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    Switch(
-                      value: _showVerifiedOnly,
-                      activeColor: Colors.white,
-                      activeTrackColor: Colors.white.withOpacity(0.5),
-                      inactiveThumbColor: AppColors.success,
-                      inactiveTrackColor: AppColors.success.withOpacity(0.3),
-                      onChanged: (val) => setState(() => _showVerifiedOnly = val),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    widget.onApply(_maxDistance, _priceRange, _showVerifiedOnly);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Ink(
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.tune_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Filters',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () {
+                          widget.onReset();
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.restart_alt_rounded),
+                        label: const Text('Reset'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  _buildFilterSection(
+                    title: 'Max Distance',
+                    subtitle: '${_maxDistance.toInt()} km away',
+                    child: Slider(
+                      value: _maxDistance,
+                      min: 1,
+                      max: 100,
+                      divisions: 99,
+                      activeColor: AppColors.primary,
+                      inactiveColor: AppColors.primary.withOpacity(0.2),
+                      onChanged: (val) => setState(() => _maxDistance = val),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFilterSection(
+                    title: 'Price Range',
+                    subtitle:
+                        '₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}',
+                    child: RangeSlider(
+                      values: _priceRange,
+                      min: 0,
+                      max: 10000,
+                      divisions: 100,
+                      activeColor: AppColors.primary,
+                      inactiveColor: AppColors.primary.withOpacity(0.2),
+                      onChanged: (val) => setState(() => _priceRange = val),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      gradient:
+                          _showVerifiedOnly ? AppColors.successGradient : null,
+                      color: _showVerifiedOnly ? null : AppColors.background,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Apply Filters',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.verified_rounded,
+                          color:
+                              _showVerifiedOnly
+                                  ? Colors.white
+                                  : AppColors.success,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Verified Providers',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color:
+                                      _showVerifiedOnly
+                                          ? Colors.white
+                                          : AppColors.text,
+                                ),
+                              ),
+                              Text(
+                                '4.5+ stars & 10+ reviews',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color:
+                                      _showVerifiedOnly
+                                          ? Colors.white70
+                                          : AppColors.textLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _showVerifiedOnly,
+                          activeColor: Colors.white,
+                          activeTrackColor: Colors.white.withOpacity(0.5),
+                          inactiveThumbColor: AppColors.success,
+                          inactiveTrackColor: AppColors.success.withOpacity(
+                            0.3,
+                          ),
+                          onChanged:
+                              (val) => setState(() => _showVerifiedOnly = val),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        widget.onApply(
+                          _maxDistance,
+                          _priceRange,
+                          _showVerifiedOnly,
+                        );
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'Apply Filters',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }

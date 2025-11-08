@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
   @override
   _NotificationsScreenState createState() => _NotificationsScreenState();
 }
@@ -59,18 +61,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 _clearOldNotifications();
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'clear_old',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_sweep, color: Colors.red),
-                    SizedBox(width: 10),
-                    Text('Clear old notifications'),
-                  ],
-                ),
-              ),
-            ],
+            itemBuilder:
+                (context) => [
+                  PopupMenuItem(
+                    value: 'clear_old',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_sweep, color: Colors.red),
+                        SizedBox(width: 10),
+                        Text('Clear old notifications'),
+                      ],
+                    ),
+                  ),
+                ],
           ),
         ],
       ),
@@ -150,9 +153,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           color: notification.isRead ? Colors.white : Colors.blue[50],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: notification.isRead
-                ? Colors.grey[300]!
-                : Colors.blue[200]!,
+            color: notification.isRead ? Colors.grey[300]! : Colors.blue[200]!,
             width: 1,
           ),
           boxShadow: [
@@ -170,7 +171,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               if (!notification.isRead) {
                 NotificationService.markAsRead(notification.id);
               }
-              // TODO: Navigate to event details if needed
             },
             borderRadius: BorderRadius.circular(16),
             child: Padding(
@@ -181,40 +181,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   // Icon or Image
                   notification.imageUrl != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: notification.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              width: 60,
-                              height: 60,
-                              color: Colors.grey[300],
-                              child: Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: typeColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(typeIcon, color: typeColor, size: 30),
-                            ),
-                          ),
-                        )
-                      : Container(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: notification.imageUrl!,
                           width: 60,
                           height: 60,
-                          decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(typeIcon, color: typeColor, size: 30),
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[300],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: typeColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  typeIcon,
+                                  color: typeColor,
+                                  size: 30,
+                                ),
+                              ),
                         ),
+                      )
+                      : Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: typeColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(typeIcon, color: typeColor, size: 30),
+                      ),
                   SizedBox(width: 16),
 
                   // Content
@@ -265,8 +273,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.access_time,
-                                size: 14, color: Colors.grey[500]),
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: Colors.grey[500],
+                            ),
                             SizedBox(width: 4),
                             Text(
                               _formatTimestamp(notification.createdAt),
@@ -276,11 +287,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               ),
                             ),
                             SizedBox(width: 16),
-                            Icon(Icons.calendar_today,
-                                size: 14, color: Colors.grey[500]),
+                            Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: Colors.grey[500],
+                            ),
                             SizedBox(width: 4),
                             Text(
-                              DateFormat('MMM dd').format(notification.eventDate),
+                              DateFormat(
+                                'MMM dd',
+                              ).format(notification.eventDate),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[500],
@@ -381,35 +397,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _clearOldNotifications() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.delete_sweep, color: Colors.orange),
-            SizedBox(width: 10),
-            Text('Clear Old Notifications?'),
-          ],
-        ),
-        content: Text(
-            'This will delete notifications older than 30 days. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.delete_sweep, color: Colors.orange),
+                SizedBox(width: 10),
+                Text('Clear Old Notifications?'),
+              ],
+            ),
+            content: Text(
+              'This will delete notifications older than 30 days. Continue?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await NotificationService.deleteOldNotifications();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Old notifications cleared')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text('Clear', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              await NotificationService.deleteOldNotifications();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Old notifications cleared')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Clear', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
     );
   }
 }

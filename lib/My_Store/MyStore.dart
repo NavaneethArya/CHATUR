@@ -12,7 +12,8 @@ class MyStorePage extends StatefulWidget {
   final String storeDescription;
   final File? storeLogo;
 
-  MyStorePage({
+  const MyStorePage({
+    super.key,
     required this.storeName,
     required this.storeDescription,
     this.storeLogo,
@@ -37,42 +38,48 @@ class _MyStorePageState extends State<MyStorePage>
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
-    _fabAnimation =
-        CurvedAnimation(parent: _fabController, curve: Curves.easeInOut);
+    _fabAnimation = CurvedAnimation(
+      parent: _fabController,
+      curve: Curves.easeInOut,
+    );
     _fabController.forward();
 
     print('MyStore initialized with ${_productManager.productCount} products');
 
     _initializeFromFirebase();
-  
-  _fabController = AnimationController(
-    vsync: this,
-    duration: Duration(milliseconds: 300),
-  );
-  _fabAnimation = CurvedAnimation(parent: _fabController, curve: Curves.easeInOut);
-  _fabController.forward();
+
+    _fabController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300),
+    );
+    _fabAnimation = CurvedAnimation(
+      parent: _fabController,
+      curve: Curves.easeInOut,
+    );
+    _fabController.forward();
   }
 
   Future<void> _initializeFromFirebase() async {
-  await _productManager.initializeStore();
-  await _productManager.loadProducts();
-  
-  if (mounted) {
-    setState(() {});
-    _checkStoreCreation();
+    await _productManager.initializeStore();
+    await _productManager.loadProducts();
+
+    if (mounted) {
+      setState(() {});
+      _checkStoreCreation();
+    }
+
+    print('MyStore initialized with ${_productManager.productCount} products');
   }
-  
-  print('MyStore initialized with ${_productManager.productCount} products');
-}
 
   void _navigateToProductDetail(Product product) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => StoreDetailView(
-          product: product,
-          storeData: _productManager.storeData!,
-        ),
+        builder:
+            (context) => StoreDetailView(
+              product: product,
+              storeData: _productManager.storeData!,
+            ),
       ),
     );
   }
@@ -89,51 +96,60 @@ class _MyStorePageState extends State<MyStorePage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.orange, size: 28),
-            SizedBox(width: 10),
-            Expanded(child: Text('No Store Found')),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.store_outlined,
-                size: 60, color: Colors.deepPurple.withOpacity(0.5)),
-            SizedBox(height: 15),
-            Text(
-              'You haven\'t created a store yet!',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 10),
-            Text(
-              'Please create your store first to start adding products and manage your business.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              textAlign: TextAlign.center,
+            title: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.orange, size: 28),
+                SizedBox(width: 10),
+                Expanded(child: Text('No Store Found')),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              minimumSize: Size(double.infinity, 45),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.store_outlined,
+                  size: 60,
+                  color: Colors.deepPurple.withOpacity(0.5),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'You haven\'t created a store yet!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Please create your store first to start adding products and manage your business.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            child: Text('Create Store Now',
-                style: TextStyle(color: Colors.white, fontSize: 16)),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: Size(double.infinity, 45),
+                ),
+                child: Text(
+                  'Create Store Now',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -147,80 +163,81 @@ class _MyStorePageState extends State<MyStorePage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Store Management',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Store Management',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                SizedBox(height: 20),
+                _buildMenuOption(
+                  icon: Icons.edit,
+                  title: 'Edit Store',
+                  subtitle: 'Update store information',
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToEditStore();
+                  },
+                ),
+                Divider(height: 1),
+                _buildMenuOption(
+                  icon: Icons.delete_sweep,
+                  title: 'Clear All Products',
+                  subtitle: 'Remove all products from store',
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showClearProductsDialog();
+                  },
+                ),
+                Divider(height: 1),
+                _buildMenuOption(
+                  icon: Icons.pause_circle_outline,
+                  title: 'Deactivate Store Temporarily',
+                  subtitle: 'Hide store but keep data saved',
+                  color: Colors.amber,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeactivateStoreDialog();
+                  },
+                ),
+                Divider(height: 1),
+                _buildMenuOption(
+                  icon: Icons.delete_forever,
+                  title: 'Delete Store',
+                  subtitle: 'Permanently delete store and all data',
+                  color: Colors.red,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeleteStoreDialog();
+                  },
+                ),
+                SizedBox(height: 10),
+              ],
             ),
-            SizedBox(height: 20),
-            _buildMenuOption(
-              icon: Icons.edit,
-              title: 'Edit Store',
-              subtitle: 'Update store information',
-              color: Colors.blue,
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToEditStore();
-              },
-            ),
-            Divider(height: 1),
-            _buildMenuOption(
-              icon: Icons.delete_sweep,
-              title: 'Clear All Products',
-              subtitle: 'Remove all products from store',
-              color: Colors.orange,
-              onTap: () {
-                Navigator.pop(context);
-                _showClearProductsDialog();
-              },
-            ),
-            Divider(height: 1),
-            _buildMenuOption(
-              icon: Icons.pause_circle_outline,
-              title: 'Deactivate Store Temporarily',
-              subtitle: 'Hide store but keep data saved',
-              color: Colors.amber,
-              onTap: () {
-                Navigator.pop(context);
-                _showDeactivateStoreDialog();
-              },
-            ),
-            Divider(height: 1),
-            _buildMenuOption(
-              icon: Icons.delete_forever,
-              title: 'Delete Store',
-              subtitle: 'Permanently delete store and all data',
-              color: Colors.red,
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteStoreDialog();
-              },
-            ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -242,17 +259,11 @@ class _MyStorePageState extends State<MyStorePage>
       ),
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.grey[600],
-        ),
+        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
       onTap: onTap,
     );
@@ -262,9 +273,8 @@ class _MyStorePageState extends State<MyStorePage>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditStorePage(
-          storeData: _productManager.storeData!,
-        ),
+        builder:
+            (context) => EditStorePage(storeData: _productManager.storeData!),
       ),
     );
 
@@ -292,68 +302,79 @@ class _MyStorePageState extends State<MyStorePage>
   void _showClearProductsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 10),
-            Text('Clear All Products'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.delete_sweep,
-                size: 60, color: Colors.orange.withOpacity(0.5)),
-            SizedBox(height: 15),
-            Text(
-              'Are you sure you want to clear all products?',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 10),
-            Text(
-              'This will remove all ${_productManager.productCount} products from your store. This action cannot be undone.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _productManager.clearAllProducts();
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 10),
-                      Text('All products cleared'),
-                    ],
-                  ),
-                  backgroundColor: Colors.orange,
-                  behavior: SnackBarBehavior.floating,
+            title: Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 28,
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                SizedBox(width: 10),
+                Text('Clear All Products'),
+              ],
             ),
-            child: Text('Clear All', style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.delete_sweep,
+                  size: 60,
+                  color: Colors.orange.withOpacity(0.5),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'Are you sure you want to clear all products?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'This will remove all ${_productManager.productCount} products from your store. This action cannot be undone.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _productManager.clearAllProducts();
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text('All products cleared'),
+                        ],
+                      ),
+                      backgroundColor: Colors.orange,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Clear All', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -362,187 +383,208 @@ class _MyStorePageState extends State<MyStorePage>
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.pause_circle_outline, color: Colors.amber, size: 28),
-            SizedBox(width: 10),
-            Expanded(child: Text('Deactivate Store')),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.store_outlined,
-                size: 60, color: Colors.amber.withOpacity(0.5)),
-            SizedBox(height: 15),
-            Text(
-              'How long do you want to deactivate your store?',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: daysController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Number of days',
-                prefixIcon: Icon(Icons.calendar_today, color: Colors.amber),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
+            title: Row(
+              children: [
+                Icon(Icons.pause_circle_outline, color: Colors.amber, size: 28),
+                SizedBox(width: 10),
+                Expanded(child: Text('Deactivate Store')),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.store_outlined,
+                  size: 60,
+                  color: Colors.amber.withOpacity(0.5),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.amber, width: 2),
+                SizedBox(height: 15),
+                Text(
+                  'How long do you want to deactivate your store?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: daysController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Number of days',
+                    prefixIcon: Icon(Icons.calendar_today, color: Colors.amber),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: Colors.amber, width: 2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Your store will be hidden but all data will be saved securely.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final days = int.tryParse(daysController.text);
+                  if (days == null || days <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter a valid number of days'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final deactivateUntil = DateTime.now().add(
+                    Duration(days: days),
+                  );
+                  _productManager.deactivateStore(deactivateUntil);
+
+                  Navigator.pop(context);
+                  Navigator.pop(context); // Go back to previous screen
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Store deactivated for $days day${days > 1 ? 's' : ''}',
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: Colors.amber,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Deactivate',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Your store will be hidden but all data will be saved securely.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              final days = int.tryParse(daysController.text);
-              if (days == null || days <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Please enter a valid number of days'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              final deactivateUntil = DateTime.now().add(Duration(days: days));
-              _productManager.deactivateStore(deactivateUntil);
-
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to previous screen
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Store deactivated for $days day${days > 1 ? 's' : ''}',
-                        ),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: Colors.amber,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text('Deactivate', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
     );
   }
 
   void _showDeleteStoreDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            SizedBox(width: 10),
-            Text('Delete Store'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.delete_forever,
-                size: 60, color: Colors.red.withOpacity(0.5)),
-            SizedBox(height: 15),
-            Text(
-              'Are you sure you want to delete your store?',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            SizedBox(height: 10),
-            Text(
-              'This will permanently delete your store, all products, and store information. This action cannot be undone.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              textAlign: TextAlign.center,
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+                SizedBox(width: 10),
+                Text('Delete Store'),
+              ],
             ),
-            SizedBox(height: 15),
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Store: ${widget.storeName}\nProducts: ${_productManager.productCount}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red[700],
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.delete_forever,
+                  size: 60,
+                  color: Colors.red.withOpacity(0.5),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _productManager.deleteStore();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to previous screen
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 10),
-                      Text('Store deleted successfully'),
-                    ],
+                SizedBox(height: 15),
+                Text(
+                  'Are you sure you want to delete your store?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'This will permanently delete your store, all products, and store information. This action cannot be undone.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 15),
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
+                  child: Text(
+                    'Store: ${widget.storeName}\nProducts: ${_productManager.productCount}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red[700],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+              ],
             ),
-            child: Text('Delete Permanently',
-                style: TextStyle(color: Colors.white)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _productManager.deleteStore();
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Go back to previous screen
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text('Store deleted successfully'),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Delete Permanently',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -550,9 +592,7 @@ class _MyStorePageState extends State<MyStorePage>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddProductPage(
-          isEditMode: false,
-        ),
+        builder: (context) => AddProductPage(isEditMode: false),
       ),
     );
 
@@ -567,8 +607,10 @@ class _MyStorePageState extends State<MyStorePage>
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 10),
               Expanded(
-                  child: Text(
-                      'Product "${result.productName}" added successfully!')),
+                child: Text(
+                  'Product "${result.productName}" added successfully!',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.green,
@@ -585,11 +627,12 @@ class _MyStorePageState extends State<MyStorePage>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddProductPage(
-          isEditMode: true,
-          existingProduct: product,
-          productIndex: index,
-        ),
+        builder:
+            (context) => AddProductPage(
+              isEditMode: true,
+              existingProduct: product,
+              productIndex: index,
+            ),
       ),
     );
 
@@ -605,8 +648,10 @@ class _MyStorePageState extends State<MyStorePage>
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 10),
               Expanded(
-                  child: Text(
-                      'Product "${result.productName}" updated successfully!')),
+                child: Text(
+                  'Product "${result.productName}" updated successfully!',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.blue,
@@ -618,7 +663,10 @@ class _MyStorePageState extends State<MyStorePage>
   }
 
   void _showImageZoomFromUrl(
-      List<String> imageUrls, int initialIndex, String productName) {
+    List<String> imageUrls,
+    int initialIndex,
+    String productName,
+  ) {
     showDialog(
       context: context,
       barrierColor: Colors.black87,
@@ -638,8 +686,9 @@ class _MyStorePageState extends State<MyStorePage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           title: Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange),
@@ -648,7 +697,8 @@ class _MyStorePageState extends State<MyStorePage>
             ],
           ),
           content: Text(
-              'Are you sure you want to delete "$productName"?\n\nThis action cannot be undone.'),
+            'Are you sure you want to delete "$productName"?\n\nThis action cannot be undone.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -677,7 +727,8 @@ class _MyStorePageState extends State<MyStorePage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text('Delete', style: TextStyle(color: Colors.white)),
             ),
@@ -700,7 +751,7 @@ class _MyStorePageState extends State<MyStorePage>
             colors: [
               Colors.deepPurple.shade50,
               Colors.white,
-              Colors.purple.shade50
+              Colors.purple.shade50,
             ],
           ),
         ),
@@ -709,9 +760,10 @@ class _MyStorePageState extends State<MyStorePage>
             children: [
               _buildAppBar(products.length),
               Expanded(
-                child: products.isEmpty
-                    ? _buildEmptyState()
-                    : _buildProductsList(products),
+                child:
+                    products.isEmpty
+                        ? _buildEmptyState()
+                        : _buildProductsList(products),
               ),
             ],
           ),
@@ -723,9 +775,10 @@ class _MyStorePageState extends State<MyStorePage>
           onPressed: _navigateToAddProduct,
           backgroundColor: Colors.deepPurple,
           icon: Icon(Icons.add, color: Colors.white),
-          label: Text('Add Product',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          label: Text(
+            'Add Product',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
           elevation: 8,
         ),
       ),
@@ -740,16 +793,17 @@ class _MyStorePageState extends State<MyStorePage>
           colors: [
             Colors.deepPurple,
             Colors.deepPurple[300]!,
-            Colors.purple[200]!
+            Colors.purple[200]!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.3),
-              blurRadius: 10,
-              offset: Offset(0, 5)),
+            color: Colors.deepPurple.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: Row(
@@ -772,7 +826,9 @@ class _MyStorePageState extends State<MyStorePage>
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Icon(Icons.store, color: Colors.deepPurple, size: 30),
             ),
           SizedBox(width: 15),
@@ -780,13 +836,18 @@ class _MyStorePageState extends State<MyStorePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.storeName,
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-                Text('$productCount Product${productCount != 1 ? 's' : ''}',
-                    style: TextStyle(fontSize: 14, color: Colors.white70)),
+                Text(
+                  widget.storeName,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  '$productCount Product${productCount != 1 ? 's' : ''}',
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                ),
               ],
             ),
           ),
@@ -816,14 +877,19 @@ class _MyStorePageState extends State<MyStorePage>
                     width: 150,
                     height: 150,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [
-                        Colors.deepPurple.withOpacity(0.2),
-                        Colors.purple.withOpacity(0.1)
-                      ]),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.deepPurple.withOpacity(0.2),
+                          Colors.purple.withOpacity(0.1),
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(75),
                     ),
-                    child: Icon(Icons.inventory_2_outlined,
-                        size: 80, color: Colors.deepPurple),
+                    child: Icon(
+                      Icons.inventory_2_outlined,
+                      size: 80,
+                      color: Colors.deepPurple,
+                    ),
                   ),
                 );
               },
@@ -837,11 +903,14 @@ class _MyStorePageState extends State<MyStorePage>
                   opacity: value,
                   child: Column(
                     children: [
-                      Text('No Products Yet',
-                          style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple)),
+                      Text(
+                        'No Products Yet',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
                       SizedBox(height: 10),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 40),
@@ -849,22 +918,25 @@ class _MyStorePageState extends State<MyStorePage>
                           'Start adding products to your store\nand grow your business!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              height: 1.5),
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
                         ),
                       ),
                       SizedBox(height: 40),
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                              colors: [Colors.deepPurple, Colors.purple[300]!]),
+                            colors: [Colors.deepPurple, Colors.purple[300]!],
+                          ),
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.deepPurple.withOpacity(0.3),
-                                blurRadius: 15,
-                                offset: Offset(0, 8))
+                              color: Colors.deepPurple.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: Offset(0, 8),
+                            ),
                           ],
                         ),
                         child: ElevatedButton.icon(
@@ -873,17 +945,26 @@ class _MyStorePageState extends State<MyStorePage>
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
                             padding: EdgeInsets.symmetric(
-                                horizontal: 30, vertical: 15),
+                              horizontal: 30,
+                              vertical: 15,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25)),
+                              borderRadius: BorderRadius.circular(25),
+                            ),
                           ),
-                          icon: Icon(Icons.add_circle_outline,
-                              size: 28, color: Colors.white),
-                          label: Text('Add Your First Product',
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            size: 28,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            'Add Your First Product',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -918,69 +999,82 @@ class _MyStorePageState extends State<MyStorePage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 15,
-              offset: Offset(0, 5))
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
         ],
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Container(
+              SizedBox(
                 width: MediaQuery.of(context).size.width * 0.4,
                 height: 200,
                 child: Stack(
                   children: [
                     product.productImageUrls.isNotEmpty
                         ? PageView.builder(
-                            itemCount: product.productImageUrls.length,
-                            itemBuilder: (context, imgIndex) {
-                              return GestureDetector(
-                                onTap: () => _showImageZoomFromUrl(
+                          itemCount: product.productImageUrls.length,
+                          itemBuilder: (context, imgIndex) {
+                            return GestureDetector(
+                              onTap:
+                                  () => _showImageZoomFromUrl(
                                     product.productImageUrls,
                                     imgIndex,
-                                    product.productName),
-                                child: Hero(
-                                  tag:
-                                      'product_image_${product.productName}_$imgIndex',
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(20),
-                                        bottomLeft: Radius.circular(20)),
-                                    child: CachedNetworkImage(
-                                      imageUrl:
-                                          product.productImageUrls[imgIndex],
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => Center(
-                                        child: CircularProgressIndicator(
-                                          color: Colors.deepPurple,
+                                    product.productName,
+                                  ),
+                              child: Hero(
+                                tag:
+                                    'product_image_${product.productName}_$imgIndex',
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    bottomLeft: Radius.circular(20),
+                                  ),
+                                  child: CachedNetworkImage(
+                                    imageUrl:
+                                        product.productImageUrls[imgIndex],
+                                    fit: BoxFit.cover,
+                                    placeholder:
+                                        (context, url) => Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.deepPurple,
+                                          ),
                                         ),
-                                      ),
-                                      errorWidget: (context, url, error) =>
-                                          Container(
-                                        color:
-                                            Colors.deepPurple.withOpacity(0.1),
-                                        child: Icon(Icons.error,
-                                            color: Colors.red),
-                                      ),
-                                    ),
+                                    errorWidget:
+                                        (context, url, error) => Container(
+                                          color: Colors.deepPurple.withOpacity(
+                                            0.1,
+                                          ),
+                                          child: Icon(
+                                            Icons.error,
+                                            color: Colors.red,
+                                          ),
+                                        ),
                                   ),
                                 ),
-                              );
-                            },
-                          )
+                              ),
+                            );
+                          },
+                        )
                         : Container(
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.1),
-                              borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  bottomLeft: Radius.circular(20)),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              bottomLeft: Radius.circular(20),
                             ),
-                            child: Center(
-                                child: Icon(Icons.image,
-                                    size: 60, color: Colors.deepPurple)),
                           ),
+                          child: Center(
+                            child: Icon(
+                              Icons.image,
+                              size: 60,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                        ),
                     if (storeData?.storeLogo != null)
                       Positioned(
                         top: 10,
@@ -991,13 +1085,16 @@ class _MyStorePageState extends State<MyStorePage>
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
-                            border:
-                                Border.all(color: Colors.deepPurple, width: 2),
+                            border: Border.all(
+                              color: Colors.deepPurple,
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2))
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
                             ],
                           ),
                           child: ClipOval(
@@ -1005,8 +1102,11 @@ class _MyStorePageState extends State<MyStorePage>
                               storeData!.storeLogo!,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return Icon(Icons.store,
-                                    color: Colors.deepPurple, size: 20);
+                                return Icon(
+                                  Icons.store,
+                                  color: Colors.deepPurple,
+                                  size: 20,
+                                );
                               },
                             ),
                           ),
@@ -1017,21 +1117,30 @@ class _MyStorePageState extends State<MyStorePage>
                         bottom: 10,
                         right: 10,
                         child: Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(12)),
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Row(
                             children: [
-                              Icon(Icons.photo_library,
-                                  size: 14, color: Colors.white),
+                              Icon(
+                                Icons.photo_library,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                               SizedBox(width: 4),
-                              Text('${product.productImageUrls.length}',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '${product.productImageUrls.length}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1046,73 +1155,101 @@ class _MyStorePageState extends State<MyStorePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                            color: Colors.deepPurple.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Text(product.productType,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.deepPurple,
-                                fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                          color: Colors.deepPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          product.productType,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.deepPurple,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       SizedBox(height: 8),
-                      Text(product.productName,
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        product.productName,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       SizedBox(height: 8),
-                      Text(product.productDescription,
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[600]),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        product.productDescription,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('₹${product.productPrice.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple)),
+                          Text(
+                            '₹${product.productPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: product.stockQuantity > 0
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.red.withOpacity(0.1),
+                              color:
+                                  product.stockQuantity > 0
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text('Stock: ${product.stockQuantity}',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: product.stockQuantity > 0
+                            child: Text(
+                              'Stock: ${product.stockQuantity}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color:
+                                    product.stockQuantity > 0
                                         ? Colors.green
                                         : Colors.red,
-                                    fontWeight: FontWeight.bold)),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.local_shipping,
-                              size: 14, color: Colors.blue),
+                          Icon(
+                            Icons.local_shipping,
+                            size: 14,
+                            color: Colors.blue,
+                          ),
                           SizedBox(width: 5),
                           Expanded(
-                              child: Text(product.shippingMethod,
-                                  style: TextStyle(
-                                      fontSize: 10, color: Colors.grey[600]),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis)),
+                            child: Text(
+                              product.shippingMethod,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: 4),
@@ -1121,13 +1258,17 @@ class _MyStorePageState extends State<MyStorePage>
                           Icon(Icons.public, size: 14, color: Colors.orange),
                           SizedBox(width: 5),
                           Expanded(
-                              child: Text(product.shippingAvailability,
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey[600],
-                                      fontWeight: FontWeight.w600),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis)),
+                            child: Text(
+                              product.shippingAvailability,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -1141,8 +1282,9 @@ class _MyStorePageState extends State<MyStorePage>
             decoration: BoxDecoration(
               color: Colors.grey[50],
               borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20)),
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -1179,7 +1321,8 @@ class ImageZoomDialogUrl extends StatefulWidget {
   final int initialIndex;
   final String productName;
 
-  ImageZoomDialogUrl({
+  const ImageZoomDialogUrl({
+    super.key,
     required this.imageUrls,
     required this.initialIndex,
     required this.productName,
@@ -1237,14 +1380,18 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                       child: CachedNetworkImage(
                         imageUrl: widget.imageUrls[index],
                         fit: BoxFit.contain,
-                        placeholder: (context, url) => Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                        errorWidget: (context, url, error) => Icon(
-                          Icons.error,
-                          color: Colors.white,
-                          size: 50,
-                        ),
+                        placeholder:
+                            (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                        errorWidget:
+                            (context, url, error) => Icon(
+                              Icons.error,
+                              color: Colors.white,
+                              size: 50,
+                            ),
                       ),
                     ),
                   ),
@@ -1266,7 +1413,7 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                         color: Colors.black26,
                         blurRadius: 10,
                         offset: Offset(0, 4),
-                      )
+                      ),
                     ],
                   ),
                   child: Icon(Icons.close, color: Colors.white, size: 28),
@@ -1289,7 +1436,7 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                           color: Colors.black26,
                           blurRadius: 10,
                           offset: Offset(0, 4),
-                        )
+                        ),
                       ],
                     ),
                     child: Text(
@@ -1311,10 +1458,11 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                   bottom: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => _pageController.previousPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      ),
+                      onTap:
+                          () => _pageController.previousPage(
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          ),
                       child: Container(
                         padding: EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -1325,7 +1473,7 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                               color: Colors.black26,
                               blurRadius: 10,
                               offset: Offset(0, 4),
-                            )
+                            ),
                           ],
                         ),
                         child: Icon(
@@ -1344,10 +1492,11 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                   bottom: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => _pageController.nextPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      ),
+                      onTap:
+                          () => _pageController.nextPage(
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          ),
                       child: Container(
                         padding: EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -1358,7 +1507,7 @@ class _ImageZoomDialogUrlState extends State<ImageZoomDialogUrl> {
                               color: Colors.black26,
                               blurRadius: 10,
                               offset: Offset(0, 4),
-                            )
+                            ),
                           ],
                         ),
                         child: Icon(

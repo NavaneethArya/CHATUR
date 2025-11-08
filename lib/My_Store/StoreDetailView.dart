@@ -8,7 +8,8 @@ class StoreDetailView extends StatefulWidget {
   final Product product;
   final StoreData storeData;
 
-  StoreDetailView({
+  const StoreDetailView({
+    super.key,
     required this.product,
     required this.storeData,
   });
@@ -48,10 +49,7 @@ class _StoreDetailViewState extends State<StoreDetailView> {
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
 
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
@@ -104,39 +102,41 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                 children: [
                   widget.product.productImageUrls.isNotEmpty
                       ? PageView.builder(
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentImageIndex = index;
-                            });
-                          },
-                          itemCount: widget.product.productImageUrls.length,
-                          itemBuilder: (context, index) {
-                            return CachedNetworkImage(
-                              imageUrl: widget.product.productImageUrls[index],
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.deepPurple,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentImageIndex = index;
+                          });
+                        },
+                        itemCount: widget.product.productImageUrls.length,
+                        itemBuilder: (context, index) {
+                          return CachedNetworkImage(
+                            imageUrl: widget.product.productImageUrls[index],
+                            fit: BoxFit.cover,
+                            placeholder:
+                                (context, url) => Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.deepPurple,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[300],
-                                child: Icon(Icons.error, size: 50),
-                              ),
-                            );
-                          },
-                        )
+                            errorWidget:
+                                (context, url, error) => Container(
+                                  color: Colors.grey[300],
+                                  child: Icon(Icons.error, size: 50),
+                                ),
+                          );
+                        },
+                      )
                       : Container(
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.image,
-                            size: 100,
-                            color: Colors.grey[500],
-                          ),
+                        color: Colors.grey[300],
+                        child: Icon(
+                          Icons.image,
+                          size: 100,
+                          color: Colors.grey[500],
                         ),
+                      ),
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -160,8 +160,10 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                       bottom: 20,
                       right: 20,
                       child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
@@ -230,12 +232,15 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                       ),
                       Spacer(),
                       Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: widget.product.stockQuantity > 0
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                          color:
+                              widget.product.stockQuantity > 0
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -245,9 +250,10 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                                   ? Icons.check_circle
                                   : Icons.cancel,
                               size: 16,
-                              color: widget.product.stockQuantity > 0
-                                  ? Colors.green
-                                  : Colors.red,
+                              color:
+                                  widget.product.stockQuantity > 0
+                                      ? Colors.green
+                                      : Colors.red,
                             ),
                             SizedBox(width: 5),
                             Text(
@@ -255,9 +261,10 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                                   ? 'In Stock (${widget.product.stockQuantity})'
                                   : 'Out of Stock',
                               style: TextStyle(
-                                color: widget.product.stockQuantity > 0
-                                    ? Colors.green
-                                    : Colors.red,
+                                color:
+                                    widget.product.stockQuantity > 0
+                                        ? Colors.green
+                                        : Colors.red,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -346,8 +353,9 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                       ],
                     ),
                     borderRadius: BorderRadius.circular(15),
-                    border:
-                        Border.all(color: Colors.deepPurple.withOpacity(0.2)),
+                    border: Border.all(
+                      color: Colors.deepPurple.withOpacity(0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,24 +368,36 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: Colors.deepPurple, width: 2),
+                                color: Colors.deepPurple,
+                                width: 2,
+                              ),
                               color: Colors.white,
                             ),
-                            child: widget.storeData.storeLogo != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.file(
-                                      widget.storeData.storeLogo!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Icon(Icons.store,
-                                            color: Colors.deepPurple, size: 30);
-                                      },
+                            child:
+                                widget.storeData.storeLogo != null
+                                    ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        widget.storeData.storeLogo!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Icon(
+                                            Icons.store,
+                                            color: Colors.deepPurple,
+                                            size: 30,
+                                          );
+                                        },
+                                      ),
+                                    )
+                                    : Icon(
+                                      Icons.store,
+                                      color: Colors.deepPurple,
+                                      size: 30,
                                     ),
-                                  )
-                                : Icon(Icons.store,
-                                    color: Colors.deepPurple, size: 30),
                           ),
                           SizedBox(width: 15),
                           Expanded(
@@ -439,8 +459,11 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                                     color: Colors.green.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Icon(Icons.phone,
-                                      color: Colors.green, size: 20),
+                                  child: Icon(
+                                    Icons.phone,
+                                    color: Colors.green,
+                                    size: 20,
+                                  ),
                                 ),
                                 SizedBox(width: 12),
                                 Expanded(
@@ -472,11 +495,14 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: IconButton(
-                                    icon:
-                                        Icon(Icons.phone, color: Colors.white),
-                                    onPressed: () => _makePhoneCall(
-                                      widget.storeData.phoneNumber,
+                                    icon: Icon(
+                                      Icons.phone,
+                                      color: Colors.white,
                                     ),
+                                    onPressed:
+                                        () => _makePhoneCall(
+                                          widget.storeData.phoneNumber,
+                                        ),
                                     tooltip: 'Call Owner',
                                   ),
                                 ),
@@ -561,10 +587,7 @@ class _StoreDetailViewState extends State<StoreDetailView> {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.black87),
           ),
         ),
       ],
@@ -589,10 +612,7 @@ class _StoreDetailViewState extends State<StoreDetailView> {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               Text(
                 value,

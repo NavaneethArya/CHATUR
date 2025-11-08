@@ -115,7 +115,7 @@
 //               right: 40,
 //               child: ElevatedButton(
 //                 onPressed: () {
-//                   Navigator.pushReplacementNamed(context, '/Elogin'); 
+//                   Navigator.pushReplacementNamed(context, '/Elogin');
 //                 },
 //                 style: ElevatedButton.styleFrom(
 //                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -133,13 +133,12 @@
 //   }
 // }
 
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -169,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     // --- Auto navigate after 10 seconds ---
     Future.delayed(const Duration(seconds: 10), () {
-      Navigator.pushReplacementNamed(context, '/Elogin'); 
+      Navigator.pushReplacementNamed(context, '/Elogin');
     });
   }
 
@@ -184,21 +183,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: _controller.value.isInitialized
-            ? SizedBox.expand(
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _controller.value.size.width,
-                    height: _controller.value.size.height,
-                    child: VideoPlayer(_controller),
+        child:
+            _controller.value.isInitialized
+                ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
+                    ),
                   ),
-                ),
-              )
-            : const CircularProgressIndicator(color: Colors.white),
+                )
+                : const CircularProgressIndicator(color: Colors.white),
       ),
     );
   }
 }
-
-

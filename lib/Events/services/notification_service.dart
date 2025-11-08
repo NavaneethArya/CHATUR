@@ -104,10 +104,10 @@ class NotificationService {
         .limit(50) // Limit to last 50 notifications
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => NotificationModel.fromFirestore(doc))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => NotificationModel.fromFirestore(doc))
+              .toList();
+        });
   }
 
   // ============================================
@@ -125,9 +125,9 @@ class NotificationService {
   // ============================================
   static Future<void> markAsRead(String notificationId) async {
     try {
-      await _eventNotificationsCollection
-          .doc(notificationId)
-          .update({'isRead': true});
+      await _eventNotificationsCollection.doc(notificationId).update({
+        'isRead': true,
+      });
       print('✅ Notification marked as read');
     } catch (e) {
       print('❌ Error marking notification as read: $e');
@@ -139,9 +139,10 @@ class NotificationService {
   // ============================================
   static Future<void> markAllAsRead() async {
     try {
-      final unreadDocs = await _eventNotificationsCollection
-          .where('isRead', isEqualTo: false)
-          .get();
+      final unreadDocs =
+          await _eventNotificationsCollection
+              .where('isRead', isEqualTo: false)
+              .get();
 
       final batch = _firestore.batch();
       for (var doc in unreadDocs.docs) {
@@ -172,9 +173,10 @@ class NotificationService {
   static Future<void> deleteOldNotifications() async {
     try {
       final thirtyDaysAgo = DateTime.now().subtract(Duration(days: 30));
-      final oldDocs = await _eventNotificationsCollection
-          .where('createdAt', isLessThan: Timestamp.fromDate(thirtyDaysAgo))
-          .get();
+      final oldDocs =
+          await _eventNotificationsCollection
+              .where('createdAt', isLessThan: Timestamp.fromDate(thirtyDaysAgo))
+              .get();
 
       final batch = _firestore.batch();
       for (var doc in oldDocs.docs) {
@@ -191,12 +193,14 @@ class NotificationService {
   // GET NOTIFICATIONS FOR SPECIFIC EVENT
   // ============================================
   static Future<List<NotificationModel>> getNotificationsForEvent(
-      String eventId) async {
+    String eventId,
+  ) async {
     try {
-      final snapshot = await _eventNotificationsCollection
-          .where('eventId', isEqualTo: eventId)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final snapshot =
+          await _eventNotificationsCollection
+              .where('eventId', isEqualTo: eventId)
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))

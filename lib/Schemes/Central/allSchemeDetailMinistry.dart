@@ -12,12 +12,12 @@ class MinistrySchemeDetailPage extends StatefulWidget {
   final double textSizeMultiplier;
 
   const MinistrySchemeDetailPage({
-    Key? key,
+    super.key,
     required this.ministryName,
     this.selectedLanguage = 'English',
     this.isDarkMode = false,
     this.textSizeMultiplier = 1.0,
-  }) : super(key: key);
+  });
 
   @override
   _MinistrySchemeDetailPageState createState() =>
@@ -44,7 +44,7 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   static const String _cacheKeyLanguage = '_language';
   static const int _cacheDurationDays = 7;
 
-  Map<String, String> _translations = {
+  final Map<String, String> _translations = {
     'en_search': 'Search schemes...',
     'kn_search': 'ಯೋಜನೆಗಳನ್ನು ಹುಡುಕಿ...',
     'hi_search': 'योजनाओं को खोजें...',
@@ -66,9 +66,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   };
 
   String _t(String key) {
-    String langPrefix = _selectedLanguage == 'English'
-        ? 'en'
-        : _selectedLanguage == 'Kannada'
+    String langPrefix =
+        _selectedLanguage == 'English'
+            ? 'en'
+            : _selectedLanguage == 'Kannada'
             ? 'kn'
             : 'hi';
     return _translations['${langPrefix}_$key'] ?? key;
@@ -94,9 +95,9 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.userScrollDirection
-        .toString()
-        .contains('forward')) {
+    if (_scrollController.position.userScrollDirection.toString().contains(
+      'forward',
+    )) {
       if (!_showHeader) {
         setState(() {
           _showHeader = true;
@@ -171,11 +172,14 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
 
       await prefs.setStringList(cacheKey, schemesJson);
       await prefs.setString(
-          '$cacheKey$_cacheKeyTimestamp', DateTime.now().toIso8601String());
+        '$cacheKey$_cacheKeyTimestamp',
+        DateTime.now().toIso8601String(),
+      );
       await prefs.setString('$cacheKey$_cacheKeyLanguage', _selectedLanguage);
 
       print(
-          'Ministry schemes cached successfully. Count: ${schemes.length} for ${widget.ministryName}');
+        'Ministry schemes cached successfully. Count: ${schemes.length} for ${widget.ministryName}',
+      );
     } catch (e) {
       print('Error saving schemes to cache: $e');
     }
@@ -199,9 +203,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
     final bookmarksJson =
         prefs.getStringList('bookmarked_central_schemes') ?? [];
     setState(() {
-      _bookmarkedSchemes = bookmarksJson
-          .map((json) => Map<String, dynamic>.from(jsonDecode(json)))
-          .toList();
+      _bookmarkedSchemes =
+          bookmarksJson
+              .map((json) => Map<String, dynamic>.from(jsonDecode(json)))
+              .toList();
     });
   }
 
@@ -213,23 +218,25 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   bool _isBookmarked(Map<String, dynamic> scheme) {
-    return _bookmarkedSchemes
-        .any((s) => s['Title']?.toString() == scheme['Title']?.toString());
+    return _bookmarkedSchemes.any(
+      (s) => s['Title']?.toString() == scheme['Title']?.toString(),
+    );
   }
 
   void _toggleBookmark(Map<String, dynamic> scheme) {
     setState(() {
       if (_isBookmarked(scheme)) {
         _bookmarkedSchemes.removeWhere(
-            (s) => s['Title']?.toString() == scheme['Title']?.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Removed from bookmarks')),
+          (s) => s['Title']?.toString() == scheme['Title']?.toString(),
         );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Removed from bookmarks')));
       } else {
         _bookmarkedSchemes.add(scheme);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added to bookmarks')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Added to bookmarks')));
       }
     });
     _saveBookmarks();
@@ -316,9 +323,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchSchemesFromAPI() async {
-    final langCode = _selectedLanguage == 'English'
-        ? 'en'
-        : _selectedLanguage == 'Kannada'
+    final langCode =
+        _selectedLanguage == 'English'
+            ? 'en'
+            : _selectedLanguage == 'Kannada'
             ? 'kn'
             : 'hi';
     final url =
@@ -327,10 +335,9 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
 
     try {
       print('Fetching from URL: $url');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Accept': 'application/json'},
-      ).timeout(Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(url), headers: {'Accept': 'application/json'})
+          .timeout(Duration(seconds: 30));
 
       print('Response status: ${response.statusCode}');
 
@@ -343,7 +350,8 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
 
           if (ministrySchemes != null && ministrySchemes is List) {
             print(
-                'Found ${ministrySchemes.length} schemes for ${widget.ministryName}');
+              'Found ${ministrySchemes.length} schemes for ${widget.ministryName}',
+            );
             return List<Map<String, dynamic>>.from(ministrySchemes);
           } else {
             print('No schemes found for ministry: ${widget.ministryName}');
@@ -363,21 +371,22 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
 
   void _filterSchemes(String query) {
     final searchList = _showingBookmarks ? _bookmarkedSchemes : _schemes;
-    final results = searchList.where((scheme) {
-      final lowerQuery = query.toLowerCase();
-      final titleMatch =
-          scheme['Title']?.toString().toLowerCase().contains(lowerQuery) ??
+    final results =
+        searchList.where((scheme) {
+          final lowerQuery = query.toLowerCase();
+          final titleMatch =
+              scheme['Title']?.toString().toLowerCase().contains(lowerQuery) ??
               false;
-      final descMatch = scheme['Description']
-              ?.toString()
-              .toLowerCase()
-              .contains(lowerQuery) ??
-          false;
-      final tagMatch =
-          scheme['Tags']?.toString().toLowerCase().contains(lowerQuery) ??
+          final descMatch =
+              scheme['Description']?.toString().toLowerCase().contains(
+                lowerQuery,
+              ) ??
               false;
-      return titleMatch || descMatch || tagMatch;
-    }).toList();
+          final tagMatch =
+              scheme['Tags']?.toString().toLowerCase().contains(lowerQuery) ??
+              false;
+          return titleMatch || descMatch || tagMatch;
+        }).toList();
     setState(() {
       _filteredSchemes = results;
       _schemeCount = results.length;
@@ -394,11 +403,12 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   List<String> _getUniqueTags(String? tagsString) {
     if (tagsString == null || tagsString.isEmpty) return [];
 
-    final tagList = tagsString
-        .split(',')
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toList();
+    final tagList =
+        tagsString
+            .split(',')
+            .map((tag) => tag.trim())
+            .where((tag) => tag.isNotEmpty)
+            .toList();
 
     final uniqueTags = <String>{};
     final result = <String>[];
@@ -418,13 +428,14 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SchemeInformationCentralPage(
-          scheme: scheme,
-          isDarkMode: _isDarkMode,
-          textSizeMultiplier: _textSizeMultiplier,
-          isBookmarked: _isBookmarked(scheme),
-          onBookmarkToggle: () => _toggleBookmark(scheme),
-        ),
+        builder:
+            (context) => SchemeInformationCentralPage(
+              scheme: scheme,
+              isDarkMode: _isDarkMode,
+              textSizeMultiplier: _textSizeMultiplier,
+              isBookmarked: _isBookmarked(scheme),
+              onBookmarkToggle: () => _toggleBookmark(scheme),
+            ),
       ),
     );
 
@@ -538,9 +549,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: !_isDarkMode
-                                  ? Colors.blueAccent
-                                  : Colors.grey[300],
+                              color:
+                                  !_isDarkMode
+                                      ? Colors.blueAccent
+                                      : Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -548,18 +560,20 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                               children: [
                                 Icon(
                                   Icons.light_mode,
-                                  color: !_isDarkMode
-                                      ? Colors.white
-                                      : Colors.black54,
+                                  color:
+                                      !_isDarkMode
+                                          ? Colors.white
+                                          : Colors.black54,
                                   size: 20,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Light',
                                   style: TextStyle(
-                                    color: !_isDarkMode
-                                        ? Colors.white
-                                        : Colors.black54,
+                                    color:
+                                        !_isDarkMode
+                                            ? Colors.white
+                                            : Colors.black54,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -581,9 +595,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: _isDarkMode
-                                  ? Colors.blueAccent
-                                  : Colors.grey[300],
+                              color:
+                                  _isDarkMode
+                                      ? Colors.blueAccent
+                                      : Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -591,18 +606,20 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                               children: [
                                 Icon(
                                   Icons.dark_mode,
-                                  color: _isDarkMode
-                                      ? Colors.white
-                                      : Colors.black54,
+                                  color:
+                                      _isDarkMode
+                                          ? Colors.white
+                                          : Colors.black54,
                                   size: 20,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Dark',
                                   style: TextStyle(
-                                    color: _isDarkMode
-                                        ? Colors.white
-                                        : Colors.black54,
+                                    color:
+                                        _isDarkMode
+                                            ? Colors.white
+                                            : Colors.black54,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -640,8 +657,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                         _loadSchemes();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content:
-                                  Text('Cache cleared. Refreshing schemes...')),
+                            content: Text(
+                              'Cache cleared. Refreshing schemes...',
+                            ),
+                          ),
                         );
                       },
                       icon: Icon(Icons.refresh, color: Colors.redAccent),
@@ -661,7 +680,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   Widget _buildLanguageChip(
-      String label, String value, StateSetter setModalState) {
+    String label,
+    String value,
+    StateSetter setModalState,
+  ) {
     final isSelected = _selectedLanguage == value;
     return GestureDetector(
       onTap: () {
@@ -687,7 +709,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   Widget _buildTextSizeButton(
-      String label, double multiplier, StateSetter setModalState) {
+    String label,
+    double multiplier,
+    StateSetter setModalState,
+  ) {
     final isSelected = _textSizeMultiplier == multiplier;
     return Expanded(
       child: GestureDetector(
@@ -718,7 +743,7 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
   }
 
   Widget _buildAnimatedFAB() {
-    bool _isFabExpanded = false;
+    bool isFabExpanded = false;
 
     return Positioned(
       right: 18,
@@ -726,19 +751,16 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
       child: StatefulBuilder(
         builder: (BuildContext context, StateSetter setFabState) {
           return MouseRegion(
-            onEnter: (_) => setFabState(() => _isFabExpanded = true),
-            onExit: (_) => setFabState(() => _isFabExpanded = false),
+            onEnter: (_) => setFabState(() => isFabExpanded = true),
+            onExit: (_) => setFabState(() => isFabExpanded = false),
             child: AnimatedContainer(
               duration: Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               height: 60,
-              width: _isFabExpanded ? 200 : 58,
+              width: isFabExpanded ? 200 : 58,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.shade400,
-                    Colors.purple.shade400,
-                  ],
+                  colors: [Colors.blue.shade400, Colors.purple.shade400],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -747,7 +769,7 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                   BoxShadow(
                     color: Colors.blue.withOpacity(0.4),
                     blurRadius: 20,
-                    spreadRadius: _isFabExpanded ? 5 : 2,
+                    spreadRadius: isFabExpanded ? 5 : 2,
                     offset: Offset(0, 8),
                   ),
                 ],
@@ -779,13 +801,13 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                           size: 24,
                         ),
                       ),
-                      if (_isFabExpanded)
+                      if (isFabExpanded)
                         Positioned.fill(
                           left: 48,
                           child: Center(
                             child: AnimatedOpacity(
                               duration: Duration(milliseconds: 200),
-                              opacity: _isFabExpanded ? 1.0 : 0.0,
+                              opacity: isFabExpanded ? 1.0 : 0.0,
                               child: Text(
                                 'Check Eligibility',
                                 style: TextStyle(
@@ -803,16 +825,17 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                           duration: Duration(milliseconds: 300),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
-                            gradient: _isFabExpanded
-                                ? LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.2),
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : null,
+                            gradient:
+                                isFabExpanded
+                                    ? LinearGradient(
+                                      colors: [
+                                        Colors.white.withOpacity(0.2),
+                                        Colors.transparent,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                    : null,
                           ),
                         ),
                       ),
@@ -836,9 +859,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
     final textColor = _isDarkMode ? Colors.white : Colors.black87;
     final secondaryTextColor =
         _isDarkMode ? Colors.grey[400] : Colors.grey[600];
-    final cardGradient = _isDarkMode
-        ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
-        : [Colors.white, Colors.blue.shade50.withOpacity(0.6)];
+    final cardGradient =
+        _isDarkMode
+            ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
+            : [Colors.white, Colors.blue.shade50.withOpacity(0.6)];
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -906,9 +930,10 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                           Text(
                             "$_schemeCount ${_t('found')}",
                             style: TextStyle(
-                              color: _isDarkMode
-                                  ? Colors.grey[400]
-                                  : Colors.grey[700],
+                              color:
+                                  _isDarkMode
+                                      ? Colors.grey[400]
+                                      : Colors.grey[700],
                               fontSize: 16 * _textSizeMultiplier,
                               fontWeight: FontWeight.w600,
                             ),
@@ -924,23 +949,28 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                          color: _isDarkMode
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.blue.withOpacity(0.15),
-                          blurRadius: 8,
-                          offset: Offset(0, 4)),
+                        color:
+                            _isDarkMode
+                                ? Colors.black.withOpacity(0.3)
+                                : Colors.blue.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: TextField(
                     controller: _searchController,
                     onChanged: _filterSchemes,
                     style: TextStyle(
-                        color: textColor, fontSize: 16 * _textSizeMultiplier),
+                      color: textColor,
+                      fontSize: 16 * _textSizeMultiplier,
+                    ),
                     decoration: InputDecoration(
                       hintText: _t('search'),
                       hintStyle: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 16 * _textSizeMultiplier),
+                        color: secondaryTextColor,
+                        fontSize: 16 * _textSizeMultiplier,
+                      ),
                       prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.all(16),
@@ -949,194 +979,210 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
                 ),
                 SizedBox(height: 12),
                 Expanded(
-                  child: _isLoading
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(
-                                  color: Colors.blueAccent),
-                              SizedBox(height: 16),
-                              Text(
-                                _t('loading'),
-                                style: TextStyle(
-                                  color: secondaryTextColor,
-                                  fontSize: 14 * _textSizeMultiplier,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : _filteredSchemes.isEmpty
+                  child:
+                      _isLoading
                           ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _showingBookmarks
-                                        ? Icons.bookmark_border
-                                        : Icons.search_off,
-                                    size: 64,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Colors.blueAccent,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  _t('loading'),
+                                  style: TextStyle(
                                     color: secondaryTextColor,
+                                    fontSize: 14 * _textSizeMultiplier,
                                   ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    _showingBookmarks
-                                        ? _t('no_bookmarks')
-                                        : _t('no_schemes'),
-                                    style: TextStyle(
-                                        color: secondaryTextColor,
-                                        fontSize: 16 * _textSizeMultiplier),
+                                ),
+                              ],
+                            ),
+                          )
+                          : _filteredSchemes.isEmpty
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _showingBookmarks
+                                      ? Icons.bookmark_border
+                                      : Icons.search_off,
+                                  size: 64,
+                                  color: secondaryTextColor,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  _showingBookmarks
+                                      ? _t('no_bookmarks')
+                                      : _t('no_schemes'),
+                                  style: TextStyle(
+                                    color: secondaryTextColor,
+                                    fontSize: 16 * _textSizeMultiplier,
                                   ),
-                                ],
-                              ),
-                            )
+                                ),
+                              ],
+                            ),
+                          )
                           : ListView.builder(
-                              controller: _scrollController,
-                              itemCount: _filteredSchemes.length,
-                              itemBuilder: (context, index) {
-                                final scheme = _filteredSchemes[index];
-                                final tagList = _getUniqueTags(
-                                    scheme['Tags']?.toString() ?? '');
-                                final isBookmarked = _isBookmarked(scheme);
+                            controller: _scrollController,
+                            itemCount: _filteredSchemes.length,
+                            itemBuilder: (context, index) {
+                              final scheme = _filteredSchemes[index];
+                              final tagList = _getUniqueTags(
+                                scheme['Tags']?.toString() ?? '',
+                              );
+                              final isBookmarked = _isBookmarked(scheme);
 
-                                return GestureDetector(
-                                  onTap: () => _openSchemeDetails(scheme),
-                                  child: Container(
-                                    margin: EdgeInsets.symmetric(vertical: 8),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: cardGradient,
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
+                              return GestureDetector(
+                                onTap: () => _openSchemeDetails(scheme),
+                                child: Container(
+                                  margin: EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: cardGradient,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            _isDarkMode
+                                                ? Colors.black.withOpacity(0.3)
+                                                : Colors.blueAccent.withOpacity(
+                                                  0.1,
+                                                ),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 3),
                                       ),
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: _isDarkMode
-                                              ? Colors.black.withOpacity(0.3)
-                                              : Colors.blueAccent
-                                                  .withOpacity(0.1),
-                                          blurRadius: 8,
-                                          offset: Offset(0, 3),
-                                        )
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.description_outlined,
+                                              color: Colors.blueAccent,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Expanded(
+                                              child: RichText(
+                                                text: _highlightText(
+                                                  scheme['Title']?.toString() ??
+                                                      'Untitled Scheme',
+                                                  searchQuery,
+                                                  TextStyle(
+                                                    fontSize:
+                                                        17 *
+                                                        _textSizeMultiplier,
+                                                    fontWeight: FontWeight.w700,
+                                                    color:
+                                                        _isDarkMode
+                                                            ? Colors
+                                                                .blue
+                                                                .shade300
+                                                            : Colors
+                                                                .blue
+                                                                .shade900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(
+                                                isBookmarked
+                                                    ? Icons.bookmark
+                                                    : Icons.bookmark_border,
+                                                color:
+                                                    isBookmarked
+                                                        ? Colors.amber
+                                                        : Colors.blueAccent,
+                                                size: 24,
+                                              ),
+                                              onPressed:
+                                                  () => _toggleBookmark(scheme),
+                                              padding: EdgeInsets.zero,
+                                              constraints: BoxConstraints(),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              color: Colors.blueAccent,
+                                              size: 16,
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 8),
+                                        RichText(
+                                          text: _highlightText(
+                                            scheme['Description']?.toString() ??
+                                                'No description available',
+                                            searchQuery,
+                                            TextStyle(
+                                              fontSize:
+                                                  15 * _textSizeMultiplier,
+                                              color: textColor,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        if (tagList.isNotEmpty)
+                                          Wrap(
+                                            spacing: 4,
+                                            runSpacing: 4,
+                                            children:
+                                                tagList.map((tag) {
+                                                  final isHighlighted =
+                                                      searchQuery.isNotEmpty &&
+                                                      tag
+                                                          .toLowerCase()
+                                                          .contains(
+                                                            searchQuery,
+                                                          );
+                                                  return GestureDetector(
+                                                    onTap:
+                                                        () =>
+                                                            _onTagPressed(tag),
+                                                    child: Chip(
+                                                      label: Text(
+                                                        tag,
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize:
+                                                              12 *
+                                                              _textSizeMultiplier,
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          isHighlighted
+                                                              ? Colors.amber
+                                                              : Colors
+                                                                  .blueAccent,
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 4,
+                                                            vertical: 0,
+                                                          ),
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                          ),
                                       ],
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(Icons.description_outlined,
-                                                  color: Colors.blueAccent),
-                                              SizedBox(width: 8),
-                                              Expanded(
-                                                child: RichText(
-                                                  text: _highlightText(
-                                                    scheme['Title']
-                                                            ?.toString() ??
-                                                        'Untitled Scheme',
-                                                    searchQuery,
-                                                    TextStyle(
-                                                      fontSize: 17 *
-                                                          _textSizeMultiplier,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: _isDarkMode
-                                                          ? Colors.blue.shade300
-                                                          : Colors
-                                                              .blue.shade900,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: Icon(
-                                                  isBookmarked
-                                                      ? Icons.bookmark
-                                                      : Icons.bookmark_border,
-                                                  color: isBookmarked
-                                                      ? Colors.amber
-                                                      : Colors.blueAccent,
-                                                  size: 24,
-                                                ),
-                                                onPressed: () =>
-                                                    _toggleBookmark(scheme),
-                                                padding: EdgeInsets.zero,
-                                                constraints: BoxConstraints(),
-                                              ),
-                                              SizedBox(width: 8),
-                                              Icon(
-                                                Icons.arrow_forward_ios,
-                                                color: Colors.blueAccent,
-                                                size: 16,
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 8),
-                                          RichText(
-                                            text: _highlightText(
-                                              scheme['Description']
-                                                      ?.toString() ??
-                                                  'No description available',
-                                              searchQuery,
-                                              TextStyle(
-                                                fontSize:
-                                                    15 * _textSizeMultiplier,
-                                                color: textColor,
-                                                height: 1.4,
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(height: 8),
-                                          if (tagList.isNotEmpty)
-                                            Wrap(
-                                              spacing: 4,
-                                              runSpacing: 4,
-                                              children: tagList.map((tag) {
-                                                final isHighlighted =
-                                                    searchQuery.isNotEmpty &&
-                                                        tag
-                                                            .toLowerCase()
-                                                            .contains(
-                                                                searchQuery);
-                                                return GestureDetector(
-                                                  onTap: () =>
-                                                      _onTagPressed(tag),
-                                                  child: Chip(
-                                                    label: Text(
-                                                      tag,
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        fontSize: 12 *
-                                                            _textSizeMultiplier,
-                                                      ),
-                                                    ),
-                                                    backgroundColor:
-                                                        isHighlighted
-                                                            ? Colors.amber
-                                                            : Colors.blueAccent,
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                      horizontal: 4,
-                                                      vertical: 0,
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
+                          ),
                 ),
               ],
             ),
@@ -1165,16 +1211,19 @@ class _MinistrySchemeDetailPageState extends State<MinistrySchemeDetailPage> {
 
       if (index > start) {
         spans.add(
-            TextSpan(text: text.substring(start, index), style: baseStyle));
+          TextSpan(text: text.substring(start, index), style: baseStyle),
+        );
       }
 
-      spans.add(TextSpan(
-        text: text.substring(index, index + query.length),
-        style: baseStyle.copyWith(
-          backgroundColor: Colors.yellow.shade300,
-          fontWeight: FontWeight.bold,
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + query.length),
+          style: baseStyle.copyWith(
+            backgroundColor: Colors.yellow.shade300,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ));
+      );
 
       start = index + query.length;
     }

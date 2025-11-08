@@ -22,7 +22,7 @@ class _ProfileIconState extends State<ProfileIcon> {
   String? _phone;
   String? _district;
   String? _state;
-  bool _isDarkMode = false;
+  final bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -38,17 +38,21 @@ class _ProfileIconState extends State<ProfileIcon> {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('Profile')
-          .doc('main')
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('Profile')
+              .doc('main')
+              .get();
 
       final data = doc.data();
       setState(() {
         _name = data?['name'] ?? 'User';
-        _phone = data?['phone'] ?? FirebaseAuth.instance.currentUser?.phoneNumber ?? '';
+        _phone =
+            data?['phone'] ??
+            FirebaseAuth.instance.currentUser?.phoneNumber ??
+            '';
         _district = data?['district'] ?? '';
         _state = data?['state'] ?? '';
         _photoUrl = data?['photoUrl'] ?? '';
@@ -65,13 +69,18 @@ class _ProfileIconState extends State<ProfileIcon> {
     const uploadPreset = 'CHATUR';
     const folder = 'chatur/images';
 
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
 
     try {
-      final request = http.MultipartRequest('POST', url)
-        ..fields['upload_preset'] = uploadPreset
-        ..fields['folder'] = folder
-        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+      final request =
+          http.MultipartRequest('POST', url)
+            ..fields['upload_preset'] = uploadPreset
+            ..fields['folder'] = folder
+            ..files.add(
+              await http.MultipartFile.fromPath('file', imageFile.path),
+            );
 
       final response = await request.send();
 
@@ -116,7 +125,7 @@ class _ProfileIconState extends State<ProfileIcon> {
             .set({'photoUrl': imageUrl}, SetOptions(merge: true));
 
         setState(() => _photoUrl = imageUrl);
-        
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile photo updated successfully')),
@@ -124,29 +133,33 @@ class _ProfileIconState extends State<ProfileIcon> {
       }
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to upload image')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
     }
   }
 
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
 
     if (confirm == true) {
@@ -160,9 +173,7 @@ class _ProfileIconState extends State<ProfileIcon> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -192,12 +203,18 @@ class _ProfileIconState extends State<ProfileIcon> {
                         CircleAvatar(
                           radius: 50,
                           backgroundColor: Colors.white,
-                          backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
-                              ? NetworkImage(_photoUrl!)
-                              : null,
-                          child: _photoUrl == null || _photoUrl!.isEmpty
-                              ? const Icon(Icons.person, size: 50, color: Colors.deepOrange)
-                              : null,
+                          backgroundImage:
+                              _photoUrl != null && _photoUrl!.isNotEmpty
+                                  ? NetworkImage(_photoUrl!)
+                                  : null,
+                          child:
+                              _photoUrl == null || _photoUrl!.isEmpty
+                                  ? const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.deepOrange,
+                                  )
+                                  : null,
                         ),
                         Positioned(
                           bottom: 0,
@@ -260,7 +277,10 @@ class _ProfileIconState extends State<ProfileIcon> {
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on, color: Colors.deepOrange),
+                            const Icon(
+                              Icons.location_on,
+                              color: Colors.deepOrange,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -288,7 +308,7 @@ class _ProfileIconState extends State<ProfileIcon> {
                         ),
                       ),
                     ),
-                  
+
                   const SizedBox(height: 16),
 
                   // Edit Profile Button
@@ -325,10 +345,13 @@ class _ProfileIconState extends State<ProfileIcon> {
                     Icons.chat_bubble,
                     'CHATUR Chatbot',
                     'Get information about government schemes',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ChaturChatbot()),
-                    ),
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChaturChatbot(),
+                          ),
+                        ),
                   ),
 
                   const SizedBox(height: 24),
@@ -350,10 +373,14 @@ class _ProfileIconState extends State<ProfileIcon> {
                     Icons.help_outline,
                     'Help & Support',
                     'Get assistance and documentation',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DocumentAssistantScreen()),
-                    ),
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const DocumentAssistantScreen(),
+                          ),
+                        ),
                   ),
                   _buildMenuCard(
                     Icons.info_outline,
@@ -419,9 +446,7 @@ class _ProfileIconState extends State<ProfileIcon> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -435,19 +460,15 @@ class _ProfileIconState extends State<ProfileIcon> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 13,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 13),
         ),
-        trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing:
+            trailing ??
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       ),
     );
   }

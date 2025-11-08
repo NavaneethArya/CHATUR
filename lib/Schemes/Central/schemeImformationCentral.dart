@@ -12,14 +12,14 @@ class SchemeInformationCentralPage extends StatefulWidget {
   final String selectedLanguage;
 
   const SchemeInformationCentralPage({
-    Key? key,
+    super.key,
     required this.scheme,
     required this.isDarkMode,
     required this.textSizeMultiplier,
     required this.isBookmarked,
     required this.onBookmarkToggle,
     this.selectedLanguage = 'English',
-  }) : super(key: key);
+  });
 
   @override
   _SchemeInformationCentralPageState createState() =>
@@ -105,9 +105,10 @@ class _SchemeInformationCentralPageState
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14 * widget.textSizeMultiplier,
-                      color: widget.isDarkMode
-                          ? Colors.grey[400]
-                          : Colors.grey[600],
+                      color:
+                          widget.isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -133,14 +134,15 @@ class _SchemeInformationCentralPageState
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SchemeEligibilityIndividualCentral(
-            scheme: widget.scheme,
-            isDarkMode: widget.isDarkMode,
-            textSizeMultiplier: widget.textSizeMultiplier,
-            selectedLanguage: widget.selectedLanguage,
-            isBookmarked: _isBookmarked,
-            onBookmarkToggle: widget.onBookmarkToggle,
-          ),
+          builder:
+              (context) => SchemeEligibilityIndividualCentral(
+                scheme: widget.scheme,
+                isDarkMode: widget.isDarkMode,
+                textSizeMultiplier: widget.textSizeMultiplier,
+                selectedLanguage: widget.selectedLanguage,
+                isBookmarked: _isBookmarked,
+                onBookmarkToggle: widget.onBookmarkToggle,
+              ),
         ),
       );
     } catch (e) {
@@ -236,12 +238,13 @@ class _SchemeInformationCentralPageState
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.blue.withOpacity(0.1),
+                  color:
+                      widget.isDarkMode
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.blue.withOpacity(0.1),
                   blurRadius: 8,
                   offset: Offset(0, 3),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -255,9 +258,10 @@ class _SchemeInformationCentralPageState
                         style: TextStyle(
                           fontSize: 20 * widget.textSizeMultiplier,
                           fontWeight: FontWeight.bold,
-                          color: widget.isDarkMode
-                              ? Colors.blue.shade300
-                              : Colors.blue.shade900,
+                          color:
+                              widget.isDarkMode
+                                  ? Colors.blue.shade300
+                                  : Colors.blue.shade900,
                         ),
                       ),
                     ),
@@ -278,22 +282,26 @@ class _SchemeInformationCentralPageState
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _isLoadingQuestions
-                            ? null
-                            : _navigateToEligibilityCheck,
-                        icon: _isLoadingQuestions
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(Icons.auto_awesome_outlined, size: 18),
-                        label: Text(_isLoadingQuestions
-                            ? 'Preparing...'
-                            : 'AI Eligibility Check'),
+                        onPressed:
+                            _isLoadingQuestions
+                                ? null
+                                : _navigateToEligibilityCheck,
+                        icon:
+                            _isLoadingQuestions
+                                ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Icon(Icons.auto_awesome_outlined, size: 18),
+                        label: Text(
+                          _isLoadingQuestions
+                              ? 'Preparing...'
+                              : 'AI Eligibility Check',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -318,12 +326,13 @@ class _SchemeInformationCentralPageState
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.blue.withOpacity(0.1),
+                  color:
+                      widget.isDarkMode
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.blue.withOpacity(0.1),
                   blurRadius: 6,
                   offset: Offset(0, 2),
-                )
+                ),
               ],
             ),
             child: TabBar(
@@ -358,28 +367,41 @@ class _SchemeInformationCentralPageState
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildContentList(_parseStringList(widget.scheme['Details']),
-                    'Details', textColor, secondaryTextColor, cardColor),
-                _buildContentList(_parseStringList(widget.scheme['Benefits']),
-                    'Benefits', textColor, secondaryTextColor, cardColor),
                 _buildContentList(
-                    _parseStringList(widget.scheme['Eligibility']),
-                    'Eligibility',
-                    textColor,
-                    secondaryTextColor,
-                    cardColor),
+                  _parseStringList(widget.scheme['Details']),
+                  'Details',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
                 _buildContentList(
-                    _parseStringList(widget.scheme['Application Process']),
-                    'Application Process',
-                    textColor,
-                    secondaryTextColor,
-                    cardColor),
+                  _parseStringList(widget.scheme['Benefits']),
+                  'Benefits',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
                 _buildContentList(
-                    _parseStringList(widget.scheme['Documents Required']),
-                    'Documents Required',
-                    textColor,
-                    secondaryTextColor,
-                    cardColor),
+                  _parseStringList(widget.scheme['Eligibility']),
+                  'Eligibility',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
+                _buildContentList(
+                  _parseStringList(widget.scheme['Application Process']),
+                  'Application Process',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
+                _buildContentList(
+                  _parseStringList(widget.scheme['Documents Required']),
+                  'Documents Required',
+                  textColor,
+                  secondaryTextColor,
+                  cardColor,
+                ),
               ],
             ),
           ),
@@ -388,18 +410,19 @@ class _SchemeInformationCentralPageState
     );
   }
 
-  Widget _buildContentList(List<String> items, String title, Color textColor,
-      Color? secondaryTextColor, Color cardColor) {
+  Widget _buildContentList(
+    List<String> items,
+    String title,
+    Color textColor,
+    Color? secondaryTextColor,
+    Color cardColor,
+  ) {
     if (items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.info_outline,
-              size: 64,
-              color: secondaryTextColor,
-            ),
+            Icon(Icons.info_outline, size: 64, color: secondaryTextColor),
             SizedBox(height: 16),
             Text(
               'No $title Available',
@@ -430,12 +453,13 @@ class _SchemeInformationCentralPageState
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: widget.isDarkMode
-                    ? Colors.black.withOpacity(0.2)
-                    : Colors.blue.withOpacity(0.08),
+                color:
+                    widget.isDarkMode
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.blue.withOpacity(0.08),
                 blurRadius: 6,
                 offset: Offset(0, 2),
-              )
+              ),
             ],
           ),
           child: Row(

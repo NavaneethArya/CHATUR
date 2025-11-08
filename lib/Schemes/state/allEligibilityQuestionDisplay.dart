@@ -12,7 +12,8 @@ class AllEligibilityQuestionsDisplay extends StatefulWidget {
   final double textSizeMultiplier;
   final String selectedLanguage;
 
-  AllEligibilityQuestionsDisplay({
+  const AllEligibilityQuestionsDisplay({
+    super.key,
     this.isDarkMode = false,
     this.textSizeMultiplier = 1.0,
     this.selectedLanguage = 'English',
@@ -27,12 +28,12 @@ class _AllEligibilityQuestionsDisplayState
     extends State<AllEligibilityQuestionsDisplay>
     with TickerProviderStateMixin {
   List<Map<String, String>> _questions = [];
-  Map<int, String> _userAnswers = {};
-  Map<int, Map<String, String>> _translatedQuestions = {};
+  final Map<int, String> _userAnswers = {};
+  final Map<int, Map<String, String>> _translatedQuestions = {};
   int _currentQuestionIndex = 0;
   bool _isLoading = true;
   String _selectedLanguage = 'English';
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   late AnimationController _progressAnimController;
   late AnimationController _cardAnimController;
   late Animation<double> _progressAnimation;
@@ -152,7 +153,8 @@ class _AllEligibilityQuestionsDisplayState
       begin: Offset(0, 0.3),
       end: Offset.zero,
     ).animate(
-        CurvedAnimation(parent: _cardAnimController, curve: Curves.easeOut));
+      CurvedAnimation(parent: _cardAnimController, curve: Curves.easeOut),
+    );
   }
 
   Future<void> _initTts() async {
@@ -216,8 +218,9 @@ class _AllEligibilityQuestionsDisplayState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text('No questions found. Please generate questions first.'),
+              content: Text(
+                'No questions found. Please generate questions first.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -289,16 +292,21 @@ class _AllEligibilityQuestionsDisplayState
 
   /// Enhanced translation with retry logic and better error handling
   Future<String> _translateQuestionWithRetry(
-      String question, String targetLanguage, int questionIndex) async {
+    String question,
+    String targetLanguage,
+    int questionIndex,
+  ) async {
     for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         print(
-            'Translating Q$questionIndex to $targetLanguage (Attempt $attempt/$MAX_RETRIES)');
+          'Translating Q$questionIndex to $targetLanguage (Attempt $attempt/$MAX_RETRIES)',
+        );
 
         String scriptName = targetLanguage == 'Kannada' ? 'ಕನ್ನಡ' : 'हिंदी';
-        String scriptInstruction = targetLanguage == 'Kannada'
-            ? 'Use ONLY Kannada script (ಕನ್ನಡ ಲಿಪಿ), not Roman letters.'
-            : 'Use ONLY Devanagari script (देवनागरी लिपि), not Roman letters.';
+        String scriptInstruction =
+            targetLanguage == 'Kannada'
+                ? 'Use ONLY Kannada script (ಕನ್ನಡ ಲಿಪಿ), not Roman letters.'
+                : 'Use ONLY Devanagari script (देवनागरी लिपि), not Roman letters.';
 
         final prompt =
             '''You are a translation API that returns ONLY valid JSON.
@@ -320,9 +328,9 @@ JSON response (ONLY):''';
           'contents': [
             {
               'parts': [
-                {'text': prompt}
-              ]
-            }
+                {'text': prompt},
+              ],
+            },
           ],
           'generationConfig': {
             'temperature': 0.1,
@@ -334,17 +342,17 @@ JSON response (ONLY):''';
             {'category': 'HARM_CATEGORY_HARASSMENT', 'threshold': 'BLOCK_NONE'},
             {
               'category': 'HARM_CATEGORY_HATE_SPEECH',
-              'threshold': 'BLOCK_NONE'
+              'threshold': 'BLOCK_NONE',
             },
             {
               'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              'threshold': 'BLOCK_NONE'
+              'threshold': 'BLOCK_NONE',
             },
             {
               'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              'threshold': 'BLOCK_NONE'
-            }
-          ]
+              'threshold': 'BLOCK_NONE',
+            },
+          ],
         });
 
         final response = await http
@@ -369,31 +377,37 @@ JSON response (ONLY):''';
                     jsonData['translated'].toString().trim();
 
                 translatedText = translatedText.replaceAll(
-                    RegExp(
-                        r'^(Translation:|$targetLanguage translation:|In $scriptName:)\s*',
-                        caseSensitive: false),
-                    '');
+                  RegExp(
+                    r'^(Translation:|$targetLanguage translation:|In $scriptName:)\s*',
+                    caseSensitive: false,
+                  ),
+                  '',
+                );
                 translatedText =
                     translatedText.replaceAll(RegExp(r'\n+'), ' ').trim();
 
                 bool hasNativeScript = false;
                 if (targetLanguage == 'Kannada') {
-                  hasNativeScript =
-                      RegExp(r'[\u0C80-\u0CFF]').hasMatch(translatedText);
+                  hasNativeScript = RegExp(
+                    r'[\u0C80-\u0CFF]',
+                  ).hasMatch(translatedText);
                 } else if (targetLanguage == 'Hindi') {
-                  hasNativeScript =
-                      RegExp(r'[\u0900-\u097F]').hasMatch(translatedText);
+                  hasNativeScript = RegExp(
+                    r'[\u0900-\u097F]',
+                  ).hasMatch(translatedText);
                 }
 
                 if (hasNativeScript && translatedText.isNotEmpty) {
                   print(
-                      '✓ Q$questionIndex translated successfully: $translatedText');
+                    '✓ Q$questionIndex translated successfully: $translatedText',
+                  );
                   return translatedText;
                 } else {
                   print('⚠ Q$questionIndex missing native script, retrying...');
                   if (attempt < MAX_RETRIES) {
                     await Future.delayed(
-                        Duration(milliseconds: RETRY_DELAY_MS));
+                      Duration(milliseconds: RETRY_DELAY_MS),
+                    );
                     continue;
                   }
                 }
@@ -429,7 +443,8 @@ JSON response (ONLY):''';
 
     // All retries failed, return original question
     print(
-        '✗ Q$questionIndex translation failed after $MAX_RETRIES attempts, using English');
+      '✗ Q$questionIndex translation failed after $MAX_RETRIES attempts, using English',
+    );
     return question;
   }
 
@@ -454,7 +469,10 @@ JSON response (ONLY):''';
         });
 
         final translated = await _translateQuestionWithRetry(
-            originalQuestion, _selectedLanguage, i + 1);
+          originalQuestion,
+          _selectedLanguage,
+          i + 1,
+        );
 
         if (mounted) {
           setState(() {
@@ -493,7 +511,10 @@ JSON response (ONLY):''';
         final originalQuestion = _questions[i]['question'] ?? '';
 
         final translated = await _translateQuestionWithRetry(
-            originalQuestion, _selectedLanguage, i + 1);
+          originalQuestion,
+          _selectedLanguage,
+          i + 1,
+        );
 
         if (mounted && translated != originalQuestion) {
           setState(() {
@@ -585,10 +606,9 @@ JSON response (ONLY):''';
     _progressAnimation = Tween<double>(
       begin: _progressAnimation.value,
       end: targetProgress,
-    ).animate(CurvedAnimation(
-      parent: _progressAnimController,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _progressAnimController, curve: Curves.easeInOut),
+    );
     _progressAnimController.forward(from: 0);
   }
 
@@ -656,9 +676,10 @@ JSON response (ONLY):''';
             padding: EdgeInsets.all(30),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: widget.isDarkMode
-                    ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
-                    : [Colors.white, Colors.blue.shade50],
+                colors:
+                    widget.isDarkMode
+                        ? [Color(0xFF1E1E1E), Color(0xFF2C2C2C)]
+                        : [Colors.white, Colors.blue.shade50],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -718,21 +739,22 @@ JSON response (ONLY):''';
     );
 
     final prefs = await SharedPreferences.getInstance();
-    final answersMap =
-        _userAnswers.map((key, value) => MapEntry(key.toString(), value));
+    final answersMap = _userAnswers.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
     await prefs.setString('user_eligibility_answers', jsonEncode(answersMap));
 
-    final questionsForEvaluation =
-        _questions.asMap().map((index, q) => MapEntry(
-              index.toString(),
-              {
-                'question': q['question'],
-                'correctAnswer': q['answer'],
-                'userAnswer': _userAnswers[index],
-              },
-            ));
+    final questionsForEvaluation = _questions.asMap().map(
+      (index, q) => MapEntry(index.toString(), {
+        'question': q['question'],
+        'correctAnswer': q['answer'],
+        'userAnswer': _userAnswers[index],
+      }),
+    );
     await prefs.setString(
-        'questions_for_evaluation', jsonEncode(questionsForEvaluation));
+      'questions_for_evaluation',
+      jsonEncode(questionsForEvaluation),
+    );
 
     await Future.delayed(Duration(milliseconds: 800));
     Navigator.of(context).pop();
@@ -740,13 +762,14 @@ JSON response (ONLY):''';
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => AllSchemeEligibility(
-          userAnswers: _userAnswers,
-          questions: _questions,
-          isDarkMode: widget.isDarkMode,
-          textSizeMultiplier: widget.textSizeMultiplier,
-          selectedLanguage: _selectedLanguage,
-        ),
+        builder:
+            (context) => AllSchemeEligibility(
+              userAnswers: _userAnswers,
+              questions: _questions,
+              isDarkMode: widget.isDarkMode,
+              textSizeMultiplier: widget.textSizeMultiplier,
+              selectedLanguage: _selectedLanguage,
+            ),
       ),
     );
   }
@@ -808,14 +831,16 @@ JSON response (ONLY):''';
         margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                )
-              : null,
-          color: isSelected
-              ? null
-              : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade100),
+          gradient:
+              isSelected
+                  ? LinearGradient(
+                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                  )
+                  : null,
+          color:
+              isSelected
+                  ? null
+                  : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? Colors.transparent : Colors.grey.shade300,
@@ -824,28 +849,22 @@ JSON response (ONLY):''';
         ),
         child: Row(
           children: [
-            Text(
-              flag,
-              style: TextStyle(fontSize: 28),
-            ),
+            Text(flag, style: TextStyle(fontSize: 28)),
             SizedBox(width: 16),
             Text(
               nativeText,
               style: TextStyle(
                 fontSize: 18 * widget.textSizeMultiplier,
                 fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : (widget.isDarkMode ? Colors.white : Colors.black87),
+                color:
+                    isSelected
+                        ? Colors.white
+                        : (widget.isDarkMode ? Colors.white : Colors.black87),
               ),
             ),
             Spacer(),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: Colors.white,
-                size: 24,
-              ),
+              Icon(Icons.check_circle, color: Colors.white, size: 24),
           ],
         ),
       ),
@@ -862,50 +881,52 @@ JSON response (ONLY):''';
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: widget.isDarkMode
-              ? LinearGradient(
-                  colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : LinearGradient(
-                  colors: [Colors.blue.shade50, Colors.purple.shade50],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+          gradient:
+              widget.isDarkMode
+                  ? LinearGradient(
+                    colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                  : LinearGradient(
+                    colors: [Colors.blue.shade50, Colors.purple.shade50],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
         ),
         child: SafeArea(
-          child: _isLoading
-              ? _buildLoadingState()
-              : _questions.isEmpty
+          child:
+              _isLoading
+                  ? _buildLoadingState()
+                  : _questions.isEmpty
                   ? _buildEmptyState(secondaryTextColor)
                   : Column(
-                      children: [
-                        _buildHeader(textColor, secondaryTextColor),
-                        _buildProgressBar(),
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: _questions.length,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentQuestionIndex = index;
-                              });
-                              flutterTts.stop();
-                            },
-                            itemBuilder: (context, index) {
-                              return _buildQuestionCard(
-                                index,
-                                textColor,
-                                cardColor,
-                              );
-                            },
-                          ),
+                    children: [
+                      _buildHeader(textColor, secondaryTextColor),
+                      _buildProgressBar(),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: _questions.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentQuestionIndex = index;
+                            });
+                            flutterTts.stop();
+                          },
+                          itemBuilder: (context, index) {
+                            return _buildQuestionCard(
+                              index,
+                              textColor,
+                              cardColor,
+                            );
+                          },
                         ),
-                        _buildNavigationBar(cardColor, textColor),
-                      ],
-                    ),
+                      ),
+                      _buildNavigationBar(cardColor, textColor),
+                    ],
+                  ),
         ),
       ),
     );
@@ -1067,8 +1088,11 @@ JSON response (ONLY):''';
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.question_answer_outlined,
-                        color: Colors.white, size: 16),
+                    child: Icon(
+                      Icons.question_answer_outlined,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                   SizedBox(width: 10),
                   Column(
@@ -1101,7 +1125,7 @@ JSON response (ONLY):''';
                   gradient: LinearGradient(
                     colors: [
                       Color(0xFF667eea).withOpacity(0.2),
-                      Color(0xFF764ba2).withOpacity(0.2)
+                      Color(0xFF764ba2).withOpacity(0.2),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
@@ -1126,9 +1150,10 @@ JSON response (ONLY):''';
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: widget.isDarkMode
-                          ? Colors.white10
-                          : Colors.grey.shade200,
+                      color:
+                          widget.isDarkMode
+                              ? Colors.white10
+                              : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -1275,9 +1300,10 @@ JSON response (ONLY):''';
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: _isSpeaking
-                ? [Color(0xFFee0979), Color(0xFFff6a00)]
-                : [Color(0xFF667eea), Color(0xFF764ba2)],
+            colors:
+                _isSpeaking
+                    ? [Color(0xFFee0979), Color(0xFFff6a00)]
+                    : [Color(0xFF667eea), Color(0xFF764ba2)],
           ),
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
@@ -1329,23 +1355,25 @@ JSON response (ONLY):''';
         padding: EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: isSelected ? gradient : null,
-          color: isSelected
-              ? null
-              : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade100),
+          color:
+              isSelected
+                  ? null
+                  : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? Colors.transparent : Colors.grey.shade300,
             width: 2,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: (gradient.colors.first).withOpacity(0.4),
-                    blurRadius: 15,
-                    offset: Offset(0, 6),
-                  ),
-                ]
-              : [],
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: (gradient.colors.first).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(0, 6),
+                    ),
+                  ]
+                  : [],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1442,35 +1470,39 @@ JSON response (ONLY):''';
             child: AnimatedContainer(
               duration: Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                gradient: (isLastQuestion && allAnswered)
-                    ? LinearGradient(
-                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                      )
-                    : (!isLastQuestion
+                gradient:
+                    (isLastQuestion && allAnswered)
                         ? LinearGradient(
-                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          )
-                        : null),
-                color: (isLastQuestion && !allAnswered)
-                    ? Colors.grey.shade300
-                    : null,
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                        )
+                        : (!isLastQuestion
+                            ? LinearGradient(
+                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                            )
+                            : null),
+                color:
+                    (isLastQuestion && !allAnswered)
+                        ? Colors.grey.shade300
+                        : null,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: (isLastQuestion && allAnswered) || !isLastQuestion
-                    ? [
-                        BoxShadow(
-                          color: Color(0xFF667eea).withOpacity(0.5),
-                          blurRadius: 15,
-                          offset: Offset(0, 6),
-                        ),
-                      ]
-                    : [],
+                boxShadow:
+                    (isLastQuestion && allAnswered) || !isLastQuestion
+                        ? [
+                          BoxShadow(
+                            color: Color(0xFF667eea).withOpacity(0.5),
+                            blurRadius: 15,
+                            offset: Offset(0, 6),
+                          ),
+                        ]
+                        : [],
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: isLastQuestion
-                      ? (allAnswered ? _submitAnswers : null)
-                      : _goToNextQuestion,
+                  onTap:
+                      isLastQuestion
+                          ? (allAnswered ? _submitAnswers : null)
+                          : _goToNextQuestion,
                   borderRadius: BorderRadius.circular(14),
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
@@ -1481,9 +1513,10 @@ JSON response (ONLY):''';
                           isLastQuestion
                               ? Icons.check_circle_rounded
                               : Icons.arrow_forward_ios,
-                          color: (isLastQuestion && !allAnswered)
-                              ? Colors.grey.shade500
-                              : Colors.white,
+                          color:
+                              (isLastQuestion && !allAnswered)
+                                  ? Colors.grey.shade500
+                                  : Colors.white,
                           size: isLastQuestion ? 20 : 16,
                         ),
                         SizedBox(width: 8),
@@ -1493,9 +1526,10 @@ JSON response (ONLY):''';
                             style: TextStyle(
                               fontSize: 14 * widget.textSizeMultiplier,
                               fontWeight: FontWeight.bold,
-                              color: (isLastQuestion && !allAnswered)
-                                  ? Colors.grey.shade500
-                                  : Colors.white,
+                              color:
+                                  (isLastQuestion && !allAnswered)
+                                      ? Colors.grey.shade500
+                                      : Colors.white,
                               letterSpacing: 0.5,
                             ),
                             textAlign: TextAlign.center,

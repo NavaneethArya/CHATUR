@@ -1,10 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum NotificationType {
-  eventCreated,
-  eventUpdated,
-  eventDeleted,
-}
+enum NotificationType { eventCreated, eventUpdated, eventDeleted }
 
 class NotificationModel {
   final String id;
@@ -101,6 +97,3 @@ class NotificationModel {
     }
   }
 }
-
-
-

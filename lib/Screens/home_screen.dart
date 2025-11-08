@@ -1,30 +1,27 @@
-import 'dart:ui';
 import 'dart:convert';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
 import 'package:chatur_frontend/Other/profile_icon.dart';
-import 'package:chatur_frontend/Schemes/state/allEligibilityQuestionDisplay.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
-import 'package:chatur_frontend/Schemes/state/geminiEligibilityQuestion.dart';
-import 'package:chatur_frontend/Schemes/state/schemeInformation.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatur_frontend/Events/screens/main_event_screen.dart';
-import 'package:chatur_frontend/Events/services/notification_service.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final currentUser = FirebaseAuth.instance.currentUser;
   final TextEditingController _searchController = TextEditingController();
   final PageController _pageController = PageController(viewportFraction: 0.9);
-  
+
   int currentPage = 0;
   List<dynamic> recommendedSchemes = [];
   bool isLoadingSchemes = false;
@@ -34,28 +31,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     {
       "title": "Find Local Jobs",
       "sub": "Quick access to jobs near you",
-      "img": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800"
+      "img":
+          "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800",
     },
     {
       "title": "Government Schemes",
       "sub": "Latest schemes for everyone",
-      "img": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800"
+      "img":
+          "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
     },
     {
       "title": "Post Skills",
       "sub": "Earn by offering your talent",
-      "img": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"
+      "img": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
     },
     {
       "title": "Community Events",
       "sub": "Discover events happening near you",
-      "img": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800"
+      "img":
+          "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
     },
     {
       "title": "Ask AI Assistant",
       "sub": "Clear doubts instantly",
-      "img": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
-    }
+      "img":
+          "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
+    },
   ];
 
   late AnimationController _animationController;
@@ -65,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 900),
       vsync: this,
@@ -97,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         Uri.parse('https://navarasa-chathur-api.hf.space/en/recommend'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          "tags": ["farmer", "rural", "women", "loan"]
+          "tags": ["farmer", "rural", "women", "loan"],
         }),
       );
 
@@ -140,7 +141,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(70),
         child: Container(
-          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16, right: 16, bottom: 8),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            bottom: 8,
+          ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF5D3FD3), Color(0xFF7A5AF8)],
@@ -166,7 +172,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 1,
+                      ),
                     ),
                     child: Image.asset(
                       "assets/images/app_logo.png",
@@ -214,11 +223,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.smart_toy_outlined, color: Colors.white, size: 26),
+                      icon: Icon(
+                        Icons.smart_toy_outlined,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ChaturChatbot()),
+                          MaterialPageRoute(
+                            builder: (context) => ChaturChatbot(),
+                          ),
                         );
                       },
 
@@ -230,11 +245,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   // Enhanced Profile icon
                   GestureDetector(
                     onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ProfileIcon()),
-                        );
-                      },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ProfileIcon()),
+                      );
+                    },
 
                     child: Container(
                       decoration: BoxDecoration(
@@ -251,12 +266,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: CircleAvatar(
                         radius: 18,
                         backgroundColor: Colors.white,
-                        backgroundImage: currentUser?.photoURL != null
-                            ? NetworkImage(currentUser!.photoURL!)
-                            : null,
-                        child: currentUser?.photoURL == null
-                            ? Icon(Icons.person, color: Colors.deepPurple, size: 20)
-                            : null,
+                        backgroundImage:
+                            currentUser?.photoURL != null
+                                ? NetworkImage(currentUser!.photoURL!)
+                                : null,
+                        child:
+                            currentUser?.photoURL == null
+                                ? Icon(
+                                  Icons.person,
+                                  color: Colors.deepPurple,
+                                  size: 20,
+                                )
+                                : null,
                       ),
                     ),
                   ),
@@ -314,7 +335,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         decoration: InputDecoration(
                           hintText: 'Search services, schemes, skills...',
                           hintStyle: TextStyle(color: Colors.grey[500]),
-                          prefixIcon: Icon(Icons.search, color: Colors.deepPurple, size: 24),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.deepPurple,
+                            size: 24,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                           suffixIcon: Container(
@@ -323,13 +348,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               color: Colors.deepPurple.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Icon(Icons.mic, color: Colors.deepPurple, size: 20),
+                            child: Icon(
+                              Icons.mic,
+                              color: Colors.deepPurple,
+                              size: 20,
+                            ),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -342,10 +374,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Text(
-                          "👋",
-                          style: TextStyle(fontSize: 28),
-                        ),
+                        Text("👋", style: TextStyle(fontSize: 28)),
                         SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -378,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   SizedBox(height: 24),
 
                   /// ✅ Enhanced Horizontal cards carousel
-                  Container(
+                  SizedBox(
                     height: 220,
                     child: PageView.builder(
                       controller: _pageController,
@@ -394,7 +423,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             double value = 1.0;
                             if (_pageController.position.haveDimensions) {
                               value = _pageController.page! - index;
-                              value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
+                              value = (1 - (value.abs() * 0.15)).clamp(
+                                0.85,
+                                1.0,
+                              );
                             }
                             return Center(
                               child: SizedBox(
@@ -423,14 +455,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   CachedNetworkImage(
                                     imageUrl: card["img"]!,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: Colors.grey[300],
-                                      child: Center(child: CircularProgressIndicator()),
-                                    ),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: Colors.grey[300],
-                                      child: Icon(Icons.error, size: 50),
-                                    ),
+                                    placeholder:
+                                        (context, url) => Container(
+                                          color: Colors.grey[300],
+                                          child: Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        ),
+                                    errorWidget:
+                                        (context, url, error) => Container(
+                                          color: Colors.grey[300],
+                                          child: Icon(Icons.error, size: 50),
+                                        ),
                                   ),
                                   Container(
                                     decoration: BoxDecoration(
@@ -450,7 +486,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     left: 20,
                                     right: 20,
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           card["title"]!,
@@ -460,7 +497,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                             color: Colors.white,
                                             shadows: [
                                               Shadow(
-                                                color: Colors.black.withOpacity(0.5),
+                                                color: Colors.black.withOpacity(
+                                                  0.5,
+                                                ),
                                                 blurRadius: 4,
                                               ),
                                             ],
@@ -471,10 +510,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                           card["sub"]!,
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: Colors.white.withOpacity(0.9),
+                                            color: Colors.white.withOpacity(
+                                              0.9,
+                                            ),
                                             shadows: [
                                               Shadow(
-                                                color: Colors.black.withOpacity(0.5),
+                                                color: Colors.black.withOpacity(
+                                                  0.5,
+                                                ),
                                                 blurRadius: 4,
                                               ),
                                             ],
@@ -505,9 +548,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           width: currentPage == index ? 24 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: currentPage == index
-                                ? Colors.deepPurple
-                                : Colors.grey[300],
+                            color:
+                                currentPage == index
+                                    ? Colors.deepPurple
+                                    : Colors.grey[300],
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -536,10 +580,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             color: Colors.black87,
                           ),
                         ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text('See all →'),
-                        ),
+                        TextButton(onPressed: () {}, child: Text('See all →')),
                       ],
                     ),
                   ),
@@ -566,66 +607,63 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // RECOMMENDED SCHEMES SECTION
   // ============================================
   Widget _buildRecommendedSchemes() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFF6B6B), Color(0xFFFFD93D)],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF6B6B), Color(0xFFFFD93D)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                borderRadius: BorderRadius.circular(10),
+                child: Icon(Icons.stars_rounded, color: Colors.white, size: 20),
               ),
-              child: Icon(Icons.stars_rounded, color: Colors.white, size: 20),
-            ),
-            SizedBox(width: 12),
-            Expanded( // 👈 ensures long text wraps properly on small screens
-              child: Text(
-                'Recommended Schemes',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              SizedBox(width: 12),
+              Expanded(
+                // 👈 ensures long text wraps properly on small screens
+                child: Text(
+                  'Recommended Schemes',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis, // 👈 prevents pixel overflow
                 ),
-                overflow: TextOverflow.ellipsis, // 👈 prevents pixel overflow
               ),
-            ),
-          ],
-        ),
-      ),
-      SizedBox(height: 4),
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          'Personalized schemes based on your profile',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
+            ],
           ),
         ),
-      ),
-      SizedBox(height: 16),
+        SizedBox(height: 4),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Personalized schemes based on your profile',
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          ),
+        ),
+        SizedBox(height: 16),
 
-      if (isLoadingSchemes)
-        _buildSchemesLoading()
-      else if (schemesError != null)
-        _buildSchemesError()
-      else if (recommendedSchemes.isEmpty)
-        _buildNoSchemes()
-      else
-        _buildSchemesList(),
-    ],
-  );
-}
-
+        if (isLoadingSchemes)
+          _buildSchemesLoading()
+        else if (schemesError != null)
+          _buildSchemesError()
+        else if (recommendedSchemes.isEmpty)
+          _buildNoSchemes()
+        else
+          _buildSchemesList(),
+      ],
+    );
+  }
 
   Widget _buildSchemesLoading() {
-    return Container(
+    return SizedBox(
       height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -728,7 +766,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildSchemesList() {
-    return Container(
+    return SizedBox(
       height: 220,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -750,15 +788,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       [Color(0xFF43e97b), Color(0xFF38f9d7)],
       [Color(0xFFfa709a), Color(0xFFfee140)],
     ];
-    
+
     final cardColors = colors[index % colors.length];
-    
+
     // Extract scheme details safely
-    final title = scheme['title']?.toString() ?? scheme['name']?.toString() ?? 'Untitled Scheme';
-    final description = scheme['description']?.toString() ?? scheme['details']?.toString() ?? 'No description available';
-    final category = scheme['category']?.toString() ?? scheme['type']?.toString() ?? 'General';
-    final benefits = scheme['benefits']?.toString() ?? scheme['amount']?.toString() ?? '';
-    
+    final title =
+        scheme['title']?.toString() ??
+        scheme['name']?.toString() ??
+        'Untitled Scheme';
+    final description =
+        scheme['description']?.toString() ??
+        scheme['details']?.toString() ??
+        'No description available';
+    final category =
+        scheme['category']?.toString() ??
+        scheme['type']?.toString() ??
+        'General';
+    final benefits =
+        scheme['benefits']?.toString() ?? scheme['amount']?.toString() ?? '';
+
     return Container(
       width: 320,
       margin: EdgeInsets.only(right: 16),
@@ -794,7 +842,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(20),
@@ -815,7 +866,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           color: Colors.white.withOpacity(0.25),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.bookmark_border, color: Colors.white, size: 20),
+                        child: Icon(
+                          Icons.bookmark_border,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
@@ -845,7 +900,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   if (benefits.isNotEmpty) ...[
                     SizedBox(height: 12),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -853,7 +911,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.currency_rupee, color: Colors.white, size: 16),
+                          Icon(
+                            Icons.currency_rupee,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             benefits,
@@ -915,13 +977,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final title = scheme['title']?.toString() ?? scheme['name']?.toString() ?? 'Scheme Details';
-        final description = scheme['description']?.toString() ?? scheme['details']?.toString() ?? 'No description available';
-        final category = scheme['category']?.toString() ?? scheme['type']?.toString() ?? 'General';
-        final eligibility = scheme['eligibility']?.toString() ?? 'Not specified';
-        final benefits = scheme['benefits']?.toString() ?? scheme['amount']?.toString() ?? 'Not specified';
-        final howToApply = scheme['how_to_apply']?.toString() ?? scheme['application']?.toString() ?? 'Visit nearest government office';
-        
+        final title =
+            scheme['title']?.toString() ??
+            scheme['name']?.toString() ??
+            'Scheme Details';
+        final description =
+            scheme['description']?.toString() ??
+            scheme['details']?.toString() ??
+            'No description available';
+        final category =
+            scheme['category']?.toString() ??
+            scheme['type']?.toString() ??
+            'General';
+        final eligibility =
+            scheme['eligibility']?.toString() ?? 'Not specified';
+        final benefits =
+            scheme['benefits']?.toString() ??
+            scheme['amount']?.toString() ??
+            'Not specified';
+        final howToApply =
+            scheme['how_to_apply']?.toString() ??
+            scheme['application']?.toString() ??
+            'Visit nearest government office';
+
         return DraggableScrollableSheet(
           initialChildSize: 0.7,
           minChildSize: 0.5,
@@ -951,7 +1029,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.deepPurple.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
@@ -1008,11 +1089,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         SizedBox(height: 32),
                         ElevatedButton(
                           onPressed: () {
-                            // TODO: Navigate to application page
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Application process coming soon!'),
+                                content: Text(
+                                  'Application process coming soon!',
+                                ),
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
@@ -1077,11 +1159,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         SizedBox(height: 12),
         Text(
           content,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[700],
-            height: 1.6,
-          ),
+          style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.6),
         ),
       ],
     );
@@ -1256,7 +1334,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           subtitle: 'Let employers find you',
           color: Colors.teal,
           onTap: () {
-            // TODO: Navigate to post skill
           },
         ),
         _buildQuickAccessTile(
@@ -1265,7 +1342,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           subtitle: 'Check upcoming events',
           color: Colors.indigo,
           onTap: () {
-            // TODO: Navigate to calendar
           },
         ),
         _buildQuickAccessTile(
@@ -1274,7 +1350,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           subtitle: 'Workers in your area',
           color: Colors.red,
           onTap: () {
-            // TODO: Navigate to nearby skills
           },
         ),
       ],
@@ -1326,10 +1401,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1340,7 +1412,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     color: Colors.grey[100],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[600]),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),

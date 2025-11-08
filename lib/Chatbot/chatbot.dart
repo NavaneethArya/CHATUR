@@ -13,13 +13,14 @@ class ChaturChatbot extends StatefulWidget {
   final String selectedLanguage;
 
   const ChaturChatbot({
-    Key? key,
+    super.key,
     this.isDarkMode = false,
     this.textSizeMultiplier = 1.0,
     this.selectedLanguage = 'English',
-  }) : super(key: key);
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   _ChaturChatbotState createState() => _ChaturChatbotState();
 }
 
@@ -28,11 +29,11 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
-  
+
   bool _isLoading = false;
   bool _isListening = false;
   bool _isSpeaking = false;
-  
+
   late stt.SpeechToText _speech;
   late FlutterTts _flutterTts;
   late AnimationController _pulseController;
@@ -42,7 +43,9 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   String _selectedLanguage = 'English';
   double _textSizeMultiplier = 1.0;
 
-  static const String API_URL = 'https://navarasa-chatur-model-api.hf.space/chat';
+  // ignore: constant_identifier_names
+  static const String API_URL =
+      'https://navarasa-chatur-model-api.hf.space/chat';
   static const String CHAT_HISTORY_KEY = 'chatur_chat_history';
   static const int MAX_STORED_MESSAGES = 100; // Limit storage size
 
@@ -54,7 +57,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       'placeholder': 'Ask about schemes...',
       'listening': 'Listening...',
       'thinking': 'Chatur is thinking...',
-      'welcome': "Namaste! 🙏 I'm Chatur, your AI assistant for government schemes. Ask me anything about schemes, eligibility, or benefits!",
+      'welcome':
+          "Namaste! 🙏 I'm Chatur, your AI assistant for government schemes. Ask me anything about schemes, eligibility, or benefits!",
       'suggestions': [
         "Schemes for women",
         "Agriculture schemes",
@@ -63,7 +67,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
         "Eligibility criteria",
       ],
       'quickSuggestions': 'Quick suggestions:',
-      'errorMessage': 'Sorry, I\'m having trouble connecting. Please check your internet and try again.',
+      'errorMessage':
+          'Sorry, I\'m having trouble connecting. Please check your internet and try again.',
       'emptyStateTitle': 'Ask me anything about\ngovernment schemes!',
     },
     'Kannada': {
@@ -72,7 +77,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       'placeholder': 'ಯೋಜನೆಗಳ ಬಗ್ಗೆ ಕೇಳಿ...',
       'listening': 'ಕೇಳುತ್ತಿದೆ...',
       'thinking': 'ಚತುರ ಯೋಚಿಸುತ್ತಿದೆ...',
-      'welcome': "ನಮಸ್ಕಾರ! 🙏 ನಾನು ಚತುರ, ನಿಮ್ಮ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ AI ಸಹಾಯಕ. ಯೋಜನೆಗಳು, ಅರ್ಹತೆ ಅಥವಾ ಪ್ರಯೋಜನಗಳ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ!",
+      'welcome':
+          "ನಮಸ್ಕಾರ! 🙏 ನಾನು ಚತುರ, ನಿಮ್ಮ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ AI ಸಹಾಯಕ. ಯೋಜನೆಗಳು, ಅರ್ಹತೆ ಅಥವಾ ಪ್ರಯೋಜನಗಳ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ!",
       'suggestions': [
         "ಮಹಿಳೆಯರಿಗಾಗಿ ಯೋಜನೆಗಳು",
         "ಕೃಷಿ ಯೋಜನೆಗಳು",
@@ -81,7 +87,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
         "ಅರ್ಹತೆ ಮಾನದಂಡಗಳು",
       ],
       'quickSuggestions': 'ತ್ವರಿತ ಸಲಹೆಗಳು:',
-      'errorMessage': 'ಕ್ಷಮಿಸಿ, ನಾನು ಸಂಪರ್ಕಿಸಲು ತೊಂದರೆ ಅನುಭವಿಸುತ್ತಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+      'errorMessage':
+          'ಕ್ಷಮಿಸಿ, ನಾನು ಸಂಪರ್ಕಿಸಲು ತೊಂದರೆ ಅನುಭವಿಸುತ್ತಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
       'emptyStateTitle': 'ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ\nಏನು ಬೇಕಾದರೂ ಕೇಳಿ!',
     },
     'Hindi': {
@@ -90,7 +97,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       'placeholder': 'योजनाओं के बारे में पूछें...',
       'listening': 'सुन रहा है...',
       'thinking': 'चतुर सोच रहा है...',
-      'welcome': "नमस्ते! 🙏 मैं चतुर हूं, आपका सरकारी योजनाओं का AI सहायक। योजनाओं, पात्रता या लाभों के बारे में कुछ भी पूछें!",
+      'welcome':
+          "नमस्ते! 🙏 मैं चतुर हूं, आपका सरकारी योजनाओं का AI सहायक। योजनाओं, पात्रता या लाभों के बारे में कुछ भी पूछें!",
       'suggestions': [
         "महिलाओं के लिए योजनाएं",
         "कृषि योजनाएं",
@@ -99,7 +107,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
         "पात्रता मानदंड",
       ],
       'quickSuggestions': 'त्वरित सुझाव:',
-      'errorMessage': 'क्षमा करें, मुझे कनेक्ट करने में परेशानी हो रही है। कृपया अपना इंटरनेट जांचें और पुनः प्रयास करें।',
+      'errorMessage':
+          'क्षमा करें, मुझे कनेक्ट करने में परेशानी हो रही है। कृपया अपना इंटरनेट जांचें और पुनः प्रयास करें।',
       'emptyStateTitle': 'सरकारी योजनाओं के बारे में\nकुछ भी पूछें!',
     },
   };
@@ -116,23 +125,22 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   }
 
   // ============ CHAT HISTORY MANAGEMENT ============
-  
+
   /// Load chat history from local storage
   Future<void> _loadChatHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final chatHistoryJson = prefs.getString(CHAT_HISTORY_KEY);
-      
+
       if (chatHistoryJson != null && chatHistoryJson.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(chatHistoryJson);
-        final loadedMessages = decoded
-            .map((item) => ChatMessage.fromJson(item))
-            .toList();
-        
+        final loadedMessages =
+            decoded.map((item) => ChatMessage.fromJson(item)).toList();
+
         setState(() {
           _messages.addAll(loadedMessages);
         });
-        
+
         print('Loaded ${loadedMessages.length} messages from history');
         _scrollToBottom();
       } else {
@@ -144,28 +152,29 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       _addWelcomeMessage();
     }
   }
-  
+
   /// Save chat history to local storage
   Future<void> _saveChatHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Keep only the last MAX_STORED_MESSAGES to prevent storage bloat
-      final messagesToStore = _messages.length > MAX_STORED_MESSAGES
-          ? _messages.sublist(_messages.length - MAX_STORED_MESSAGES)
-          : _messages;
-      
+      final messagesToStore =
+          _messages.length > MAX_STORED_MESSAGES
+              ? _messages.sublist(_messages.length - MAX_STORED_MESSAGES)
+              : _messages;
+
       final chatHistoryJson = jsonEncode(
-        messagesToStore.map((msg) => msg.toJson()).toList()
+        messagesToStore.map((msg) => msg.toJson()).toList(),
       );
-      
+
       await prefs.setString(CHAT_HISTORY_KEY, chatHistoryJson);
       print('Saved ${messagesToStore.length} messages to history');
     } catch (e) {
       print('Error saving chat history: $e');
     }
   }
-  
+
   /// Clear all chat history
   Future<void> _clearChatHistory() async {
     try {
@@ -176,7 +185,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       print('Error clearing chat history: $e');
     }
   }
-  
+
   /// Export chat history as text
   String _exportChatAsText() {
     final buffer = StringBuffer();
@@ -185,7 +194,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     buffer.writeln('Language: $_selectedLanguage');
     buffer.writeln('=' * 40);
     buffer.writeln();
-    
+
     for (var message in _messages) {
       final sender = message.isUser ? 'You' : 'Chatur';
       final time = _formatTime(message.timestamp);
@@ -193,7 +202,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       buffer.writeln(message.text);
       buffer.writeln();
     }
-    
+
     return buffer.toString();
   }
 
@@ -202,7 +211,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       vsync: this,
       duration: Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -255,16 +264,20 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   }
 
   List<String> _getSuggestions() {
-    return List<String>.from(_translations[_selectedLanguage]?['suggestions'] ?? []);
+    return List<String>.from(
+      _translations[_selectedLanguage]?['suggestions'] ?? [],
+    );
   }
 
   void _addWelcomeMessage() {
     setState(() {
-      _messages.add(ChatMessage(
-        text: _t('welcome'),
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          text: _t('welcome'),
+          isUser: false,
+          timestamp: DateTime.now(),
+        ),
+      );
     });
   }
 
@@ -275,7 +288,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final bgColor = widget.isDarkMode ? Color(0xFF1E1E1E) : Colors.white;
+            final bgColor =
+                widget.isDarkMode ? Color(0xFF1E1E1E) : Colors.white;
             final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
 
             return Container(
@@ -311,7 +325,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                     ),
                   ),
                   SizedBox(height: 20),
-                  
+
                   // Language Selection
                   Text(
                     'Language',
@@ -331,7 +345,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                     ],
                   ),
                   SizedBox(height: 20),
-                  
+
                   // Text Size Selection
                   Text(
                     'Text Size',
@@ -360,7 +374,11 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     );
   }
 
-  Widget _buildLanguageChip(String label, String value, StateSetter setModalState) {
+  Widget _buildLanguageChip(
+    String label,
+    String value,
+    StateSetter setModalState,
+  ) {
     final isSelected = _selectedLanguage == value;
     return GestureDetector(
       onTap: () async {
@@ -370,7 +388,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
         setModalState(() {});
         await _updateTtsLanguage();
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Language changed to $value'),
@@ -378,7 +396,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
             backgroundColor: Color(0xFF667eea),
           ),
         );
-        
+
         // Clear and add new welcome message in selected language
         setState(() {
           _messages.clear();
@@ -402,7 +420,11 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     );
   }
 
-  Widget _buildTextSizeButton(String label, double multiplier, StateSetter setModalState) {
+  Widget _buildTextSizeButton(
+    String label,
+    double multiplier,
+    StateSetter setModalState,
+  ) {
     final isSelected = _textSizeMultiplier == multiplier;
     return Expanded(
       child: GestureDetector(
@@ -441,7 +463,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       bool available = await _speech.initialize();
       if (available) {
         setState(() => _isListening = true);
-        
+
         // Set locale based on selected language
         String locale = 'en_IN';
         if (_selectedLanguage == 'Kannada') {
@@ -449,7 +471,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
         } else if (_selectedLanguage == 'Hindi') {
           locale = 'hi_IN';
         }
-        
+
         _speech.listen(
           onResult: (result) {
             if (result.finalResult) {
@@ -496,25 +518,29 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     _scrollToBottom();
 
     try {
-      final response = await http.post(
-        Uri.parse(API_URL),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'query': text.trim()}),
-      ).timeout(Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse(API_URL),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'query': text.trim()}),
+          )
+          .timeout(Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final botResponse = data['response'] ?? data['answer'] ?? 
-            _t('errorMessage');
+        final botResponse =
+            data['response'] ?? data['answer'] ?? _t('errorMessage');
 
         setState(() {
-          _messages.add(ChatMessage(
-            text: botResponse,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
+          _messages.add(
+            ChatMessage(
+              text: botResponse,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
         });
-        
+
         // Save after adding bot message
         await _saveChatHistory();
       } else {
@@ -523,12 +549,14 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     } catch (e) {
       print('Chat API Error: $e');
       setState(() {
-        _messages.add(ChatMessage(
-          text: _t('errorMessage'),
-          isUser: false,
-          isError: true,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(
+          ChatMessage(
+            text: _t('errorMessage'),
+            isUser: false,
+            isError: true,
+            timestamp: DateTime.now(),
+          ),
+        );
       });
       await _saveChatHistory();
     } finally {
@@ -555,28 +583,39 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       builder: (BuildContext context) {
         final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
         final bgColor = widget.isDarkMode ? Color(0xFF1E1E1E) : Colors.white;
-        
+
         return AlertDialog(
           backgroundColor: bgColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange),
               SizedBox(width: 12),
               Text(
                 'Clear Chat History?',
-                style: TextStyle(color: textColor, fontSize: 18 * _textSizeMultiplier),
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 18 * _textSizeMultiplier,
+                ),
               ),
             ],
           ),
           content: Text(
             'This will permanently delete all your chat messages. This action cannot be undone.',
-            style: TextStyle(color: textColor, fontSize: 15 * _textSizeMultiplier),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15 * _textSizeMultiplier,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(fontSize: 15 * _textSizeMultiplier)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(fontSize: 15 * _textSizeMultiplier),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -598,14 +637,17 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: Text('Clear All', style: TextStyle(fontSize: 15 * _textSizeMultiplier)),
+              child: Text(
+                'Clear All',
+                style: TextStyle(fontSize: 15 * _textSizeMultiplier),
+              ),
             ),
           ],
         );
       },
     );
   }
-  
+
   void _showChatHistoryMenu() {
     showModalBottomSheet(
       context: context,
@@ -613,7 +655,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       builder: (BuildContext context) {
         final bgColor = widget.isDarkMode ? Color(0xFF1E1E1E) : Colors.white;
         final textColor = widget.isDarkMode ? Colors.white : Colors.black87;
-        
+
         return Container(
           decoration: BoxDecoration(
             color: bgColor,
@@ -644,13 +686,16 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                 ),
               ),
               SizedBox(height: 20),
-              
+
               // Total messages count
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF667eea).withOpacity(0.1), Color(0xFF764ba2).withOpacity(0.1)],
+                    colors: [
+                      Color(0xFF667eea).withOpacity(0.1),
+                      Color(0xFF764ba2).withOpacity(0.1),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -682,13 +727,16 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                 ),
               ),
               SizedBox(height: 20),
-              
+
               // Export chat button
               ListTile(
                 leading: Icon(Icons.download_outlined, color: Colors.blue),
                 title: Text(
                   'Export Chat History',
-                  style: TextStyle(color: textColor, fontSize: 16 * _textSizeMultiplier),
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 16 * _textSizeMultiplier,
+                  ),
                 ),
                 subtitle: Text(
                   'Save as text file',
@@ -707,13 +755,16 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                   );
                 },
               ),
-              
+
               // Clear chat button
               ListTile(
                 leading: Icon(Icons.delete_outline, color: Colors.red),
                 title: Text(
                   'Clear Chat History',
-                  style: TextStyle(color: Colors.red, fontSize: 16 * _textSizeMultiplier),
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 16 * _textSizeMultiplier,
+                  ),
                 ),
                 subtitle: Text(
                   'Delete all messages',
@@ -745,7 +796,6 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDarkMode;
-    final bgColor = isDark ? Color(0xFF0A0E27) : Color(0xFFF5F7FA);
     final cardColor = isDark ? Color(0xFF1A1F3A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
 
@@ -755,9 +805,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isDark
-                ? [Color(0xFF0A0E27), Color(0xFF1A1F3A)]
-                : [Color(0xFFF5F7FA), Color(0xFFE8EAF6)],
+            colors:
+                isDark
+                    ? [Color(0xFF0A0E27), Color(0xFF1A1F3A)]
+                    : [Color(0xFFF5F7FA), Color(0xFFE8EAF6)],
           ),
         ),
         child: SafeArea(
@@ -765,9 +816,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
             children: [
               _buildHeader(cardColor, textColor),
               Expanded(
-                child: _messages.isEmpty
-                    ? _buildEmptyState(textColor)
-                    : _buildMessageList(cardColor, textColor),
+                child:
+                    _messages.isEmpty
+                        ? _buildEmptyState(textColor)
+                        : _buildMessageList(cardColor, textColor),
               ),
               if (_messages.length <= 1 && !_isLoading)
                 _buildQuickSuggestions(cardColor, textColor),
@@ -891,7 +943,11 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                   ),
                 ],
               ),
-              child: Icon(Icons.chat_bubble_outline, size: 60, color: Colors.white),
+              child: Icon(
+                Icons.chat_bubble_outline,
+                size: 60,
+                color: Colors.white,
+              ),
             ),
           ),
           SizedBox(height: 24),
@@ -923,22 +979,37 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, Color cardColor, Color textColor) {
+  Widget _buildMessageBubble(
+    ChatMessage message,
+    Color cardColor,
+    Color textColor,
+  ) {
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         child: Column(
-          crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              message.isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
           children: [
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: message.isUser
-                    ? LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)])
-                    : null,
-                color: message.isUser ? null : (message.isError ? Colors.red.shade50 : cardColor),
+                gradient:
+                    message.isUser
+                        ? LinearGradient(
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                        )
+                        : null,
+                color:
+                    message.isUser
+                        ? null
+                        : (message.isError ? Colors.red.shade50 : cardColor),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -952,9 +1023,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                     offset: Offset(0, 2),
                   ),
                 ],
-                border: message.isError
-                    ? Border.all(color: Colors.red.shade200, width: 1)
-                    : null,
+                border:
+                    message.isError
+                        ? Border.all(color: Colors.red.shade200, width: 1)
+                        : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -962,7 +1034,12 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                   Text(
                     message.text,
                     style: TextStyle(
-                      color: message.isUser ? Colors.white : (message.isError ? Colors.red.shade900 : textColor),
+                      color:
+                          message.isUser
+                              ? Colors.white
+                              : (message.isError
+                                  ? Colors.red.shade900
+                                  : textColor),
                       fontSize: 15 * _textSizeMultiplier,
                       height: 1.4,
                     ),
@@ -974,7 +1051,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                       Text(
                         _formatTime(message.timestamp),
                         style: TextStyle(
-                          color: message.isUser ? Colors.white.withOpacity(0.7) : Colors.grey,
+                          color:
+                              message.isUser
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Colors.grey,
                           fontSize: 11 * _textSizeMultiplier,
                         ),
                       ),
@@ -1044,7 +1124,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
 
   Widget _buildQuickSuggestions(Color cardColor, Color textColor) {
     final suggestions = _getSuggestions();
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -1066,29 +1146,38 @@ class _ChaturChatbotState extends State<ChaturChatbot>
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: suggestions.map((suggestion) {
-              return GestureDetector(
-                onTap: () => _sendMessage(suggestion),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF667eea).withOpacity(0.1), Color(0xFF764ba2).withOpacity(0.1)],
+            children:
+                suggestions.map((suggestion) {
+                  return GestureDetector(
+                    onTap: () => _sendMessage(suggestion),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF667eea).withOpacity(0.1),
+                            Color(0xFF764ba2).withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Color(0xFF667eea).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        suggestion,
+                        style: TextStyle(
+                          fontSize: 13 * _textSizeMultiplier,
+                          color: Color(0xFF764ba2),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Color(0xFF667eea).withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    suggestion,
-                    style: TextStyle(
-                      fontSize: 13 * _textSizeMultiplier,
-                      color: Color(0xFF764ba2),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ],
       ),
@@ -1116,19 +1205,25 @@ class _ChaturChatbotState extends State<ChaturChatbot>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                gradient: _isListening
-                    ? LinearGradient(colors: [Colors.red.shade400, Colors.red.shade600])
-                    : LinearGradient(colors: [Colors.grey.shade200, Colors.grey.shade300]),
-                shape: BoxShape.circle,
-                boxShadow: _isListening
-                    ? [
-                        BoxShadow(
-                          color: Colors.red.withOpacity(0.4),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                gradient:
+                    _isListening
+                        ? LinearGradient(
+                          colors: [Colors.red.shade400, Colors.red.shade600],
+                        )
+                        : LinearGradient(
+                          colors: [Colors.grey.shade200, Colors.grey.shade300],
                         ),
-                      ]
-                    : [],
+                shape: BoxShape.circle,
+                boxShadow:
+                    _isListening
+                        ? [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                        : [],
               ),
               child: Icon(
                 _isListening ? Icons.mic_off : Icons.mic,
@@ -1140,7 +1235,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: widget.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.grey.shade100,
+                color:
+                    widget.isDarkMode
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: TextField(
@@ -1157,7 +1255,10 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                     fontSize: 15 * _textSizeMultiplier,
                   ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
@@ -1167,32 +1268,35 @@ class _ChaturChatbotState extends State<ChaturChatbot>
           ),
           SizedBox(width: 12),
           GestureDetector(
-            onTap: _messageController.text.trim().isEmpty || _isLoading
-                ? null
-                : () => _sendMessage(_messageController.text),
+            onTap:
+                _messageController.text.trim().isEmpty || _isLoading
+                    ? null
+                    : () => _sendMessage(_messageController.text),
             child: Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                gradient: _messageController.text.trim().isEmpty || _isLoading
-                    ? LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade400])
-                    : LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
-                shape: BoxShape.circle,
-                boxShadow: _messageController.text.trim().isEmpty || _isLoading
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Color(0xFF667eea).withOpacity(0.4),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                gradient:
+                    _messageController.text.trim().isEmpty || _isLoading
+                        ? LinearGradient(
+                          colors: [Colors.grey.shade300, Colors.grey.shade400],
+                        )
+                        : LinearGradient(
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                         ),
-                      ],
+                shape: BoxShape.circle,
+                boxShadow:
+                    _messageController.text.trim().isEmpty || _isLoading
+                        ? []
+                        : [
+                          BoxShadow(
+                            color: Color(0xFF667eea).withOpacity(0.4),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
               ),
-              child: Icon(
-                Icons.send_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
+              child: Icon(Icons.send_rounded, color: Colors.white, size: 22),
             ),
           ),
         ],
@@ -1219,7 +1323,7 @@ class ChatMessage {
     this.isError = false,
     required this.timestamp,
   });
-  
+
   // Convert ChatMessage to JSON for storage
   Map<String, dynamic> toJson() {
     return {
@@ -1229,14 +1333,16 @@ class ChatMessage {
       'timestamp': timestamp.toIso8601String(),
     };
   }
-  
+
   // Create ChatMessage from JSON
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
       text: json['text'] ?? '',
       isUser: json['isUser'] ?? false,
       isError: json['isError'] ?? false,
-      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 }

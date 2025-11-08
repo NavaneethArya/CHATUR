@@ -49,6 +49,8 @@ class Ministry {
 }
 
 class MinistryDetailPage extends StatefulWidget {
+  const MinistryDetailPage({super.key});
+
   @override
   _MinistryDetailPageState createState() => _MinistryDetailPageState();
 }
@@ -165,7 +167,7 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
     'india': Icons.flag,
   };
 
-  Map<String, String> _translations = {
+  final Map<String, String> _translations = {
     'en_search': 'Search ministries...',
     'kn_search': 'ಸಚಿವಾಲಯಗಳನ್ನು ಹುಡುಕಿ...',
     'hi_search': 'मंत्रालयों को खोजें...',
@@ -184,9 +186,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   };
 
   String _t(String key) {
-    String langPrefix = _selectedLanguage == 'English'
-        ? 'en'
-        : _selectedLanguage == 'Kannada'
+    String langPrefix =
+        _selectedLanguage == 'English'
+            ? 'en'
+            : _selectedLanguage == 'Kannada'
             ? 'kn'
             : 'hi';
     return _translations['${langPrefix}_$key'] ?? key;
@@ -283,7 +286,9 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
 
       await prefs.setStringList(_cacheKeyMinistries, ministriesJson);
       await prefs.setString(
-          _cacheKeyTimestamp, DateTime.now().toIso8601String());
+        _cacheKeyTimestamp,
+        DateTime.now().toIso8601String(),
+      );
       await prefs.setString(_cacheKeyLanguage, _selectedLanguage);
 
       print('Ministries cached successfully. Count: ${ministries.length}');
@@ -305,25 +310,26 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   }
 
   Future<List<Ministry>> _fetchMinistriesFromAPI() async {
-    final langCode = _selectedLanguage == 'English'
-        ? 'en'
-        : _selectedLanguage == 'Kannada'
+    final langCode =
+        _selectedLanguage == 'English'
+            ? 'en'
+            : _selectedLanguage == 'Kannada'
             ? 'kn'
             : 'hi';
     final url =
         //'https://navarasa-chathur-api.hf.space/$langCode/central/ministries';
-    'https://navarasa-chathur-api.hf.space/central/ministries?lang=$langCode';
+        'https://navarasa-chathur-api.hf.space/central/ministries?lang=$langCode';
 
     try {
       print('Fetching from URL: $url');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Accept': 'application/json'},
-      ).timeout(Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(url), headers: {'Accept': 'application/json'})
+          .timeout(Duration(seconds: 30));
 
       print('Response status: ${response.statusCode}');
       print(
-          'Response body preview: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
+        'Response body preview: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}',
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -404,10 +410,7 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
           SnackBar(
             content: Text("Failed to fetch ministries: ${e.toString()}"),
             duration: Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _loadMinistries,
-            ),
+            action: SnackBarAction(label: 'Retry', onPressed: _loadMinistries),
           ),
         );
       }
@@ -415,13 +418,17 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   }
 
   void _filterMinistries(String query) {
-    final results = _ministries.where((ministry) {
-      final lowerQuery = query.toLowerCase();
-      final nameMatch =
-          ministry.ministryName.toLowerCase().contains(lowerQuery);
-      final descMatch = ministry.description.toLowerCase().contains(lowerQuery);
-      return nameMatch || descMatch;
-    }).toList();
+    final results =
+        _ministries.where((ministry) {
+          final lowerQuery = query.toLowerCase();
+          final nameMatch = ministry.ministryName.toLowerCase().contains(
+            lowerQuery,
+          );
+          final descMatch = ministry.description.toLowerCase().contains(
+            lowerQuery,
+          );
+          return nameMatch || descMatch;
+        }).toList();
     setState(() {
       _filteredMinistries = results;
       _ministryCount = results.length;
@@ -454,12 +461,13 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MinistrySchemeDetailPage(
-          ministryName: ministry.ministryName,
-          selectedLanguage: _selectedLanguage,
-          isDarkMode: _isDarkMode,
-          textSizeMultiplier: _textSizeMultiplier,
-        ),
+        builder:
+            (context) => MinistrySchemeDetailPage(
+              ministryName: ministry.ministryName,
+              selectedLanguage: _selectedLanguage,
+              isDarkMode: _isDarkMode,
+              textSizeMultiplier: _textSizeMultiplier,
+            ),
       ),
     );
   }
@@ -504,13 +512,16 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                         gradient: LinearGradient(
                           colors: [
                             Colors.blue.shade400,
-                            Colors.purple.shade400
+                            Colors.purple.shade400,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(_getMinistryIcon(ministry.ministryName),
-                          color: Colors.white, size: 28),
+                      child: Icon(
+                        _getMinistryIcon(ministry.ministryName),
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -540,15 +551,18 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.blue.withOpacity(0.1),
-                                Colors.purple.withOpacity(0.1)
+                                Colors.purple.withOpacity(0.1),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.description,
-                                  color: Colors.blueAccent, size: 24),
+                              Icon(
+                                Icons.description,
+                                color: Colors.blueAccent,
+                                size: 24,
+                              ),
                               SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -708,9 +722,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: !_isDarkMode
-                                  ? Colors.blueAccent
-                                  : Colors.grey[300],
+                              color:
+                                  !_isDarkMode
+                                      ? Colors.blueAccent
+                                      : Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -718,18 +733,20 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                               children: [
                                 Icon(
                                   Icons.light_mode,
-                                  color: !_isDarkMode
-                                      ? Colors.white
-                                      : Colors.black54,
+                                  color:
+                                      !_isDarkMode
+                                          ? Colors.white
+                                          : Colors.black54,
                                   size: 20,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Light',
                                   style: TextStyle(
-                                    color: !_isDarkMode
-                                        ? Colors.white
-                                        : Colors.black54,
+                                    color:
+                                        !_isDarkMode
+                                            ? Colors.white
+                                            : Colors.black54,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -750,9 +767,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: _isDarkMode
-                                  ? Colors.blueAccent
-                                  : Colors.grey[300],
+                              color:
+                                  _isDarkMode
+                                      ? Colors.blueAccent
+                                      : Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -760,18 +778,20 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                               children: [
                                 Icon(
                                   Icons.dark_mode,
-                                  color: _isDarkMode
-                                      ? Colors.white
-                                      : Colors.black54,
+                                  color:
+                                      _isDarkMode
+                                          ? Colors.white
+                                          : Colors.black54,
                                   size: 20,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Dark',
                                   style: TextStyle(
-                                    color: _isDarkMode
-                                        ? Colors.white
-                                        : Colors.black54,
+                                    color:
+                                        _isDarkMode
+                                            ? Colors.white
+                                            : Colors.black54,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -809,8 +829,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
                         _loadMinistries();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text(
-                                  'Cache cleared. Refreshing ministries...')),
+                            content: Text(
+                              'Cache cleared. Refreshing ministries...',
+                            ),
+                          ),
                         );
                       },
                       icon: Icon(Icons.refresh, color: Colors.redAccent),
@@ -830,7 +852,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   }
 
   Widget _buildLanguageChip(
-      String label, String value, StateSetter setModalState) {
+    String label,
+    String value,
+    StateSetter setModalState,
+  ) {
     final isSelected = _selectedLanguage == value;
     return GestureDetector(
       onTap: () {
@@ -856,7 +881,10 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   }
 
   Widget _buildTextSizeButton(
-      String label, double multiplier, StateSetter setModalState) {
+    String label,
+    double multiplier,
+    StateSetter setModalState,
+  ) {
     final isSelected = _textSizeMultiplier == multiplier;
     return Expanded(
       child: GestureDetector(
@@ -934,168 +962,184 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
             child: TextField(
               controller: _searchController,
               onChanged: _filterMinistries,
-              style:
-                  TextStyle(color: _isDarkMode ? Colors.white : Colors.black87),
+              style: TextStyle(
+                color: _isDarkMode ? Colors.white : Colors.black87,
+              ),
               decoration: InputDecoration(
                 hintText: _t('search'),
                 hintStyle: TextStyle(
-                    color: _isDarkMode ? Colors.grey[400] : Colors.grey[600]),
-                prefixIcon: Icon(Icons.search,
-                    color: _isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
                 filled: true,
                 fillColor: searchBgColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: Colors.blueAccent),
-                        SizedBox(height: 16),
-                        Text(
-                          _t('loading'),
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14 * _textSizeMultiplier,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : _filteredMinistries.isEmpty
+            child:
+                _isLoading
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.search_off,
-                                size: 64, color: Colors.grey[400]),
-                            SizedBox(height: 16),
-                            Text(
-                              _t('no_ministries'),
-                              style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 16 * _textSizeMultiplier),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(color: Colors.blueAccent),
+                          SizedBox(height: 16),
+                          Text(
+                            _t('loading'),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14 * _textSizeMultiplier,
                             ),
-                            SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              onPressed: _loadMinistries,
-                              icon: Icon(Icons.refresh),
-                              label: Text('Retry'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : _filteredMinistries.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            _t('no_ministries'),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16 * _textSizeMultiplier,
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: _loadMinistries,
+                            icon: Icon(Icons.refresh),
+                            label: Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
                               ),
                             ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ),
+                    )
                     : GridView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.all(16),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1.1,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                        itemCount: _filteredMinistries.length,
-                        itemBuilder: (context, index) {
-                          final ministry = _filteredMinistries[index];
-                          final color = _getMinistryColor(index);
+                      controller: _scrollController,
+                      padding: EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1.1,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: _filteredMinistries.length,
+                      itemBuilder: (context, index) {
+                        final ministry = _filteredMinistries[index];
+                        final color = _getMinistryColor(index);
 
-                          return GestureDetector(
-                            onTap: () => _navigateToMinistrySchemes(ministry),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _isDarkMode
-                                      ? Colors.grey.shade800
-                                      : Colors.grey.shade200,
-                                  width: 1,
-                                ),
-                                boxShadow: _isDarkMode
-                                    ? []
-                                    : [
+                        return GestureDetector(
+                          onTap: () => _navigateToMinistrySchemes(ministry),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    _isDarkMode
+                                        ? Colors.grey.shade800
+                                        : Colors.grey.shade200,
+                                width: 1,
+                              ),
+                              boxShadow:
+                                  _isDarkMode
+                                      ? []
+                                      : [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.05),
                                           blurRadius: 8,
                                           offset: Offset(0, 2),
                                         ),
                                       ],
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: color.withOpacity(0.2),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(
-                                            _getMinistryIcon(
-                                                ministry.ministryName),
-                                            color: color,
-                                            size: 24,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 12),
-                                    Expanded(
-                                      child: Text(
-                                        ministry.ministryName,
-                                        style: TextStyle(
-                                          fontSize: 13 * _textSizeMultiplier,
-                                          fontWeight: FontWeight.w600,
-                                          color: textColor,
-                                          height: 1.3,
-                                        ),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    if (ministry.schemeCount > 0)
-                                      Text(
-                                        '${ministry.schemeCount} ${_t('schemes')}',
-                                        style: TextStyle(
-                                          fontSize: 12 * _textSizeMultiplier,
-                                          color: _isDarkMode
-                                              ? Colors.grey[400]
-                                              : Colors.grey[600],
-                                          fontWeight: FontWeight.w500,
+                                        child: Icon(
+                                          _getMinistryIcon(
+                                            ministry.ministryName,
+                                          ),
+                                          color: color,
+                                          size: 24,
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12),
+                                  Expanded(
+                                    child: Text(
+                                      ministry.ministryName,
+                                      style: TextStyle(
+                                        fontSize: 13 * _textSizeMultiplier,
+                                        fontWeight: FontWeight.w600,
+                                        color: textColor,
+                                        height: 1.3,
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  if (ministry.schemeCount > 0)
+                                    Text(
+                                      '${ministry.schemeCount} ${_t('schemes')}',
+                                      style: TextStyle(
+                                        fontSize: 12 * _textSizeMultiplier,
+                                        color:
+                                            _isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),

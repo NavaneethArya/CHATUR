@@ -2,6 +2,8 @@ import 'package:chatur_frontend/Events/services/panchayat_auth_service.dart';
 import 'package:flutter/material.dart';
 
 class PanchayatLoginScreen extends StatefulWidget {
+  const PanchayatLoginScreen({super.key});
+
   @override
   _PanchayatLoginScreenState createState() => _PanchayatLoginScreenState();
 }
@@ -94,7 +96,10 @@ class _PanchayatLoginScreenState extends State<PanchayatLoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'Official Email',
-                  prefixIcon: Icon(Icons.email_rounded, color: Colors.deepPurple),
+                  prefixIcon: Icon(
+                    Icons.email_rounded,
+                    color: Colors.deepPurple,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -112,11 +117,16 @@ class _PanchayatLoginScreenState extends State<PanchayatLoginScreen> {
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_rounded, color: Colors.deepPurple),
+                  prefixIcon: Icon(
+                    Icons.lock_rounded,
+                    color: Colors.deepPurple,
+                  ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword
-                        ? Icons.visibility_off
-                        : Icons.visibility),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
                     onPressed: () {
                       setState(() => _obscurePassword = !_obscurePassword);
                     },
@@ -144,16 +154,17 @@ class _PanchayatLoginScreenState extends State<PanchayatLoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: _isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                  child:
+                      _isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                            'Login',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
                 ),
               ),
 

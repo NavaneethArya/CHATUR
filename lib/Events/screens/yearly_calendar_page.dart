@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 class YearlyCalendarPage extends StatefulWidget {
   final int initialYear;
 
-  const YearlyCalendarPage({Key? key, required this.initialYear})
-      : super(key: key);
+  const YearlyCalendarPage({super.key, required this.initialYear});
 
   @override
   State<YearlyCalendarPage> createState() => _YearlyCalendarPageState();
@@ -65,7 +64,11 @@ class _YearlyCalendarPageState extends State<YearlyCalendarPage> {
               // Header with year navigation
               Padding(
                 padding: const EdgeInsets.only(
-                    top: 24, left: 12, bottom: 10, right: 12),
+                  top: 24,
+                  left: 12,
+                  bottom: 10,
+                  right: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
