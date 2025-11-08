@@ -1,0 +1,54 @@
+name: chatur_frontend
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.13.1
+  firebase_auth: ^5.5.4
+  google_sign_in: ^6.3.0
+  cloud_firestore: ^5.6.9
+  flutter_otp_text_field: ^1.5.1+1
+  get: ^4.7.2
+  pinput: ^5.0.1
+  geolocator: ^14.0.1
+  firebase_storage: ^12.4.7
+  image_picker: ^1.1.2
+  http: ^1.4.0
+  speech_to_text: ^7.0.0
+  latlong2: ^0.9.1
+  flutter_map: ^8.1.1
+  flutter_typeahead: ^5.2.0
+  flutter_tts: ^4.2.3
+  table_calendar: ^3.2.0
+  geocoding: ^4.0.0
+  google_generative_ai: ^0.4.7
+  url_launcher: ^6.3.2
+  shared_preferences: ^2.5.3
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  firebase_analytics: ^11.6.0
+  video_player: ^2.10.0
+  google_ml_kit: ^0.20.0
+  go_router: ^16.3.0
+  permission_handler: ^12.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  
+  
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/videos/intro.mp4
+    - assets/images/app_logo.png

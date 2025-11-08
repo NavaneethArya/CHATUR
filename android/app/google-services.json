@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1015460904025",
+    "project_id": "chatur-689f5",
+    "storage_bucket": "chatur-689f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015460904025:android:3de57ee3136ebb85864548",
+        "android_client_info": {
+          "package_name": "com.example.chatur_frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1015460904025-ega3erj4dlu3eoif41ivsn87ob30uf1o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chatur_frontend",
+            "certificate_hash": "3b059a84e700b0fb5116f7256b59637720dae7a1"
+          }
+        },
+        {
+          "client_id": "1015460904025-g8vfklo97bemjilvb0lcdu95ak99l5bi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXBR_3g8h4JmgAPZaUFNXEjKZCOltbAwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1015460904025-g8vfklo97bemjilvb0lcdu95ak99l5bi.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1015460904025-ge7cp6p1pq5dthr9rimpvuiluures279.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.chaturFrontend"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
