@@ -7,6 +7,7 @@ import 'package:chatur_frontend/Authentication/P_OTP_verify.dart';
 import 'package:chatur_frontend/Screens/OnboardingScreen.dart';
 import 'package:chatur_frontend/Screens/main_screen.dart';
 import 'package:chatur_frontend/Screens/profile_screen.dart';
+import 'package:chatur_frontend/Skills/MySkills.dart';
 import 'package:chatur_frontend/Skills/Post_skill.dart';
 import 'package:chatur_frontend/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -37,7 +38,9 @@ class MainApp extends StatelessWidget {
         '/Elogin': (context) => E_LoginPage(),
         '/Eregister': (context) => E_RegisterPage(),
         '/editProfile': (context) => ProfileScreen(),
-        '/SkillPost': (context) => PostSkillScreen(),
+        '/post-skill': (context) => ImprovedPostSkillScreen(),
+        '/my-skills': (context) => const MySkillsScreen(),
+
       },
     );
   }

@@ -21,7 +21,7 @@ class EditSkillScreen extends StatefulWidget {
   const EditSkillScreen({
     super.key,
     required this.skillId,
-    required this.skillData,
+    required this.skillData, required String userId,
   });
 
   @override

@@ -13,29 +13,30 @@ class AppColors {
   static const Color background = Color(0xFFF7F9FC);
   static const Color text = Color(0xFF2C3E50);
   static const Color textLight = Color(0xFF95A5A6);
+  static const Color success = Color(0xFF00C896);
+  static const Color warning = Color(0xFFFFAB00);
 }
 
-class SkillDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> skillData;
-  final String? skillId;
-  final String? userId;
+class EnhancedSkillDetailScreen extends StatefulWidget {
+  final String skillId;
+  final String userId;
 
-  const SkillDetailScreen({
+  const EnhancedSkillDetailScreen({
     super.key,
-    required this.skillData,
-    this.skillId,
-    this.userId,
+    required this.skillId,
+    required this.userId,
   });
 
   @override
-  State<SkillDetailScreen> createState() => _SkillDetailScreenState();
+  State<EnhancedSkillDetailScreen> createState() => _EnhancedSkillDetailScreenState();
 }
 
-class _SkillDetailScreenState extends State<SkillDetailScreen>
+class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Map<String, dynamic>? _skillData;
   Map<String, dynamic>? _providerProfile;
-  final List<Map<String, dynamic>> _reviews = [];
+  List<Map<String, dynamic>> _reviews = [];
   bool _isLoading = true;
   bool _isSaved = false;
 
@@ -54,37 +55,64 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
 
   Future<void> _loadData() async {
     try {
-      final userId = widget.userId ?? widget.skillData['userId'];
+      // Fetch skill data
+      final skillDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('skills')
+          .doc(widget.skillId)
+          .get();
+
+      if (!skillDoc.exists) {
+        if (mounted) Navigator.pop(context);
+        return;
+      }
 
       // Fetch provider profile
-      if (userId != null) {
-        final profileDoc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(userId)
-                .collection('Profile')
-                .doc('main')
-                .get();
+      final profileDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('Profile')
+          .doc('main')
+          .get();
 
-        if (profileDoc.exists) {
-          _providerProfile = profileDoc.data();
-        }
-      }
+      // Fetch reviews
+      final reviewsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('skills')
+          .doc(widget.skillId)
+          .collection('reviews')
+          .orderBy('createdAt', descending: true)
+          .limit(10)
+          .get();
 
       // Check if saved
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null && widget.skillId != null) {
-        final savedDoc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(currentUser.uid)
-                .collection('savedSkills')
-                .doc(widget.skillId)
-                .get();
+      if (currentUser != null) {
+        final savedDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('savedSkills')
+            .doc(widget.skillId)
+            .get();
         _isSaved = savedDoc.exists;
       }
 
-      setState(() => _isLoading = false);
+      // Increment view count
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('skills')
+          .doc(widget.skillId)
+          .update({'viewCount': FieldValue.increment(1)});
+
+      setState(() {
+        _skillData = skillDoc.data();
+        _providerProfile = profileDoc.data();
+        _reviews = reviewsSnapshot.docs.map((doc) => doc.data()).toList();
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error loading data: $e');
       setState(() => _isLoading = false);
@@ -94,13 +122,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
   Future<void> _toggleSave() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please login to save')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to save')),
+      );
       return;
     }
-
-    if (widget.skillId == null) return;
 
     final docRef = FirebaseFirestore.instance
         .collection('users')
@@ -112,19 +138,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
       if (_isSaved) {
         await docRef.delete();
         setState(() => _isSaved = false);
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Removed from saved')));
-        }
       } else {
-        await docRef.set(widget.skillData);
+        await docRef.set(_skillData!);
         setState(() => _isSaved = true);
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Saved successfully')));
-        }
       }
     } catch (e) {
       debugPrint('Toggle save error: $e');
@@ -145,7 +161,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
         await launchUrl(phoneUri);
       }
     } catch (e) {
-      debugPrint('Call error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot make call')),
+      );
     }
   }
 
@@ -157,51 +175,51 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
       return;
     }
 
-    final message =
-        'Hi, I found your ${widget.skillData['skillTitle']} service on CHATUR. I would like to know more.';
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    if (!cleanNumber.startsWith('+')) {
+      cleanNumber = '+91$cleanNumber';
+    }
+
+    final message = 'Hi! I found your ${_skillData!['skillTitle']} service on CHATUR. I would like to know more about it.';
     final Uri whatsappUri = Uri.parse(
-      'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}',
+      'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
     );
+
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WhatsApp not installed')),
+        );
       }
     } catch (e) {
-      debugPrint('WhatsApp error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot open WhatsApp')),
+      );
     }
-  }
-
-  void _showBookingSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => BookingSheet(
-            skillData: widget.skillData,
-            providerId: widget.userId ?? widget.skillData['userId'],
-            skillId: widget.skillId,
-          ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final images = List<String>.from(widget.skillData['images'] ?? []);
-    final GeoPoint? geo = widget.skillData['coordinates'];
-    final availability =
-        widget.skillData['availability'] as Map<String, dynamic>?;
-    final profile =
-        widget.skillData['profile'] as Map<String, dynamic>? ??
-        _providerProfile;
+    if (_skillData == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Skill Not Found')),
+        body: const Center(child: Text('This skill is no longer available')),
+      );
+    }
+
+    final images = List<String>.from(_skillData!['images'] ?? []);
+    final GeoPoint geo = _skillData!['coordinates'] ?? const GeoPoint(0, 0);
+    final availability = _skillData!['availability'] as Map<String, dynamic>?;
+    final profile = _skillData!['profile'] as Map<String, dynamic>? ?? _providerProfile;
+    final isAtWork = _skillData!['isAtWork'] ?? false;
 
     return Scaffold(
       body: CustomScrollView(
@@ -225,230 +243,303 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background:
-                  images.isNotEmpty
-                      ? PageView.builder(
-                        itemCount: images.length,
-                        itemBuilder:
-                            (context, index) => Image.network(
-                              images[index],
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => Container(
-                                    color: Colors.grey[300],
-                                    child: const Icon(
-                                      Icons.broken_image,
-                                      size: 80,
-                                    ),
-                                  ),
-                            ),
-                      )
-                      : Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.image, size: 80),
+              background: images.isNotEmpty
+                  ? PageView.builder(
+                      itemCount: images.length,
+                      itemBuilder: (context, index) => Image.network(
+                        images[index],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.broken_image, size: 80),
+                        ),
                       ),
+                    )
+                  : Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 80),
+                    ),
             ),
           ),
 
           // Content
           SliverToBoxAdapter(
-            child: Container(
-              color: AppColors.background,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title & Price Section
-                  Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.skillData['skillTitle'] ?? 'Service',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.text,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                _getPriceDisplay(),
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                widget.skillData['category'] ?? 'General',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${(widget.skillData['rating'] ?? 0.0).toStringAsFixed(1)} (${widget.skillData['reviewCount'] ?? 0} reviews)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title & Price Section
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _skillData!['skillTitle'] ?? 'Service',
                               style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _getPriceDisplay(),
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _skillData!['category'] ?? 'General',
+                              style: TextStyle(
+                                color: Colors.orange[700],
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Provider Info Card
-                  Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundImage: NetworkImage(
-                            profile?['photoUrl'] ??
-                                'https://via.placeholder.com/100',
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(width: 12),
+                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${(_skillData!['rating'] ?? 0.0).toStringAsFixed(1)} (${_skillData!['reviewCount'] ?? 0} reviews)',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${_skillData!['viewCount'] ?? 0} views',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      // Work Status Indicator
+                      if (isAtWork) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                profile?['name'] ?? 'Service Provider',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              const Icon(Icons.work, color: AppColors.warning, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Currently at work - May not be immediately available',
+                                  style: TextStyle(
+                                    color: Colors.orange[900],
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Phone: ${profile?['phone'] ?? 'Not specified'}',
-                                style: TextStyle(color: AppColors.textLight),
                               ),
                             ],
                           ),
                         ),
-                        Column(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.phone,
-                                color: AppColors.secondary,
+                      ],
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // Provider Info Card
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Card(
+                    elevation: 0,
+                    color: Colors.blue[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundImage: NetworkImage(
+                              profile?['photoUrl'] ?? 'https://via.placeholder.com/100',
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile?['name'] ?? 'Service Provider',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Phone: ${profile?['phone'] ?? 'Not specified'}',
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.phone, color: Colors.green),
+                                onPressed: () => _makeCall(profile?['phone'] ?? ''),
                               ),
-                              onPressed: () => _makeCall(profile?['phone']),
+                              IconButton(
+                                icon: const Icon(Icons.chat, color: Colors.blue),
+                                onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Tabs
+                TabBar(
+                  controller: _tabController,
+                  labelColor: Theme.of(context).primaryColor,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Theme.of(context).primaryColor,
+                  tabs: const [
+                    Tab(text: 'About'),
+                    Tab(text: 'Availability'),
+                    Tab(text: 'Reviews'),
+                  ],
+                ),
+
+                // Tab Content
+                SizedBox(
+                  height: 400,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildAboutTab(),
+                      _buildAvailabilityTab(availability),
+                      _buildReviewsTab(),
+                    ],
+                  ),
+                ),
+
+                // Map Section
+                if (geo.latitude != 0 && geo.longitude != 0) ...[
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Service Location',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 200,
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: LatLng(geo.latitude, geo.longitude),
+                              initialZoom: 14,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.chat, color: Colors.green),
-                              onPressed: () => _openWhatsApp(profile?['phone']),
-                            ),
-                          ],
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              ),
+                              CircleLayer(
+                                circles: [
+                                  CircleMarker(
+                                    point: LatLng(geo.latitude, geo.longitude),
+                                    color: Colors.blue.withOpacity(0.2),
+                                    borderColor: Colors.blue,
+                                    borderStrokeWidth: 2,
+                                    radius: _skillData!['serviceRadiusMeters']?.toDouble() ?? 5000,
+                                    useRadiusInMeter: true,
+                                  ),
+                                ],
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: LatLng(geo.latitude, geo.longitude),
+                                    width: 60,
+                                    height: 60,
+                                    child: const Icon(
+                                      Icons.location_pin,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _skillData!['address'] ?? 'Location not specified',
+                          style: TextStyle(color: Colors.grey[700]),
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  // Tabs
-                  Container(
-                    color: Colors.white,
-                    child: TabBar(
-                      controller: _tabController,
-                      labelColor: AppColors.primary,
-                      unselectedLabelColor: AppColors.textLight,
-                      indicatorColor: AppColors.primary,
-                      tabs: const [
-                        Tab(text: 'About'),
-                        Tab(text: 'Availability'),
-                        Tab(text: 'Location'),
-                      ],
-                    ),
-                  ),
-
-                  // Tab Content
-                  SizedBox(
-                    height: 400,
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildAboutTab(),
-                        _buildAvailabilityTab(availability),
-                        _buildLocationTab(geo),
-                      ],
-                    ),
-                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: SafeArea(
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
           child: Row(
             children: [
               Expanded(
                 flex: 2,
                 child: ElevatedButton.icon(
-                  onPressed: _showBookingSheet,
-                  icon: const Icon(Icons.calendar_today),
-                  label: const Text('Book Now'),
+                  onPressed: () => _makeCall(profile?['phone'] ?? ''),
+                  icon: const Icon(Icons.phone),
+                  label: const Text('Call Now'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.success,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     textStyle: const TextStyle(
                       fontSize: 16,
@@ -460,12 +551,12 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _makeCall(profile?['phone']),
-                  icon: const Icon(Icons.phone),
-                  label: const Text('Call'),
+                  onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
+                  icon: const Icon(Icons.chat),
+                  label: const Text('Chat'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.secondary,
-                    side: const BorderSide(color: AppColors.secondary),
+                    foregroundColor: Colors.green,
+                    side: const BorderSide(color: Colors.green),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
@@ -485,41 +576,37 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
         children: [
           const Text(
             'Description',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _skillData!['description'] ?? 'No description available',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              fontSize: 15,
+              color: Colors.grey[800],
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            widget.skillData['description'] ?? 'No description available',
-            style: TextStyle(fontSize: 15, color: AppColors.text, height: 1.6),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           const Text(
             'Service Details',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
             Icons.category,
             'Category',
-            widget.skillData['category'] ?? 'General',
+            _skillData!['category'] ?? 'General',
           ),
           _buildInfoRow(
             Icons.location_on,
             'Service Area',
-            '${(widget.skillData['serviceRadiusMeters'] ?? 5000) / 1000} km radius',
+            '${(_skillData!['serviceRadiusMeters'] ?? 5000) / 1000} km radius',
           ),
           _buildInfoRow(
             Icons.access_time,
             'Posted',
-            _formatDate(widget.skillData['createdAt']),
+            _formatDate(_skillData!['createdAt']),
           ),
         ],
       ),
@@ -542,72 +629,33 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
         children: [
           const Text(
             'Available Days',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children:
-                days
-                    .map(
-                      (day) => Chip(
-                        label: Text(day),
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        labelStyle: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
-                    .toList(),
+            children: days
+                .map(
+                  (day) => Chip(
+                    label: Text(day),
+                    backgroundColor: Colors.green[50],
+                    labelStyle: TextStyle(color: Colors.green[700]),
+                  ),
+                )
+                .toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           const Text(
             'Working Hours',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.access_time,
-                  color: AppColors.accent,
-                  size: 32,
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Daily Working Hours',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$startTime - $endTime',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.access_time, color: Colors.blue),
+              title: Text('$startTime - $endTime'),
+              subtitle: const Text('Daily working hours'),
             ),
           ),
         ],
@@ -615,74 +663,84 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
     );
   }
 
-  Widget _buildLocationTab(GeoPoint? geo) {
-    if (geo == null || (geo.latitude == 0 && geo.longitude == 0)) {
-      return const Center(child: Text('Location not specified'));
+  Widget _buildReviewsTab() {
+    if (_reviews.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.rate_review_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No reviews yet',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: FlutterMap(
-            options: MapOptions(
-              initialCenter: LatLng(geo.latitude, geo.longitude),
-              initialZoom: 14,
+    return ListView.separated(
+      padding: const EdgeInsets.all(20),
+      itemCount: _reviews.length,
+      separatorBuilder: (_, __) => const Divider(height: 24),
+      itemBuilder: (context, index) {
+        final review = _reviews[index];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(
+                    review['userPhoto'] ?? 'https://via.placeholder.com/50',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        review['userName'] ?? 'User',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        children: [
+                          ...List.generate(
+                            5,
+                            (i) => Icon(
+                              i < (review['rating'] ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatDate(review['createdAt']),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.chatur.app',
-              ),
-              CircleLayer(
-                circles: [
-                  CircleMarker(
-                    point: LatLng(geo.latitude, geo.longitude),
-                    color: AppColors.primary.withOpacity(0.2),
-                    borderColor: AppColors.primary,
-                    borderStrokeWidth: 2,
-                    radius:
-                        (widget.skillData['serviceRadiusMeters'] ?? 5000)
-                            .toDouble(),
-                    useRadiusInMeter: true,
-                  ),
-                ],
-              ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: LatLng(geo.latitude, geo.longitude),
-                    width: 50,
-                    height: 50,
-                    child: const Icon(
-                      Icons.location_pin,
-                      color: AppColors.primary,
-                      size: 40,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Address',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.skillData['address'] ?? 'Address not specified',
-                style: TextStyle(color: AppColors.textLight),
-              ),
-            ],
-          ),
-        ),
-      ],
+            const SizedBox(height: 8),
+            Text(
+              review['comment'] ?? '',
+              style: TextStyle(color: Colors.grey[800]),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -691,11 +749,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.textLight),
+          Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
           Expanded(
-            child: Text(value, style: TextStyle(color: AppColors.textLight)),
+            child: Text(value, style: TextStyle(color: Colors.grey[700])),
           ),
         ],
       ),
@@ -703,8 +761,8 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
   }
 
   String _getPriceDisplay() {
-    final flatPrice = widget.skillData['flatPrice'];
-    final perKmPrice = widget.skillData['perKmPrice'];
+    final flatPrice = _skillData!['flatPrice'];
+    final perKmPrice = _skillData!['perKmPrice'];
     if (flatPrice != null && flatPrice > 0) return '₹$flatPrice';
     if (perKmPrice != null && perKmPrice > 0) return '₹$perKmPrice/km';
     return 'Negotiable';
@@ -714,293 +772,15 @@ class _SkillDetailScreenState extends State<SkillDetailScreen>
     if (timestamp == null) return 'Recently';
     try {
       final date = (timestamp as Timestamp).toDate();
-      return DateFormat('MMM d, yyyy').format(date);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+
+      if (diff.inDays > 30) return DateFormat('MMM d, yyyy').format(date);
+      if (diff.inDays > 0) return '${diff.inDays}d ago';
+      if (diff.inHours > 0) return '${diff.inHours}h ago';
+      return 'Just now';
     } catch (e) {
       return 'Recently';
     }
-  }
-}
-
-// Booking Sheet Widget
-class BookingSheet extends StatefulWidget {
-  final Map<String, dynamic> skillData;
-  final String providerId;
-  final String? skillId;
-
-  const BookingSheet({
-    super.key,
-    required this.skillData,
-    required this.providerId,
-    this.skillId,
-  });
-
-  @override
-  State<BookingSheet> createState() => _BookingSheetState();
-}
-
-class _BookingSheetState extends State<BookingSheet> {
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  final TextEditingController _notesController = TextEditingController();
-  bool _isSubmitting = false;
-
-  @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitBooking() async {
-    if (_selectedDate == null || _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select date and time')),
-      );
-      return;
-    }
-
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please login to book')));
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      final bookingId =
-          FirebaseFirestore.instance.collection('bookings').doc().id;
-      final bookingData = {
-        'bookingId': bookingId,
-        'skillId': widget.skillId,
-        'providerId': widget.providerId,
-        'customerId': currentUser.uid,
-        'customerName': currentUser.displayName ?? 'Customer',
-        'customerPhone': currentUser.phoneNumber ?? '',
-        'skillTitle': widget.skillData['skillTitle'],
-        'providerName': widget.skillData['profile']?['name'] ?? 'Provider',
-        'providerPhone': widget.skillData['profile']?['phone'] ?? '',
-        'scheduledDate': Timestamp.fromDate(_selectedDate!),
-        'scheduledTime': '${_selectedTime!.hour}:${_selectedTime!.minute}',
-        'notes': _notesController.text.trim(),
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-        'price':
-            widget.skillData['flatPrice'] ?? widget.skillData['perKmPrice'],
-      };
-
-      // Create booking in provider's collection
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.providerId)
-          .collection('bookings')
-          .doc(bookingId)
-          .set(bookingData);
-
-      // Create booking in customer's collection
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('myBookings')
-          .doc(bookingId)
-          .set(bookingData);
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Booking request sent successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Booking error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to book: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Book This Service',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.skillData['skillTitle'] ?? '',
-              style: TextStyle(fontSize: 16, color: AppColors.textLight),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Select Date',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 1)),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 90)),
-                );
-                if (date != null) setState(() => _selectedDate = date);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_today, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Text(
-                      _selectedDate != null
-                          ? DateFormat(
-                            'EEEE, MMM d, yyyy',
-                          ).format(_selectedDate!)
-                          : 'Choose a date',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color:
-                            _selectedDate != null
-                                ? AppColors.text
-                                : AppColors.textLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Select Time',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (time != null) setState(() => _selectedTime = time);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Text(
-                      _selectedTime != null
-                          ? _selectedTime!.format(context)
-                          : 'Choose a time',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color:
-                            _selectedTime != null
-                                ? AppColors.text
-                                : AppColors.textLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Additional Notes (Optional)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Any specific requirements...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitBooking,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child:
-                    _isSubmitting
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                        : const Text(
-                          'Confirm Booking',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

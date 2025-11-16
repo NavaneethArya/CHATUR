@@ -1,9 +1,21 @@
+import 'package:chatur_frontend/Skills/edit_skill_screen.dart';
+import 'package:chatur_frontend/Skills/skill_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+class AppColors {
+  static const Color primary = Color(0xFFFF6B35);
+  static const Color secondary = Color(0xFF004E89);
+  static const Color success = Color(0xFF00C896);
+  static const Color warning = Color(0xFFFFAB00);
+  static const Color danger = Color(0xFFFF5252);
+  static const Color text = Color(0xFF2C3E50);
+  static const Color textLight = Color(0xFF95A5A6);
+}
+
 class MySkillsScreen extends StatefulWidget {
-  const MySkillsScreen({super.key});
+  const MySkillsScreen({super.key});  // ✅ Simple constructor, no parameters
 
   @override
   State<MySkillsScreen> createState() => _MySkillsScreenState();
@@ -38,9 +50,11 @@ class _MySkillsScreenState extends State<MySkillsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Skills'),
+        title: const Text('My Services'),
+        backgroundColor: AppColors.primary,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
           tabs: const [
             Tab(icon: Icon(Icons.check_circle), text: 'Active'),
             Tab(icon: Icon(Icons.pause_circle), text: 'Paused'),
@@ -58,28 +72,56 @@ class _MySkillsScreenState extends State<MySkillsScreen>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Navigate to PostSkillScreen
+          Navigator.pushNamed(context, '/post-skill').then((_) {
+            // Refresh the list after posting
+            setState(() {});
+          });
         },
         icon: const Icon(Icons.add),
-        label: const Text('Add New Skill'),
+        label: const Text('Add New Service'),
+        backgroundColor: AppColors.primary,
       ),
     );
   }
 
   Widget _buildSkillsList(String userId, String status) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .collection('skills')
-              .where('status', isEqualTo: status)
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('skills')
+          .where('status', isEqualTo: status)
+          //.orderBy('createdAt', descending: true)
+          .snapshots(),
       builder: (context, snapshot) {
+        // Debug: Print connection state
+        debugPrint('Connection state: ${snapshot.connectionState}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (snapshot.hasError) {
+          debugPrint('Error: ${snapshot.error}');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: ${snapshot.error}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Debug: Print document count
+        debugPrint('Documents found: ${snapshot.data?.docs.length ?? 0}');
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
@@ -93,30 +135,66 @@ class _MySkillsScreenState extends State<MySkillsScreen>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No $status skills',
+                  'No $status services',
                   style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  status == 'active'
+                      ? 'Post your first service to get started'
+                      : 'No services in this category',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+                if (status == 'active') ...[
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/post-skill').then((_) {
+                        setState(() {});
+                      });
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Post New Service'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
-            final skillData = doc.data();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: MySkillCard(
-                skillId: doc.id,
-                userId: userId,
-                skillData: skillData,
-                onUpdate: () => setState(() {}),
-              ),
-            );
+        return RefreshIndicator(
+          onRefresh: () async {
+            setState(() {});
+            await Future.delayed(const Duration(seconds: 1));
           },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
+              final skillData = doc.data();
+              
+              // Debug: Print skill data
+              debugPrint('Skill ${index + 1}: ${skillData['skillTitle']}');
+              
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: MySkillCard(
+                  skillId: doc.id,
+                  userId: userId,
+                  skillData: skillData,
+                  onUpdate: () => setState(() {}),
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -144,6 +222,7 @@ class MySkillCard extends StatelessWidget {
     final viewCount = skillData['viewCount'] ?? 0;
     final bookingCount = skillData['bookingCount'] ?? 0;
     final rating = (skillData['rating'] ?? 0.0).toDouble();
+    final isAtWork = skillData['isAtWork'] ?? false;
 
     return Card(
       elevation: 2,
@@ -158,27 +237,25 @@ class MySkillCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child:
-                    images.isNotEmpty
-                        ? Image.network(
-                          images.first,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, __, ___) => Container(
-                                height: 150,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.broken_image, size: 50),
-                              ),
-                        )
-                        : Container(
+                child: images.isNotEmpty
+                    ? Image.network(
+                        images.first,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
                           height: 150,
                           color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(Icons.image, size: 50),
-                          ),
+                          child: const Icon(Icons.broken_image, size: 50),
                         ),
+                      )
+                    : Container(
+                        height: 150,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.image, size: 50),
+                        ),
+                      ),
               ),
               Positioned(
                 top: 12,
@@ -202,6 +279,36 @@ class MySkillCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isAtWork)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.work, color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'AT WORK',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -232,10 +339,7 @@ class MySkillCard extends StatelessWidget {
                   children: [
                     _buildStatChip(Icons.visibility, '$viewCount views'),
                     const SizedBox(width: 12),
-                    _buildStatChip(
-                      Icons.shopping_bag,
-                      '$bookingCount bookings',
-                    ),
+                    _buildStatChip(Icons.work, '$bookingCount jobs'),
                     const SizedBox(width: 12),
                     _buildStatChip(Icons.star, rating.toStringAsFixed(1)),
                   ],
@@ -247,7 +351,20 @@ class MySkillCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showEditOptions(context),
+                        onPressed: () => _navigateToProfile(context),
+                        icon: const Icon(Icons.visibility, size: 18),
+                        label: const Text('View'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _navigateToEdit(context),
                         icon: const Icon(Icons.edit, size: 18),
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(
@@ -255,7 +372,7 @@ class MySkillCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _toggleStatus(context),
@@ -312,80 +429,34 @@ class MySkillCard extends StatelessWidget {
     }
   }
 
-  void _showEditOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  void _navigateToProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SkillProfileScreen(
+          skillId: skillId,  // ✅ Required argument 1
+          userId: userId,     // ✅ Required argument 2
+        ),
       ),
-      builder:
-          (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.blue),
-                  title: const Text('Edit Details'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to edit screen
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.photo_library,
-                    color: Colors.purple,
-                  ),
-                  title: const Text('Change Photos'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to photo editor
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.location_on, color: Colors.red),
-                  title: const Text('Update Location'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to location editor
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.schedule, color: Colors.orange),
-                  title: const Text('Edit Availability'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to availability editor
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text(
-                    'Delete Skill',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _confirmDelete(context);
-                  },
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-    );
+    ).then((_) => onUpdate());  // Refresh list when returning
   }
+
+  void _navigateToEdit(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditSkillScreen(
+        skillId: skillId,
+        userId: userId,        // ✅ Added userId
+        skillData: skillData,
+      ),
+    ),
+  ).then((result) {
+    if (result == true) {
+      onUpdate();
+    }
+  });
+}
 
   Future<void> _toggleStatus(BuildContext context) async {
     final currentStatus = skillData['status'] ?? 'active';
@@ -398,15 +469,15 @@ class MySkillCard extends StatelessWidget {
           .collection('skills')
           .doc(skillId)
           .update({
-            'status': newStatus,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'status': newStatus,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Skill ${newStatus == 'active' ? 'activated' : 'paused'}',
+              'Service ${newStatus == 'active' ? 'activated' : 'paused'}',
             ),
             backgroundColor: Colors.green,
           ),
@@ -414,78 +485,16 @@ class MySkillCard extends StatelessWidget {
       }
       onUpdate();
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Skill?'),
-            content: const Text(
-              'This will permanently delete this skill and all associated data. This action cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await _deleteSkill(context);
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  Future<void> _deleteSkill(BuildContext context) async {
-    try {
-      // Delete from user's skills
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('skills')
-          .doc(skillId)
-          .delete();
-
-      // Delete from global index if exists
-      await FirebaseFirestore.instance
-          .collection('globalSkills')
-          .doc(skillId)
-          .delete()
-          .catchError((_) {});
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Skill deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
+          SnackBar(content: Text('Error: $e')),
         );
-      }
-      onUpdate();
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting skill: $e')));
       }
     }
   }
 }
 
-// Analytics Dashboard Widget
+// Analytics Dashboard Widget for the top of My Skills screen
 class SkillAnalyticsDashboard extends StatelessWidget {
   final String userId;
 
@@ -494,16 +503,15 @@ class SkillAnalyticsDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .collection('skills')
-              .where('status', isEqualTo: 'active')
-              .snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('skills')
+          .where('status', isEqualTo: 'active')
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox.shrink();
         }
 
         int totalViews = 0;
@@ -520,8 +528,9 @@ class SkillAnalyticsDashboard extends StatelessWidget {
 
         double avgRating = skillCount > 0 ? totalRating / skillCount : 0;
 
-        return Padding(
+        return Container(
           padding: const EdgeInsets.all(16),
+          color: Colors.grey[100],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -535,7 +544,7 @@ class SkillAnalyticsDashboard extends StatelessWidget {
                   Expanded(
                     child: _buildStatCard(
                       icon: Icons.work,
-                      label: 'Active Skills',
+                      label: 'Active Services',
                       value: '$skillCount',
                       color: Colors.blue,
                     ),
@@ -556,8 +565,8 @@ class SkillAnalyticsDashboard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildStatCard(
-                      icon: Icons.shopping_bag,
-                      label: 'Bookings',
+                      icon: Icons.work_outline,
+                      label: 'Jobs',
                       value: '$totalBookings',
                       color: Colors.green,
                     ),
