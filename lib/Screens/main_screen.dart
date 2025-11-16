@@ -89,45 +89,45 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      extendBody: true,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: Offset(0, -5),
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: _screens[_currentIndex],
+    extendBody: false,  // ✅ Changed from true to false - this reserves space
+    bottomNavigationBar: Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(_navItems.length, (index) {
-                    return _buildNavItem(index);
-                  }),
-                ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_navItems.length, (index) {
+                  return _buildNavItem(index);
+                }),
               ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem(int index) {
     final navItem = _navItems[index];

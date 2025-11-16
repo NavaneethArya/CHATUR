@@ -5,17 +5,38 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFFF6B35);
-  static const Color secondary = Color(0xFF004E89);
+  static const Color primary = Color(0xFF6C63FF);
+  static const Color primaryDark = Color(0xFF5548E0);
+  static const Color secondary = Color(0xFF00D4FF);
+  static const Color accent = Color(0xFF8B7FFF);
   static const Color success = Color(0xFF00C896);
   static const Color warning = Color(0xFFFFAB00);
   static const Color danger = Color(0xFFFF5252);
   static const Color text = Color(0xFF2C3E50);
   static const Color textLight = Color(0xFF95A5A6);
+  static const Color background = Color(0xFFF8F9FE);
+
+  static const primaryGradient = LinearGradient(
+    colors: [Color(0xFF6C63FF), Color(0xFF5548E0)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const accentGradient = LinearGradient(
+    colors: [Color(0xFF8B7FFF), Color(0xFFA29FFF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const successGradient = LinearGradient(
+    colors: [Color(0xFF00C896), Color(0xFF00E5B0)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
 
 class MySkillsScreen extends StatefulWidget {
-  const MySkillsScreen({super.key});  // ✅ Simple constructor, no parameters
+  const MySkillsScreen({super.key});
 
   @override
   State<MySkillsScreen> createState() => _MySkillsScreenState();
@@ -43,22 +64,60 @@ class _MySkillsScreenState extends State<MySkillsScreen>
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('My Skills')),
-        body: const Center(child: Text('Please login to view your skills')),
+        body: Container(
+          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_outline, size: 80, color: Colors.white),
+                const SizedBox(height: 24),
+                const Text(
+                  'Please login to view your skills',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text('Login Now'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Services'),
+        title: const Text(
+          'My Services',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primary,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
-            Tab(icon: Icon(Icons.check_circle), text: 'Active'),
-            Tab(icon: Icon(Icons.pause_circle), text: 'Paused'),
-            Tab(icon: Icon(Icons.archive), text: 'Archived'),
+            Tab(icon: Icon(Icons.check_circle_outline), text: 'Active'),
+            Tab(icon: Icon(Icons.pause_circle_outline), text: 'Paused'),
+            Tab(icon: Icon(Icons.archive_outlined), text: 'Archived'),
           ],
         ),
       ),
@@ -70,49 +129,86 @@ class _MySkillsScreenState extends State<MySkillsScreen>
           _buildSkillsList(user.uid, 'archived'),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, '/post-skill').then((_) {
-            // Refresh the list after posting
-            setState(() {});
-          });
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add New Service'),
-        backgroundColor: AppColors.primary,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/post-skill',
+            ).then((_) => setState(() {}));
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          icon: const Icon(Icons.add_circle_outline, size: 24),
+          label: const Text(
+            'Add Service',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildSkillsList(String userId, String status) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('skills')
-          .where('status', isEqualTo: status)
-          //.orderBy('createdAt', descending: true)
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('skills')
+              .where('status', isEqualTo: status)
+              .snapshots(),
       builder: (context, snapshot) {
-        // Debug: Print connection state
-        debugPrint('Connection state: ${snapshot.connectionState}');
-        
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: ShaderMask(
+              shaderCallback:
+                  (bounds) => AppColors.primaryGradient.createShader(bounds),
+              child: const CircularProgressIndicator(color: Colors.white),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
-          debugPrint('Error: ${snapshot.error}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                ShaderMask(
+                  shaderCallback:
+                      (bounds) =>
+                          AppColors.primaryGradient.createShader(bounds),
+                  child: const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.white,
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text('Error: ${snapshot.error}'),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: AppColors.danger),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => setState(() {}),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   child: const Text('Retry'),
                 ),
               ],
@@ -120,46 +216,81 @@ class _MySkillsScreenState extends State<MySkillsScreen>
           );
         }
 
-        // Debug: Print document count
-        debugPrint('Documents found: ${snapshot.data?.docs.length ?? 0}');
-
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  status == 'active' ? Icons.work_off : Icons.archive,
-                  size: 64,
-                  color: Colors.grey[400],
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.accentGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    status == 'active'
+                        ? Icons.work_off_outlined
+                        : Icons.archive_outlined,
+                    size: 64,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 Text(
                   'No $status services',
-                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   status == 'active'
                       ? 'Post your first service to get started'
                       : 'No services in this category',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 14, color: AppColors.textLight),
+                  textAlign: TextAlign.center,
                 ),
                 if (status == 'active') ...[
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/post-skill').then((_) {
-                        setState(() {});
-                      });
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Post New Service'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                  const SizedBox(height: 32),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/post-skill',
+                        ).then((_) => setState(() {}));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_circle_outline, size: 24),
+                      label: const Text(
+                        'Post New Service',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -174,24 +305,34 @@ class _MySkillsScreenState extends State<MySkillsScreen>
             setState(() {});
             await Future.delayed(const Duration(seconds: 1));
           },
+          color: AppColors.primary,
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final skillData = doc.data();
-              
-              // Debug: Print skill data
-              debugPrint('Skill ${index + 1}: ${skillData['skillTitle']}');
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: MySkillCard(
-                  skillId: doc.id,
-                  userId: userId,
-                  skillData: skillData,
-                  onUpdate: () => setState(() {}),
-                ),
+
+              return TweenAnimationBuilder<double>(
+                duration: Duration(milliseconds: 300 + (index * 100)),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 30 * (1 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: MySkillCard(
+                          skillId: doc.id,
+                          userId: userId,
+                          skillData: skillData,
+                          onUpdate: () => setState(() {}),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -224,194 +365,356 @@ class MySkillCard extends StatelessWidget {
     final rating = (skillData['rating'] ?? 0.0).toDouble();
     final isAtWork = skillData['isAtWork'] ?? false;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image & Status Badge
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: images.isNotEmpty
-                    ? Image.network(
-                        images.first,
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 150,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 50),
-                        ),
-                      )
-                    : Container(
-                        height: 150,
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Icon(Icons.image, size: 50),
-                        ),
-                      ),
-              ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-              if (isAtWork)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.work, color: Colors.white, size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          'AT WORK',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.white,
+          child: InkWell(
+            onTap: () => _navigateToProfile(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  skillData['skillTitle'] ?? 'Skill',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                // Image & Badges
+                Stack(
+                  children: [
+                    images.isNotEmpty
+                        ? Image.network(
+                          images.first,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                        )
+                        : _buildPlaceholder(),
+                    // Gradient Overlay
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.5),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Status Badge
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: _getStatusGradient(status),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _getStatusColor(status).withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              status == 'active'
+                                  ? Icons.check_circle
+                                  : status == 'paused'
+                                  ? Icons.pause_circle
+                                  : Icons.archive,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              status.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // At Work Badge
+                    if (isAtWork)
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFAB00), Color(0xFFFFBF3C)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.warning.withOpacity(0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.work, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'AT WORK',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Title at bottom
+                    Positioned(
+                      bottom: 12,
+                      left: 12,
+                      right: 12,
+                      child: Text(
+                        skillData['skillTitle'] ?? 'Skill',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 8),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.accentGradient,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          skillData['category'] ?? 'General',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Stats Row
+                      Row(
+                        children: [
+                          _buildStatChip(
+                            Icons.visibility_outlined,
+                            '$viewCount',
+                            AppColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          _buildStatChip(
+                            Icons.work_outline,
+                            '$bookingCount',
+                            AppColors.success,
+                          ),
+                          const SizedBox(width: 10),
+                          _buildStatChip(
+                            Icons.star_outline,
+                            rating.toStringAsFixed(1),
+                            Colors.amber,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionButton(
+                              icon: Icons.visibility_outlined,
+                              label: 'View',
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF2196F3), Color(0xFF42A5F5)],
+                              ),
+                              onPressed: () => _navigateToProfile(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildActionButton(
+                              icon: Icons.edit_outlined,
+                              label: 'Edit',
+                              gradient: AppColors.accentGradient,
+                              onPressed: () => _navigateToEdit(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildActionButton(
+                              icon:
+                                  status == 'active'
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                              label: status == 'active' ? 'Pause' : 'Active',
+                              gradient:
+                                  status == 'active'
+                                      ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFF9800),
+                                          Color(0xFFFFB74D),
+                                        ],
+                                      )
+                                      : AppColors.successGradient,
+                              onPressed: () => _toggleStatus(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  skillData['category'] ?? 'General',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 12),
-
-                // Stats Row
-                Row(
-                  children: [
-                    _buildStatChip(Icons.visibility, '$viewCount views'),
-                    const SizedBox(width: 12),
-                    _buildStatChip(Icons.work, '$bookingCount jobs'),
-                    const SizedBox(width: 12),
-                    _buildStatChip(Icons.star, rating.toStringAsFixed(1)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _navigateToProfile(context),
-                        icon: const Icon(Icons.visibility, size: 18),
-                        label: const Text('View'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _navigateToEdit(context),
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _toggleStatus(context),
-                        icon: Icon(
-                          status == 'active' ? Icons.pause : Icons.play_arrow,
-                          size: 18,
-                        ),
-                        label: Text(status == 'active' ? 'Pause' : 'Activate'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              status == 'active' ? Colors.orange : Colors.green,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatChip(IconData icon, String label) {
+  Widget _buildPlaceholder() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 180,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.3),
+            AppColors.accent.withOpacity(0.3),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.grey[700]),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-        ],
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 60,
+          color: Colors.white.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(IconData icon, String label, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required LinearGradient gradient,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -419,13 +722,28 @@ class MySkillCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'active':
-        return Colors.green;
+        return AppColors.success;
       case 'paused':
         return Colors.orange;
       case 'archived':
         return Colors.grey;
       default:
-        return Colors.blue;
+        return AppColors.primary;
+    }
+  }
+
+  LinearGradient _getStatusGradient(String status) {
+    switch (status) {
+      case 'active':
+        return AppColors.successGradient;
+      case 'paused':
+        return const LinearGradient(
+          colors: [Color(0xFFFF9800), Color(0xFFFFB74D)],
+        );
+      case 'archived':
+        return LinearGradient(colors: [Colors.grey[600]!, Colors.grey[500]!]);
+      default:
+        return AppColors.primaryGradient;
     }
   }
 
@@ -433,30 +751,27 @@ class MySkillCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SkillProfileScreen(
-          skillId: skillId,  // ✅ Required argument 1
-          userId: userId,     // ✅ Required argument 2
-        ),
+        builder:
+            (context) => SkillProfileScreen(skillId: skillId, userId: userId),
       ),
-    ).then((_) => onUpdate());  // Refresh list when returning
+    ).then((_) => onUpdate());
   }
 
   void _navigateToEdit(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditSkillScreen(
-        skillId: skillId,
-        userId: userId,        // ✅ Added userId
-        skillData: skillData,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditSkillScreen(
+              skillId: skillId,
+              userId: userId,
+              skillData: skillData,
+            ),
       ),
-    ),
-  ).then((result) {
-    if (result == true) {
-      onUpdate();
-    }
-  });
-}
+    ).then((result) {
+      if (result == true) onUpdate();
+    });
+  }
 
   Future<void> _toggleStatus(BuildContext context) async {
     final currentStatus = skillData['status'] ?? 'active';
@@ -469,9 +784,9 @@ class MySkillCard extends StatelessWidget {
           .collection('skills')
           .doc(skillId)
           .update({
-        'status': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'status': newStatus,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -479,7 +794,11 @@ class MySkillCard extends StatelessWidget {
             content: Text(
               'Service ${newStatus == 'active' ? 'activated' : 'paused'}',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -487,140 +806,13 @@ class MySkillCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
-  }
-}
-
-// Analytics Dashboard Widget for the top of My Skills screen
-class SkillAnalyticsDashboard extends StatelessWidget {
-  final String userId;
-
-  const SkillAnalyticsDashboard({super.key, required this.userId});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('skills')
-          .where('status', isEqualTo: 'active')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SizedBox.shrink();
-        }
-
-        int totalViews = 0;
-        int totalBookings = 0;
-        double totalRating = 0;
-        int skillCount = snapshot.data!.docs.length;
-
-        for (var doc in snapshot.data!.docs) {
-          final data = doc.data();
-          totalViews += (data['viewCount'] ?? 0) as int;
-          totalBookings += (data['bookingCount'] ?? 0) as int;
-          totalRating += (data['rating'] ?? 0.0) as double;
-        }
-
-        double avgRating = skillCount > 0 ? totalRating / skillCount : 0;
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.grey[100],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Your Performance',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.work,
-                      label: 'Active Services',
-                      value: '$skillCount',
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.visibility,
-                      label: 'Total Views',
-                      value: '$totalViews',
-                      color: Colors.purple,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.work_outline,
-                      label: 'Jobs',
-                      value: '$totalBookings',
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.star,
-                      label: 'Avg Rating',
-                      value: avgRating.toStringAsFixed(1),
-                      color: Colors.amber,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

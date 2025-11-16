@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
+import 'package:chatur_frontend/Documents/document.dart';
 import 'package:chatur_frontend/Other/profile_icon.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
@@ -1217,13 +1218,13 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           _buildFeatureCard(
             icon: Icons.account_balance_rounded,
-            title: 'Schemes',
-            subtitle: 'Govt benefits',
+            title: 'Documents',
+            subtitle: 'Docs & Forms',
             gradient: [Color(0xFFE67E22), Color(0xFFD35400)],
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => SchemeDetailPage()),
+                MaterialPageRoute(builder: (_) => DocumentAssistantScreen()),
               );
             },
           ),

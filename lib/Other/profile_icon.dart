@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
-import 'package:chatur_frontend/Other/DocumentAssistant.dart';
+import 'package:chatur_frontend/Documents/document.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
