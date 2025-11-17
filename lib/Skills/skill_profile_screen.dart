@@ -51,26 +51,28 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
 
   Future<void> _loadSkillData() async {
     try {
-      final skillDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('skills')
-          .doc(widget.skillId)
-          .get();
+      final skillDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .collection('skills')
+              .doc(widget.skillId)
+              .get();
 
       if (!skillDoc.exists) {
         if (mounted) Navigator.pop(context);
         return;
       }
 
-      final reviewsSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('skills')
-          .doc(widget.skillId)
-          .collection('reviews')
-          .orderBy('createdAt', descending: true)
-          .get();
+      final reviewsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .collection('skills')
+              .doc(widget.skillId)
+              .collection('reviews')
+              .orderBy('createdAt', descending: true)
+              .get();
 
       setState(() {
         _skillData = skillDoc.data();
@@ -85,10 +87,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
 
   Future<void> _toggleWorkStatus() async {
     if (_skillData == null) return;
-    
+
     final currentStatus = _skillData!['isAtWork'] ?? false;
     final newStatus = !currentStatus;
-    
+
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -96,9 +98,9 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
           .collection('skills')
           .doc(widget.skillId)
           .update({
-        'isAtWork': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'isAtWork': newStatus,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       setState(() {
         _skillData!['isAtWork'] = newStatus;
@@ -106,156 +108,191 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(newStatus ? '🟡 Status: At Work' : '🟢 Status: Available'),
+          content: Text(
+            newStatus ? '🟡 Status: At Work' : '🟢 Status: Available',
+          ),
           backgroundColor: newStatus ? AppColors.warning : AppColors.success,
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating status: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error updating status: $e')));
     }
   }
 
   void _showQRCode() {
     final qrData = 'chatur://rate-skill/${widget.userId}/${widget.skillId}';
-    
+
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.1), AppColors.secondary.withOpacity(0.1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.1),
+                    AppColors.secondary.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.qr_code, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Service QR Code',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                          ),
+                          shape: BoxShape.circle,
                         ),
-                        Text(
-                          'Scan to rate service',
-                          style: TextStyle(fontSize: 14, color: AppColors.textLight),
+                        child: const Icon(
+                          Icons.qr_code,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Service QR Code',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Scan to rate service',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: QrImageView(
+                      data: qrData,
+                      version: QrVersions.auto,
+                      size: 280,
+                      backgroundColor: Colors.white,
+                      errorCorrectionLevel: QrErrorCorrectLevel.H,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Ask customers to scan this code after completing the service to receive genuine ratings',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.text.withOpacity(0.8),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Share.share(
+                              'Rate my ${_skillData!['skillTitle']} service on CHATUR!\n\nScan QR: $qrData',
+                              subject: 'Rate My Service',
+                            );
+                          },
+                          icon: const Icon(Icons.share),
+                          label: const Text('Share'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: AppColors.primary),
+                            foregroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('📸 QR Code saved to gallery'),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.download),
+                          label: const Text('Save'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: QrImageView(
-                  data: qrData,
-                  version: QrVersions.auto,
-                  size: 280,
-                  backgroundColor: Colors.white,
-                  errorCorrectionLevel: QrErrorCorrectLevel.H,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Ask customers to scan this code after completing the service to receive genuine ratings',
-                        style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.8)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Share.share(
-                          'Rate my ${_skillData!['skillTitle']} service on CHATUR!\n\nScan QR: $qrData',
-                          subject: 'Rate My Service',
-                        );
-                      },
-                      icon: const Icon(Icons.share),
-                      label: const Text('Share'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.primary),
-                        foregroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('📸 QR Code saved to gallery')),
-                        );
-                      },
-                      icon: const Icon(Icons.download),
-                      label: const Text('Save'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -263,10 +300,7 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
     final result = await Navigator.pushNamed(
       context,
       '/edit-skill',
-      arguments: {
-        'skillId': widget.skillId,
-        'skillData': _skillData,
-      },
+      arguments: {'skillId': widget.skillId, 'skillData': _skillData},
     );
 
     if (result == true) {
@@ -277,30 +311,35 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
   Future<void> _deleteSkill() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
-            Icon(Icons.warning, color: AppColors.danger),
-            SizedBox(width: 12),
-            Text('Delete Skill?'),
-          ],
-        ),
-        content: const Text(
-          'This will permanently delete this skill and all associated data. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.warning, color: AppColors.danger),
+                SizedBox(width: 12),
+                Text('Delete Skill?'),
+              ],
+            ),
+            content: const Text(
+              'This will permanently delete this skill and all associated data. This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
 
     if (confirm == true) {
@@ -322,9 +361,9 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
           );
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting skill: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting skill: $e')));
       }
     }
   }
@@ -372,33 +411,43 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
               ),
               PopupMenuButton(
                 icon: const Icon(Icons.more_vert),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'share',
-                    child: Row(
-                      children: [
-                        Icon(Icons.share, size: 20),
-                        SizedBox(width: 12),
-                        Text('Share'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: AppColors.danger, size: 20),
-                        SizedBox(width: 12),
-                        Text('Delete', style: TextStyle(color: AppColors.danger)),
-                      ],
-                    ),
-                  ),
-                ],
+                itemBuilder:
+                    (context) => [
+                      const PopupMenuItem(
+                        value: 'share',
+                        child: Row(
+                          children: [
+                            Icon(Icons.share, size: 20),
+                            SizedBox(width: 12),
+                            Text('Share'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              color: AppColors.danger,
+                              size: 20,
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Delete',
+                              style: TextStyle(color: AppColors.danger),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                 onSelected: (value) {
                   if (value == 'delete') {
                     _deleteSkill();
                   } else if (value == 'share') {
-                    Share.share('Check out my ${_skillData!['skillTitle']} service on CHATUR!');
+                    Share.share(
+                      'Check out my ${_skillData!['skillTitle']} service on CHATUR!',
+                    );
                   }
                 },
               ),
@@ -441,13 +490,19 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                           children: [
                             Text(
                               _skillData!['skillTitle'] ?? 'Service',
-                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primary.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(20),
@@ -462,16 +517,24 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isAtWork ? AppColors.warning : AppColors.success,
+                                    color:
+                                        isAtWork
+                                            ? AppColors.warning
+                                            : AppColors.success,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        isAtWork ? Icons.work : Icons.check_circle,
+                                        isAtWork
+                                            ? Icons.work
+                                            : Icons.check_circle,
                                         color: Colors.white,
                                         size: 14,
                                       ),
@@ -497,7 +560,9 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primary, AppColors.secondary],
+                            ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -509,9 +574,20 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                           ),
                           child: Column(
                             children: const [
-                              Icon(Icons.qr_code_2, color: Colors.white, size: 40),
+                              Icon(
+                                Icons.qr_code_2,
+                                color: Colors.white,
+                                size: 40,
+                              ),
                               SizedBox(height: 4),
-                              Text('QR', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                              Text(
+                                'QR',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -519,27 +595,33 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Work Status Toggle
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          (isAtWork ? AppColors.warning : AppColors.success).withOpacity(0.1),
-                          (isAtWork ? AppColors.warning : AppColors.success).withOpacity(0.05),
+                          (isAtWork ? AppColors.warning : AppColors.success)
+                              .withOpacity(0.1),
+                          (isAtWork ? AppColors.warning : AppColors.success)
+                              .withOpacity(0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: (isAtWork ? AppColors.warning : AppColors.success).withOpacity(0.3),
+                        color: (isAtWork
+                                ? AppColors.warning
+                                : AppColors.success)
+                            .withOpacity(0.3),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           isAtWork ? Icons.work : Icons.check_circle,
-                          color: isAtWork ? AppColors.warning : AppColors.success,
+                          color:
+                              isAtWork ? AppColors.warning : AppColors.success,
                           size: 32,
                         ),
                         const SizedBox(width: 16),
@@ -548,7 +630,9 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isAtWork ? 'Currently at Work' : 'Available for Work',
+                                isAtWork
+                                    ? 'Currently at Work'
+                                    : 'Available for Work',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -559,7 +643,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                                 isAtWork
                                     ? 'Customers will know you\'re busy'
                                     : 'Ready to take new work',
-                                style: TextStyle(fontSize: 12, color: AppColors.textLight),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textLight,
+                                ),
                               ),
                             ],
                           ),
@@ -574,17 +661,37 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Stats
                   Row(
                     children: [
-                      _buildStatCard(Icons.star, rating.toStringAsFixed(1), 'Rating', Colors.amber),
+                      _buildStatCard(
+                        Icons.star,
+                        rating.toStringAsFixed(1),
+                        'Rating',
+                        Colors.amber,
+                      ),
                       const SizedBox(width: 12),
-                      _buildStatCard(Icons.rate_review, '$reviewCount', 'Reviews', Colors.blue),
+                      _buildStatCard(
+                        Icons.rate_review,
+                        '$reviewCount',
+                        'Reviews',
+                        Colors.blue,
+                      ),
                       const SizedBox(width: 12),
-                      _buildStatCard(Icons.visibility, '$viewCount', 'Views', Colors.purple),
+                      _buildStatCard(
+                        Icons.visibility,
+                        '$viewCount',
+                        'Views',
+                        Colors.purple,
+                      ),
                       const SizedBox(width: 12),
-                      _buildStatCard(Icons.work, '$bookingCount', 'Jobs', AppColors.success),
+                      _buildStatCard(
+                        Icons.work,
+                        '$bookingCount',
+                        'Jobs',
+                        AppColors.success,
+                      ),
                     ],
                   ),
                 ],
@@ -622,7 +729,12 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
     );
   }
 
-  Widget _buildStatCard(IconData icon, String value, String label, Color color) {
+  Widget _buildStatCard(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -637,7 +749,11 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
             const SizedBox(height: 8),
             Text(
               value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -657,27 +773,44 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Description', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Description',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Text(
             _skillData!['description'] ?? 'No description available',
-            style: const TextStyle(fontSize: 15, color: AppColors.text, height: 1.6),
+            style: const TextStyle(
+              fontSize: 15,
+              color: AppColors.text,
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 24),
-          const Text('Pricing', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Pricing',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.1), AppColors.secondary.withOpacity(0.1)],
+                colors: [
+                  AppColors.primary.withOpacity(0.1),
+                  AppColors.secondary.withOpacity(0.1),
+                ],
               ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.primary.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.currency_rupee, color: AppColors.primary, size: 32),
+                const Icon(
+                  Icons.currency_rupee,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,12 +818,18 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                     if (_skillData!['flatPrice'] != null)
                       Text(
                         '₹${_skillData!['flatPrice']} (Flat Rate)',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     if (_skillData!['perKmPrice'] != null)
                       Text(
                         '₹${_skillData!['perKmPrice']}/km',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                   ],
                 ),
@@ -698,18 +837,27 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Availability', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Availability',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ((_skillData!['availability']?['days'] ?? []) as List).map((day) {
-              return Chip(
-                label: Text(day),
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                labelStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
-              );
-            }).toList(),
+            children:
+                ((_skillData!['availability']?['days'] ?? []) as List).map((
+                  day,
+                ) {
+                  return Chip(
+                    label: Text(day),
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    labelStyle: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 12),
           Container(
@@ -724,7 +872,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                 const SizedBox(width: 12),
                 Text(
                   '${_skillData!['availability']?['startTime']} - ${_skillData!['availability']?['endTime']}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -742,9 +893,15 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
           children: [
             Icon(Icons.rate_review_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            const Text('No reviews yet', style: TextStyle(fontSize: 18, color: AppColors.textLight)),
+            const Text(
+              'No reviews yet',
+              style: TextStyle(fontSize: 18, color: AppColors.textLight),
+            ),
             const SizedBox(height: 8),
-            const Text('Share your QR code to get ratings', style: TextStyle(fontSize: 14, color: AppColors.textLight)),
+            const Text(
+              'Share your QR code to get ratings',
+              style: TextStyle(fontSize: 14, color: AppColors.textLight),
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _showQRCode,
@@ -752,7 +909,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
               label: const Text('Show QR Code'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
               ),
             ),
           ],
@@ -774,22 +934,28 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                 CircleAvatar(
                   radius: 24,
                   backgroundImage: NetworkImage(review['userPhoto'] ?? ''),
-                  child: review['userPhoto'] == null || review['userPhoto'].isEmpty
-                      ? const Icon(Icons.person)
-                      : null,
+                  child:
+                      review['userPhoto'] == null || review['userPhoto'].isEmpty
+                          ? const Icon(Icons.person)
+                          : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(review['userName'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        review['userName'] ?? 'User',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       Row(
                         children: [
                           ...List.generate(
                             5,
                             (i) => Icon(
-                              i < (review['rating'] ?? 0) ? Icons.star : Icons.star_border,
+                              i < (review['rating'] ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
                               color: Colors.amber,
                               size: 16,
                             ),
@@ -797,7 +963,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                           const SizedBox(width: 8),
                           Text(
                             _formatDate(review['createdAt']),
-                            style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -807,7 +976,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
               ],
             ),
             const SizedBox(height: 12),
-            Text(review['comment'] ?? '', style: const TextStyle(color: AppColors.text)),
+            Text(
+              review['comment'] ?? '',
+              style: const TextStyle(color: AppColors.text),
+            ),
           ],
         );
       },
@@ -855,7 +1027,13 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
     );
   }
 
-  Widget _buildDetailedStatCard(String title, dynamic value, IconData icon, Color color, String subtitle) {
+  Widget _buildDetailedStatCard(
+    String title,
+    dynamic value,
+    IconData icon,
+    Color color,
+    String subtitle,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -882,14 +1060,30 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, color: AppColors.textLight)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textLight,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   value.toString(),
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textLight,
+                  ),
+                ),
               ],
             ),
           ),

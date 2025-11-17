@@ -164,7 +164,7 @@ class _MainStorePageState extends State<MainStorePage>
                     Icon(Icons.storefront, size: 28),
                     SizedBox(width: 10),
                     Text(
-                      'Village Marketplace',
+                      'Village Market',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 22,

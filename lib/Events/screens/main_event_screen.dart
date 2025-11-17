@@ -14,14 +14,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-// Modern Color Palette - ADD THIS AFTER IMPORTS
+// ============================================
+// COLORS & CONSTANTS
+// ============================================
 class EventColors {
   static const primary = Color(0xFF6C5CE7);
-  static const primaryDark = Color(0xFF5F3DC4);
   static const secondary = Color(0xFFFF6B9D);
   static const accent = Color(0xFF00D4FF);
   static const success = Color(0xFF00C896);
-  static const warning = Color(0xFFFD79A8);
   static const background = Color(0xFFF8F9FE);
 
   static const gradient1 = LinearGradient(
@@ -41,8 +41,92 @@ class EventColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  static const appBarGradient = LinearGradient(
+    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const cardShadow = [
+    BoxShadow(color: Color(0x1A000000), blurRadius: 20, offset: Offset(0, 8)),
+  ];
 }
 
+// ============================================
+// SHIMMER LOADING WIDGET
+// ============================================
+class ShimmerLoading extends StatefulWidget {
+  final double width;
+  final double height;
+  final BorderRadius? borderRadius;
+
+  const ShimmerLoading({
+    Key? key,
+    required this.width,
+    required this.height,
+    this.borderRadius,
+  }) : super(key: key);
+
+  @override
+  _ShimmerLoadingState createState() => _ShimmerLoadingState();
+}
+
+class _ShimmerLoadingState extends State<ShimmerLoading>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1500),
+    )..repeat();
+    _animation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Colors.grey[300]!, Colors.grey[200]!, Colors.grey[300]!],
+              stops:
+                  [
+                    _animation.value - 0.3,
+                    _animation.value,
+                    _animation.value + 0.3,
+                  ].map((e) => e.clamp(0.0, 1.0)).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ============================================
+// MAIN EVENT SCREEN
+// ============================================
 class MainEventScreen extends StatefulWidget {
   const MainEventScreen({super.key});
 
@@ -50,7 +134,6 @@ class MainEventScreen extends StatefulWidget {
   _MainEventScreenState createState() => _MainEventScreenState();
 }
 
-// REPLACE THE EXISTING STATE VARIABLES WITH THESE
 class _MainEventScreenState extends State<MainEventScreen>
     with TickerProviderStateMixin {
   final currentUser = FirebaseAuth.instance.currentUser;
@@ -60,15 +143,22 @@ class _MainEventScreenState extends State<MainEventScreen>
   bool _isRefreshing = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // ADD THESE NEW ANIMATION CONTROLLERS
   late AnimationController _fabController;
   late AnimationController _headerController;
+  late AnimationController _fabMenuController;
+  late Animation<double> _fabScaleAnimation;
+  late Animation<double> _fabRotation;
+  bool _isFabMenuOpen = false;
 
   @override
   void initState() {
     super.initState();
+    _initAnimations();
+    _checkPanchayatStatus();
+    _loadEvents();
+  }
 
-    // ADD THESE ANIMATION INITIALIZATIONS
+  void _initAnimations() {
     _fabController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -77,31 +167,51 @@ class _MainEventScreenState extends State<MainEventScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _fabMenuController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _fabScaleAnimation = CurvedAnimation(
+      parent: _fabController,
+      curve: Curves.elasticOut,
+    );
+
+    _fabRotation = Tween<double>(begin: 0, end: 0.125).animate(
+      CurvedAnimation(parent: _fabMenuController, curve: Curves.easeInOut),
+    );
 
     _headerController.forward();
     Future.delayed(const Duration(milliseconds: 500), () {
       _fabController.forward();
     });
-
-    _checkPanchayatStatus();
-    _loadEvents();
   }
 
   @override
   void dispose() {
     _fabController.dispose();
     _headerController.dispose();
+    _fabMenuController.dispose();
     super.dispose();
   }
 
+  void _toggleFabMenu() {
+    setState(() {
+      _isFabMenuOpen = !_isFabMenuOpen;
+      if (_isFabMenuOpen) {
+        _fabMenuController.forward();
+      } else {
+        _fabMenuController.reverse();
+      }
+    });
+  }
+
   Future<void> _checkPanchayatStatus() async {
-    if (currentUser != null && currentUser!.email != null) {
+    if (currentUser?.email != null) {
       final isPanchayat = await PanchayatAuthService.isPanchayatMember(
         currentUser!.email!,
       );
-      if (mounted) {
-        setState(() => _isPanchayatMember = isPanchayat);
-      }
+      if (mounted) setState(() => _isPanchayatMember = isPanchayat);
     }
   }
 
@@ -109,13 +219,7 @@ class _MainEventScreenState extends State<MainEventScreen>
     if (_isLoading && !forceRefresh) return;
 
     if (mounted) {
-      setState(() {
-        if (forceRefresh) {
-          _isRefreshing = true;
-        } else {
-          _isLoading = true;
-        }
-      });
+      setState(() => forceRefresh ? _isRefreshing = true : _isLoading = true);
     }
 
     try {
@@ -133,29 +237,34 @@ class _MainEventScreenState extends State<MainEventScreen>
         });
       }
     } catch (e) {
-      print('❌ Error loading events: $e');
-
       if (mounted) {
         setState(() {
           _isLoading = false;
           _isRefreshing = false;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 10),
-                Expanded(child: Text('Error loading events')),
-              ],
-            ),
-            backgroundColor: Colors.red[700],
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _showSnackBar('Error loading events', isError: true);
       }
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle,
+              color: Colors.white,
+            ),
+            SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   Future<void> _navigateToAddEvent() async {
@@ -164,10 +273,7 @@ class _MainEventScreenState extends State<MainEventScreen>
         context,
         MaterialPageRoute(builder: (_) => AddEventWithLocationPage()),
       );
-
-      if (result == true) {
-        _loadEvents(forceRefresh: true);
-      }
+      if (result == true) _loadEvents(forceRefresh: true);
     } else {
       final memberData = await Navigator.push<Map<String, dynamic>>(
         context,
@@ -176,17 +282,13 @@ class _MainEventScreenState extends State<MainEventScreen>
 
       if (memberData != null) {
         setState(() => _isPanchayatMember = true);
-
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => AddEventWithLocationPage(panchayatData: memberData),
           ),
         );
-
-        if (result == true) {
-          _loadEvents(forceRefresh: true);
-        }
+        if (result == true) _loadEvents(forceRefresh: true);
       }
     }
   }
@@ -195,302 +297,197 @@ class _MainEventScreenState extends State<MainEventScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: EventColors.background,
+      appBar: _buildAppBar(),
+      drawer: _buildDrawer(),
+      body: Container(
+        child:
+            _isLoading
+                ? _buildLoadingShimmer()
+                : _events.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                  onRefresh: () => _loadEvents(forceRefresh: true),
+                  color: EventColors.primary,
+                  child: ListView.builder(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                    itemCount: _events.length,
+                    itemBuilder:
+                        (context, index) => _buildAnimatedEventCard(index),
+                  ),
+                ),
+      ),
+      floatingActionButton: _buildFAB(),
+    );
+  }
 
-      // ============================================
-      // APP BAR WITH DRAWER & NOTIFICATIONS
-      // ============================================
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.menu_rounded, color: Colors.black87, size: 28),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.event, color: Colors.deepPurple),
-            SizedBox(width: 8),
-            Text(
-              'Community Events',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
+  PreferredSize _buildAppBar() {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(kToolbarHeight),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: EventColors.appBarGradient,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: Offset(0, 5),
             ),
           ],
         ),
-        actions: [
-          // Loading indicator when refreshing
-          if (_isRefreshing)
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            // UPDATED: Notification bell with real-time badge
-            StreamBuilder<int>(
-              stream: NotificationService.getUnreadCountStream(),
-              builder: (context, snapshot) {
-                final unreadCount = snapshot.data ?? 0;
-
-                return Stack(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.black87,
-                        size: 28,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => NotificationsScreen(),
-                          ),
-                        );
-                      },
-                      tooltip: 'Notifications',
-                    ),
-                    // Badge showing unread count
-                    if (unreadCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            unreadCount > 99 ? '99+' : '$unreadCount',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-        ],
-      ),
-
-      // ============================================
-      // DRAWER WITH PROFILE & MENU
-      // ============================================
-      drawer: Drawer(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              // Profile Header
-              _buildDrawerHeader(),
-
-              Divider(height: 1),
-
-              // Menu Items
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildDrawerItem(
-                      icon: Icons.calendar_month_rounded,
-                      title: 'Calendar View',
-                      subtitle: 'View all events in calendar',
-                      onTap: () async {
-                        Navigator.pop(context);
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => AllEventsPage()),
-                        );
-                        if (result == true) {
-                          _loadEvents(forceRefresh: true);
-                        }
-                      },
-                    ),
-
-                    _buildDrawerItem(
-                      icon: Icons.add_circle_outline_rounded,
-                      title: 'Add Event',
-                      subtitle: 'Create a new community event',
-                      color: Colors.deepPurple,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _navigateToAddEvent();
-                      },
-                    ),
-
-                    Divider(),
-
-                    // NEW: Notifications menu item
-                    _buildDrawerItem(
-                      icon: Icons.notifications_rounded,
-                      title: 'Notifications',
-                      subtitle: 'View all event notifications',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => NotificationsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-
-                    _buildDrawerItem(
-                      icon: Icons.refresh_rounded,
-                      title: 'Refresh Events',
-                      subtitle: 'Reload latest events',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _loadEvents(forceRefresh: true);
-                      },
-                    ),
-
-                    Divider(),
-
-                    _buildDrawerItem(
-                      icon: Icons.settings_rounded,
-                      title: 'Settings',
-                      subtitle: 'App preferences',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Settings coming soon!')),
-                        );
-                      },
-                    ),
-
-                    _buildDrawerItem(
-                      icon: Icons.help_outline_rounded,
-                      title: 'Help & Support',
-                      subtitle: 'Get help using Chatur',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Help section coming soon!')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Footer
-              _buildDrawerFooter(),
-            ],
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.menu_rounded, color: Colors.white),
+            onPressed: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
           ),
+          title: Text(
+            'Community Events',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          actions: [_buildNotificationButton()],
         ),
-      ),
-
-      // ============================================
-      // BODY - EVENTS LIST
-      // ============================================
-      body:
-          _isLoading
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Loading events...',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              )
-              : _events.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                onRefresh: () => _loadEvents(forceRefresh: true),
-                child: ListView.builder(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _events.length,
-                  itemBuilder: (context, index) {
-                    return EventCard(
-                      key: ValueKey(_events[index].id),
-                      event: _events[index],
-                      currentUserEmail: currentUser?.email ?? '',
-                      isPanchayatMember: _isPanchayatMember,
-                      onEventChanged: () => _loadEvents(forceRefresh: true),
-                    );
-                  },
-                ),
-              ),
-
-      // ============================================
-      // FAB - ADD EVENT
-      // ============================================
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddEvent,
-        backgroundColor: Colors.deepPurple,
-        icon: Icon(Icons.add_rounded, color: Colors.white),
-        label: Text(
-          'Add Event',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        elevation: 6,
       ),
     );
   }
 
-  // ============================================
-  // DRAWER HEADER WITH PROFILE
-  // ============================================
+  Widget _buildAppBarButton(IconData icon, VoidCallback onPressed) {
+    return IconButton(
+      icon: Icon(icon, color: Colors.white, size: 24),
+      onPressed: onPressed,
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    return _isRefreshing
+        ? Padding(
+          padding: EdgeInsets.all(12),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        )
+        : StreamBuilder<int>(
+          stream: NotificationService.getUnreadCountStream(),
+          builder: (context, snapshot) {
+            final unreadCount = snapshot.data ?? 0;
+            return Stack(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.notifications_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => NotificationsScreen()),
+                    );
+                  },
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, EventColors.background],
+          ),
+        ),
+        child: Column(
+          children: [
+            _buildDrawerHeader(),
+            Divider(height: 1),
+            Expanded(child: _buildDrawerItems()),
+            _buildDrawerFooter(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDrawerHeader() {
     final userName = currentUser?.displayName ?? 'User';
     final userEmail = currentUser?.email ?? 'user@example.com';
-    final userPhone = currentUser?.phoneNumber ?? 'Not provided';
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
+      padding: EdgeInsets.fromLTRB(24, 60, 24, 24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.deepPurple,
-            Colors.deepPurple[300]!,
-            Colors.purple[200]!,
-          ],
-        ),
+        gradient: EventColors.appBarGradient,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 85,
+            height: 85,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 4),
+              gradient: LinearGradient(
+                colors: [Colors.white, Colors.white.withOpacity(0.9)],
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+                  blurRadius: 15,
+                  offset: Offset(0, 8),
                 ),
               ],
             ),
@@ -500,72 +497,83 @@ class _MainEventScreenState extends State<MainEventScreen>
                       ? CachedNetworkImage(
                         imageUrl: currentUser!.photoURL!,
                         fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) => CircularProgressIndicator(),
+                        placeholder: (_, __) => CircularProgressIndicator(),
                         errorWidget:
-                            (context, url, error) => Icon(
+                            (_, __, ___) => Icon(
                               Icons.person,
-                              size: 40,
-                              color: Colors.deepPurple,
+                              size: 45,
+                              color: EventColors.primary,
                             ),
                       )
-                      : Icon(Icons.person, size: 40, color: Colors.deepPurple),
+                      : Icon(
+                        Icons.person,
+                        size: 45,
+                        color: EventColors.primary,
+                      ),
             ),
           ),
           SizedBox(height: 16),
           Text(
             userName,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              letterSpacing: 0.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.email_outlined, size: 14, color: Colors.white70),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  userEmail,
-                  style: TextStyle(fontSize: 13, color: Colors.white70),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          SizedBox(height: 8),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.email_outlined, size: 14, color: Colors.white),
+                SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    userEmail,
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.phone_outlined, size: 14, color: Colors.white70),
-              SizedBox(width: 6),
-              Text(
-                userPhone,
-                style: TextStyle(fontSize: 13, color: Colors.white70),
-              ),
-            ],
+              ],
+            ),
           ),
           if (_isPanchayatMember) ...[
             SizedBox(height: 12),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [Color(0xFFf39c12), Color(0xFFe67e22)],
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.verified, size: 16, color: Colors.white),
-                  SizedBox(width: 6),
+                  Icon(Icons.verified, size: 18, color: Colors.white),
+                  SizedBox(width: 8),
                   Text(
                     'Panchayat Member',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -579,36 +587,131 @@ class _MainEventScreenState extends State<MainEventScreen>
     );
   }
 
+  Widget _buildDrawerItems() {
+    final items = [
+      {
+        'icon': Icons.calendar_month_rounded,
+        'title': 'Calendar View',
+        'subtitle': 'View all events',
+        'gradient': EventColors.gradient1,
+        'action': () async {
+          Navigator.pop(context);
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AllEventsPage()),
+          );
+          if (result == true) _loadEvents(forceRefresh: true);
+        },
+      },
+      {
+        'icon': Icons.add_circle_outline_rounded,
+        'title': 'Add Event',
+        'subtitle': 'Create new event',
+        'gradient': EventColors.gradient2,
+        'action': () {
+          Navigator.pop(context);
+          _navigateToAddEvent();
+        },
+      },
+      {
+        'icon': Icons.notifications_active_rounded,
+        'title': 'Notifications',
+        'subtitle': 'View notifications',
+        'gradient': EventColors.gradient3,
+        'action': () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => NotificationsScreen()),
+          );
+        },
+      },
+      {
+        'icon': Icons.refresh_rounded,
+        'title': 'Refresh Events',
+        'subtitle': 'Reload latest',
+        'gradient': LinearGradient(
+          colors: [Color(0xFF00C896), Color(0xFF00B894)],
+        ),
+        'action': () {
+          Navigator.pop(context);
+          _loadEvents(forceRefresh: true);
+        },
+      },
+    ];
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        SizedBox(height: 8),
+        ...items.map(
+          (item) => _buildDrawerItem(
+            icon: item['icon'] as IconData,
+            title: item['title'] as String,
+            subtitle: item['subtitle'] as String,
+            gradient: item['gradient'] as Gradient,
+            onTap: item['action'] as VoidCallback,
+          ),
+        ),
+        SizedBox(height: 8),
+      ],
+    );
+  }
+
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,
     required String subtitle,
+    required Gradient gradient,
     required VoidCallback onTap,
-    Color? color,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (color ?? Colors.deepPurple).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: (gradient as LinearGradient).colors.first.withOpacity(
+                  0.3,
+                ),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
         ),
-        child: Icon(icon, color: color ?? Colors.deepPurple, size: 24),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
         ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+        onTap: onTap,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-      ),
-      onTap: onTap,
-      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     );
   }
 
@@ -616,28 +719,135 @@ class _MainEventScreenState extends State<MainEventScreen>
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
-              SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: EventColors.gradient1,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.info_outline, size: 18, color: Colors.white),
+              ),
+              SizedBox(width: 12),
               Text(
                 'Chatur v1.0',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
           SizedBox(height: 8),
           Text(
             'Community Help & Technology for Uplifting Ruralities',
-            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w500,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnimatedEventCard(int index) {
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      tween: Tween<double>(begin: 0, end: 1),
+      curve: Curves.easeOutCubic,
+      builder: (context, double value, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: EventCard(
+        key: ValueKey(_events[index].id),
+        event: _events[index],
+        currentUserEmail: currentUser?.email ?? '',
+        isPanchayatMember: _isPanchayatMember,
+        onEventChanged: () => _loadEvents(forceRefresh: true),
+      ),
+    );
+  }
+
+  Widget _buildLoadingShimmer() {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: EdgeInsets.only(bottom: 20),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: EventColors.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  ShimmerLoading(
+                    width: 48,
+                    height: 48,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShimmerLoading(
+                          width: 150,
+                          height: 16,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        SizedBox(height: 8),
+                        ShimmerLoading(
+                          width: 100,
+                          height: 12,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              ShimmerLoading(
+                width: double.infinity,
+                height: 200,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              SizedBox(height: 16),
+              ShimmerLoading(
+                width: double.infinity,
+                height: 16,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              SizedBox(height: 8),
+              ShimmerLoading(
+                width: 250,
+                height: 16,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -649,40 +859,71 @@ class _MainEventScreenState extends State<MainEventScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(40),
+              padding: EdgeInsets.all(50),
               decoration: BoxDecoration(
-                color: Colors.deepPurple[50],
+                gradient: EventColors.gradient1,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: EventColors.primary.withOpacity(0.3),
+                    blurRadius: 30,
+                    offset: Offset(0, 15),
+                  ),
+                ],
               ),
               child: Icon(
                 Icons.event_busy_rounded,
-                size: 80,
-                color: Colors.deepPurple[300],
+                size: 90,
+                color: Colors.white,
               ),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 32),
             Text(
               'No Events Yet',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             Text(
-              'Be the first to create a community event',
+              'Be the first to create a\ncommunity event',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _loadEvents(forceRefresh: true),
-              icon: Icon(Icons.refresh, color: Colors.white),
-              label: Text('Refresh', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            SizedBox(height: 32),
+            Container(
+              decoration: BoxDecoration(
+                gradient: EventColors.gradient1,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: EventColors.primary.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => _loadEvents(forceRefresh: true),
+                icon: Icon(Icons.refresh, color: Colors.white),
+                label: Text(
+                  'Refresh',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
               ),
             ),
           ],
@@ -690,12 +931,154 @@ class _MainEventScreenState extends State<MainEventScreen>
       ),
     );
   }
+
+  Widget _buildFAB() {
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        if (_isFabMenuOpen)
+          GestureDetector(
+            onTap: _toggleFabMenu,
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+            ),
+          ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (_isFabMenuOpen) ...[
+              _buildFabMenuItem(
+                icon: Icons.calendar_month_rounded,
+                label: 'View Calendar',
+                gradient: EventColors.gradient1,
+                onTap: () async {
+                  _toggleFabMenu();
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AllEventsPage()),
+                  );
+                  if (result == true) _loadEvents(forceRefresh: true);
+                },
+                delay: 0,
+              ),
+              SizedBox(height: 12),
+              _buildFabMenuItem(
+                icon: Icons.refresh_rounded,
+                label: 'Refresh',
+                gradient: EventColors.gradient3,
+                onTap: () {
+                  _toggleFabMenu();
+                  _loadEvents(forceRefresh: true);
+                },
+                delay: 50,
+              ),
+              SizedBox(height: 16),
+            ],
+            ScaleTransition(
+              scale: _fabScaleAnimation,
+              child: RotationTransition(
+                turns: _fabRotation,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: EventColors.gradient2,
+                    boxShadow: [
+                      BoxShadow(
+                        color: EventColors.secondary.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton.extended(
+                    onPressed:
+                        _isFabMenuOpen ? _toggleFabMenu : _navigateToAddEvent,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    icon: Icon(
+                      _isFabMenuOpen ? Icons.close_rounded : Icons.add_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    label: Text(
+                      _isFabMenuOpen ? 'Close' : 'Add Event',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFabMenuItem({
+    required IconData icon,
+    required String label,
+    required Gradient gradient,
+    required VoidCallback onTap,
+    required int delay,
+  }) {
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 200 + delay),
+      tween: Tween<double>(begin: 0, end: 1),
+      curve: Curves.easeOutBack,
+      builder: (context, double value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: (gradient as LinearGradient).colors.first.withOpacity(
+                  0.4,
+                ),
+                blurRadius: 15,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ============================================
-// EVENT CARD - Instagram Post Style
+// EVENT CARD
 // ============================================
-
 class EventCard extends StatefulWidget {
   final EventModel event;
   final String currentUserEmail;
@@ -714,25 +1097,47 @@ class EventCard extends StatefulWidget {
   _EventCardState createState() => _EventCardState();
 }
 
-class _EventCardState extends State<EventCard> {
-  final bool _showAllComments = false;
+class _EventCardState extends State<EventCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _likeController;
+  late Animation<double> _likeAnimation;
 
   bool get isLiked => widget.event.likedBy.contains(widget.currentUserEmail);
 
+  @override
+  void initState() {
+    super.initState();
+    _likeController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 400),
+    );
+    _likeAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _likeController, curve: Curves.elasticOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _likeController.dispose();
+    super.dispose();
+  }
+
   Future<void> _toggleLike() async {
+    _likeController.forward().then((_) => _likeController.reverse());
     try {
       await EventFirebaseService.toggleLike(
         widget.event.eventDate,
         widget.event.id,
         widget.currentUserEmail,
       );
-
-      // Trigger refresh to show updated like count
       widget.onEventChanged();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update like')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update like'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -753,14 +1158,15 @@ class _EventCardState extends State<EventCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -774,6 +1180,7 @@ class _EventCardState extends State<EventCard> {
           _buildEventDetails(),
           if (widget.event.comments.isNotEmpty) _buildCommentsPreview(),
           _buildDateLocation(),
+          SizedBox(height: 8),
         ],
       ),
     );
@@ -781,12 +1188,26 @@ class _EventCardState extends State<EventCard> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(16),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.deepPurple[100],
-            child: Icon(Icons.account_balance, color: Colors.deepPurple),
+          Container(
+            decoration: BoxDecoration(
+              gradient: EventColors.gradient1,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: EventColors.primary.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              backgroundColor: Colors.transparent,
+              radius: 24,
+              child: Icon(Icons.account_balance, color: Colors.white, size: 24),
+            ),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -795,61 +1216,106 @@ class _EventCardState extends State<EventCard> {
               children: [
                 Text(
                   widget.event.createdBy,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
                 ),
-                Text(
-                  'Panchayat Member',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                Container(
+                  margin: EdgeInsets.only(top: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFf39c12), Color(0xFFe67e22)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Panchayat Member',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           if (widget.isPanchayatMember)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert_rounded),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => AddEventWithLocationPage(
-                            existingEvent: widget.event,
-                          ),
-                    ),
-                  ).then((result) {
-                    if (result == true) {
-                      widget.onEventChanged();
-                    }
-                  });
-                } else if (value == 'delete') {
-                  _deleteEvent();
-                }
-              },
-              itemBuilder:
-                  (context) => [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, color: Colors.blue),
-                          SizedBox(width: 10),
-                          Text('Edit'),
-                        ],
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert_rounded, color: Colors.grey[700]),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => AddEventWithLocationPage(
+                              existingEvent: widget.event,
+                            ),
                       ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 10),
-                          Text('Delete'),
-                        ],
+                    ).then((result) {
+                      if (result == true) widget.onEventChanged();
+                    });
+                  } else if (value == 'delete') {
+                    _deleteEvent();
+                  }
+                },
+                itemBuilder:
+                    (context) => [
+                      _buildPopupItem(
+                        'edit',
+                        Icons.edit,
+                        'Edit Event',
+                        Colors.blue,
                       ),
-                    ),
-                  ],
+                      _buildPopupItem(
+                        'delete',
+                        Icons.delete,
+                        'Delete Event',
+                        Colors.red,
+                      ),
+                    ],
+              ),
             ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupItem(
+    String value,
+    IconData icon,
+    String text,
+    Color color,
+  ) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color:
+                  color == Colors.blue
+                      ? Colors.blue.shade50
+                      : Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          SizedBox(width: 12),
+          Text(text),
         ],
       ),
     );
@@ -858,57 +1324,121 @@ class _EventCardState extends State<EventCard> {
   Widget _buildImage() {
     return GestureDetector(
       onDoubleTap: _toggleLike,
-      child: CachedNetworkImage(
-        imageUrl: widget.event.imageUrl!,
-        width: double.infinity,
-        height: 400,
-        fit: BoxFit.cover,
-        placeholder:
-            (context, url) => Container(
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(0),
+            child: CachedNetworkImage(
+              imageUrl: widget.event.imageUrl!,
+              width: double.infinity,
               height: 400,
-              color: Colors.grey[200],
-              child: Center(child: CircularProgressIndicator()),
+              fit: BoxFit.cover,
+              placeholder:
+                  (_, __) => Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.grey[200]!, Colors.grey[300]!],
+                      ),
+                    ),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          EventColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+              errorWidget:
+                  (_, __, ___) => Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.grey[200]!, Colors.grey[300]!],
+                      ),
+                    ),
+                    child: Icon(Icons.error, size: 50, color: Colors.red),
+                  ),
             ),
-        errorWidget:
-            (context, url, error) => Container(
-              height: 400,
-              color: Colors.grey[200],
-              child: Icon(Icons.error, size: 50, color: Colors.red),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(0.3), Colors.transparent],
+                ),
+              ),
             ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildActionButtons() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Row(
         children: [
-          IconButton(
-            icon: Icon(
+          ScaleTransition(
+            scale: _likeAnimation,
+            child: _buildActionButton(
               isLiked ? Icons.favorite : Icons.favorite_border,
-              color: isLiked ? Colors.red : Colors.black87,
-              size: 28,
+              isLiked ? Colors.red : Colors.grey[700]!,
+              _toggleLike,
+              isLiked ? Colors.red[50]! : Colors.grey[100]!,
             ),
-            onPressed: _toggleLike,
           ),
-          IconButton(
-            icon: Icon(Icons.comment_rounded, color: Colors.black87, size: 28),
-            onPressed: _showComments,
+          SizedBox(width: 8),
+          _buildActionButton(
+            Icons.comment_rounded,
+            Colors.grey[700]!,
+            _showComments,
+            Colors.grey[100]!,
           ),
+          SizedBox(width: 8),
+          _buildActionButton(Icons.share_rounded, Colors.grey[700]!, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Share feature coming soon!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }, Colors.grey[100]!),
           Spacer(),
-          IconButton(
-            icon: Icon(Icons.bookmark_border, color: Colors.black87, size: 28),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Bookmark feature coming soon!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
+          _buildActionButton(Icons.bookmark_border, Colors.grey[700]!, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Bookmark feature coming soon!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }, Colors.grey[100]!),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    IconData icon,
+    Color iconColor,
+    VoidCallback onPressed,
+    Color bgColor,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: iconColor, size: 26),
+        onPressed: onPressed,
       ),
     );
   }
@@ -916,29 +1446,45 @@ class _EventCardState extends State<EventCard> {
   Widget _buildLikesCount() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        '${widget.event.likes} ${widget.event.likes == 1 ? "like" : "likes"}',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      child: Row(
+        children: [
+          Icon(Icons.favorite, color: Colors.red, size: 16),
+          SizedBox(width: 6),
+          Text(
+            '${widget.event.likes} ${widget.event.likes == 1 ? "like" : "likes"}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildEventDetails() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              style: TextStyle(color: Colors.black87, fontSize: 14),
-              children: [
-                TextSpan(
-                  text: widget.event.heading,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                TextSpan(text: '\n${widget.event.description}'),
-              ],
+          Text(
+            widget.event.heading,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black87,
+              letterSpacing: 0.3,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            widget.event.description,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[700],
+              height: 1.5,
             ),
           ),
         ],
@@ -947,19 +1493,20 @@ class _EventCardState extends State<EventCard> {
   }
 
   Widget _buildCommentsPreview() {
-    final displayComments =
-        _showAllComments
-            ? widget.event.comments
-            : widget.event.comments.take(2).toList();
-
+    final displayComments = widget.event.comments.take(2).toList();
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...displayComments.map(
-            (comment) => Padding(
-              padding: EdgeInsets.only(bottom: 4),
+            (comment) => Container(
+              margin: EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: RichText(
                 text: TextSpan(
                   style: TextStyle(color: Colors.black87, fontSize: 14),
@@ -974,12 +1521,19 @@ class _EventCardState extends State<EventCard> {
               ),
             ),
           ),
-          if (widget.event.comments.length > 2 && !_showAllComments)
+          if (widget.event.comments.length > 2)
             GestureDetector(
               onTap: _showComments,
-              child: Text(
-                'View all ${widget.event.comments.length} comments',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              child: Container(
+                margin: EdgeInsets.only(top: 4),
+                child: Text(
+                  'View all ${widget.event.comments.length} comments',
+                  style: TextStyle(
+                    color: EventColors.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
         ],
@@ -993,40 +1547,94 @@ class _EventCardState extends State<EventCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-              SizedBox(width: 6),
-              Text(
-                DateFormat('EEEE, MMM dd, yyyy').format(widget.event.eventDate),
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  EventColors.primary.withOpacity(0.1),
+                  EventColors.accent.withOpacity(0.1),
+                ],
               ),
-            ],
-          ),
-          if (widget.event.locationName != null) ...[
-            SizedBox(height: 4),
-            GestureDetector(
-              onTap: () => _showLocationMap(),
-              child: Row(
-                children: [
-                  Icon(Icons.location_on, size: 16, color: Colors.red[400]),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      widget.event.locationName!,
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        decoration: TextDecoration.underline,
-                      ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: EventColors.gradient1,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    DateFormat(
+                      'EEEE, MMM dd, yyyy',
+                    ).format(widget.event.eventDate),
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (widget.event.locationName != null) ...[
+            SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => _showLocationMap(),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.red[50]!, Colors.orange[50]!],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red[200]!, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.red[400]!, Colors.orange[400]!],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.event.locationName!,
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: Colors.red[400],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1056,46 +1664,84 @@ class _EventCardState extends State<EventCard> {
       builder:
           (context) => AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
             ),
             title: Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                SizedBox(width: 10),
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: 12),
                 Text('Delete Event?'),
               ],
             ),
             content: Text(
-              'Are you sure you want to delete "${widget.event.heading}"?',
+              'Are you sure you want to delete "${widget.event.heading}"? This action cannot be undone.',
+              style: TextStyle(fontSize: 15),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
               ),
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    await EventFirebaseService.deleteEvent(
-                      widget.event.eventDate,
-                      widget.event.id,
-                    );
-                    Navigator.pop(context);
-
-                    widget.onEventChanged();
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Event deleted successfully')),
-                    );
-                  } catch (e) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete event')),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('Delete', style: TextStyle(color: Colors.white)),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.red, Colors.red[700]!],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await EventFirebaseService.deleteEvent(
+                        widget.event.eventDate,
+                        widget.event.id,
+                      );
+                      Navigator.pop(context);
+                      widget.onEventChanged();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.white),
+                              SizedBox(width: 10),
+                              Text('Event deleted successfully'),
+                            ],
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (e) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to delete event'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                  ),
+                  child: Text('Delete', style: TextStyle(color: Colors.white)),
+                ),
               ),
             ],
           ),
@@ -1106,7 +1752,6 @@ class _EventCardState extends State<EventCard> {
 // ============================================
 // COMMENT BOTTOM SHEET
 // ============================================
-
 class CommentBottomSheet extends StatefulWidget {
   final EventModel event;
   final String currentUserEmail;
@@ -1125,19 +1770,22 @@ class CommentBottomSheet extends StatefulWidget {
 
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final _commentController = TextEditingController();
-  final _scrollController = ScrollController();
   bool _isPosting = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   Future<void> _postComment() async {
     if (_commentController.text.trim().isEmpty) return;
-
     setState(() => _isPosting = true);
 
     try {
       final userName =
           FirebaseAuth.instance.currentUser?.displayName ??
           widget.currentUserEmail.split('@')[0];
-
       await EventFirebaseService.addComment(
         widget.event.eventDate,
         widget.event.id,
@@ -1148,227 +1796,33 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
       _commentController.clear();
       FocusScope.of(context).unfocus();
-
       widget.onCommentAdded();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Comment added!'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 10),
+              Text('Comment added!'),
+            ],
+          ),
           duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to add comment')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add comment'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isPosting = false);
-      }
+      if (mounted) setState(() => _isPosting = false);
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 12),
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Comments',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(),
-              Expanded(
-                child:
-                    widget.event.comments.isEmpty
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.comment_outlined,
-                                size: 60,
-                                color: Colors.grey[300],
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No comments yet',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Be the first to comment!',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                        : ListView.builder(
-                          controller: scrollController,
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: widget.event.comments.length,
-                          itemBuilder: (context, index) {
-                            final comment =
-                                widget.event.comments.reversed.toList()[index];
-                            return _buildCommentItem(comment);
-                          },
-                        ),
-              ),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintText: 'Add a comment...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(25),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                          ),
-                          maxLines: null,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.deepPurple,
-                        child:
-                            _isPosting
-                                ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : IconButton(
-                                  icon: Icon(Icons.send, color: Colors.white),
-                                  onPressed: _postComment,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCommentItem(Comment comment) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.blue[100],
-            child: Text(
-              comment.userName.isNotEmpty
-                  ? comment.userName[0].toUpperCase()
-                  : '?',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue[700],
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        comment.userName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(comment.text, style: TextStyle(fontSize: 14)),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  _formatTimestamp(comment.timestamp),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   String _formatTimestamp(DateTime timestamp) {
@@ -1389,17 +1843,332 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
   }
 
   @override
-  void dispose() {
-    _commentController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 12),
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: EventColors.gradient1,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.comment,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Comments',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1),
+              Expanded(
+                child:
+                    widget.event.comments.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(40),
+                                decoration: BoxDecoration(
+                                  gradient: EventColors.gradient1,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.comment_outlined,
+                                  size: 60,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Text(
+                                'No comments yet',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Be the first to comment!',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          controller: scrollController,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          itemCount: widget.event.comments.length,
+                          itemBuilder: (context, index) {
+                            final comment =
+                                widget.event.comments.reversed.toList()[index];
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: EventColors.gradient3,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: EventColors.accent.withOpacity(
+                                            0.3,
+                                          ),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.transparent,
+                                      radius: 20,
+                                      child: Text(
+                                        comment.userName.isNotEmpty
+                                            ? comment.userName[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(14),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.grey[50]!,
+                                                Colors.grey[100]!,
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.03,
+                                                ),
+                                                blurRadius: 5,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                comment.userName,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                  color: EventColors.primary,
+                                                ),
+                                              ),
+                                              SizedBox(height: 6),
+                                              Text(
+                                                comment.text,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(height: 6),
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.access_time,
+                                                size: 12,
+                                                color: Colors.grey[500],
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                _formatTimestamp(
+                                                  comment.timestamp,
+                                                ),
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+              ),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: TextField(
+                            controller: _commentController,
+                            decoration: InputDecoration(
+                              hintText: 'Add a comment...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: null,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: EventColors.gradient1,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: EventColors.primary.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          radius: 24,
+                          child:
+                              _isPosting
+                                  ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : IconButton(
+                                    icon: Icon(
+                                      Icons.send,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    onPressed: _postComment,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
 // ============================================
-// EVENT LOCATION MAP SCREEN (FIXED)
+// EVENT LOCATION MAP SCREEN
 // ============================================
-
 class EventLocationMapScreen extends StatelessWidget {
   final GeoPoint location;
   final String locationName;
@@ -1413,74 +2182,265 @@ class EventLocationMapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('Event Location'),
-        backgroundColor: Colors.deepPurple,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: FlutterMap(
-        options: MapOptions(
-          initialCenter: LatLng(location.latitude, location.longitude),
-          initialZoom: 15.0,
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.chatur.app',
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Padding(
+          padding: EdgeInsets.all(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-          MarkerLayer(
-            markers: [
-              Marker(
-                point: LatLng(location.latitude, location.longitude),
-                width: 80,
-                height: 80,
-                child: Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black26, blurRadius: 4),
-                        ],
-                      ),
-                      child: Text(
-                        locationName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Icon(Icons.location_on, color: Colors.red, size: 40),
-                  ],
+        ),
+        title: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.location_on, color: Colors.red[400], size: 20),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Event Location',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Open in maps app (future feature)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Navigation feature coming soon!'),
-              duration: Duration(seconds: 2),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: LatLng(location.latitude, location.longitude),
+              initialZoom: 15.0,
             ),
-          );
-        },
-        icon: Icon(Icons.directions, color: Colors.white),
-        label: Text('Navigate', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.deepPurple,
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.chatur.app',
+              ),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: LatLng(location.latitude, location.longitude),
+                    width: 150,
+                    height: 100,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: EventColors.gradient1,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            locationName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.4),
+                                blurRadius: 15,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 50,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: EventColors.gradient2,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          Icons.place_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              locationName,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: EventColors.gradient1,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: EventColors.primary.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: Colors.white),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Navigation feature coming soon!',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: EventColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.directions_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      label: Text(
+                        'Get Directions',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
