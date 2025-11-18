@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
-import 'package:chatur_frontend/Documents/document.dart';
 import 'package:chatur_frontend/Other/profile_icon.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
+import 'package:chatur_frontend/Screens/search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<dynamic> recommendedSchemes = [];
   bool isLoadingSchemes = false;
   String? schemesError;
+  Timer? _autoSlideTimer;
 
   final List<Map<String, String>> promoCards = [
     {
@@ -78,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: Offset(0, 0.2),
+      begin: Offset(0, 0.3),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
@@ -86,6 +88,26 @@ class _HomeScreenState extends State<HomeScreen>
 
     _animationController.forward();
     _fetchRecommendedSchemes();
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = currentPage + 1;
+
+        // Loop back to the first page when reaching the end
+        if (nextPage >= promoCards.length) {
+          nextPage = 0;
+        }
+
+        _pageController.animateToPage(
+          nextPage,
+          duration: Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   Future<void> _fetchRecommendedSchemes() async {
@@ -125,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _animationController.dispose();
     _searchController.dispose();
     _pageController.dispose();
@@ -180,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: Image.asset(
                       "assets/images/app_logo.png",
-                      height: 36, // Increased from 30
+                      height: 36,
                       width: 36,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(Icons.apps, color: Colors.white, size: 36);
@@ -217,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen>
               /// Chatbot + Profile Icons
               Row(
                 children: [
-                  // Chatbot icon with badge
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
@@ -237,13 +259,11 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         );
                       },
-
                       padding: EdgeInsets.all(8),
                       constraints: BoxConstraints(),
                     ),
                   ),
                   SizedBox(width: 12),
-                  // Enhanced Profile icon
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -251,7 +271,6 @@ class _HomeScreenState extends State<HomeScreen>
                         MaterialPageRoute(builder: (context) => ProfileIcon()),
                       );
                     },
-
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -322,16 +341,23 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       child: TextField(
                         controller: _searchController,
+                        onChanged: (value) {
+                          setState(
+                            () {},
+                          ); // Update UI to show/hide clear button
+                        },
                         onSubmitted: (value) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Searching for "$value"...'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          if (value.trim().isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => SearchResultsScreen(
+                                      searchQuery: value.trim(),
+                                    ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                         },
                         decoration: InputDecoration(
                           hintText: 'Search services, schemes, skills...',
@@ -343,17 +369,52 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           filled: true,
                           fillColor: Colors.white,
-                          suffixIcon: Container(
-                            margin: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Icon(
-                              Icons.mic,
-                              color: Colors.deepPurple,
-                              size: 20,
-                            ),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_searchController.text.isNotEmpty)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Colors.grey[600],
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {});
+                                  },
+                                ),
+                              Container(
+                                margin: EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.search,
+                                    color: Colors.deepPurple,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    if (_searchController.text
+                                        .trim()
+                                        .isNotEmpty) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => SearchResultsScreen(
+                                                searchQuery:
+                                                    _searchController.text
+                                                        .trim(),
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -407,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                   SizedBox(height: 24),
 
-                  /// ✅ Enhanced Horizontal cards carousel
+                  /// ✅ Auto-sliding Horizontal cards carousel
                   SizedBox(
                     height: 220,
                     child: PageView.builder(
@@ -627,7 +688,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               SizedBox(width: 12),
               Expanded(
-                // 👈 ensures long text wraps properly on small screens
                 child: Text(
                   'Recommended Schemes',
                   style: TextStyle(
@@ -635,7 +695,7 @@ class _HomeScreenState extends State<HomeScreen>
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
-                  overflow: TextOverflow.ellipsis, // 👈 prevents pixel overflow
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -792,7 +852,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     final cardColors = colors[index % colors.length];
 
-    // Extract scheme details safely
     final title =
         scheme['title']?.toString() ??
         scheme['name']?.toString() ??
@@ -918,12 +977,16 @@ class _HomeScreenState extends State<HomeScreen>
                             size: 16,
                           ),
                           SizedBox(width: 4),
-                          Text(
-                            benefits,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Text(
+                              benefits,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -1062,6 +1125,8 @@ class _HomeScreenState extends State<HomeScreen>
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 24),
                         _buildDetailSection(
@@ -1161,6 +1226,8 @@ class _HomeScreenState extends State<HomeScreen>
         Text(
           content,
           style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.6),
+          maxLines: 10,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -1218,13 +1285,13 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           _buildFeatureCard(
             icon: Icons.account_balance_rounded,
-            title: 'Documents',
-            subtitle: 'Docs & Forms',
+            title: 'Schemes',
+            subtitle: 'Govt benefits',
             gradient: [Color(0xFFE67E22), Color(0xFFD35400)],
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => DocumentAssistantScreen()),
+                MaterialPageRoute(builder: (_) => SchemeDetailPage()),
               );
             },
           ),
@@ -1286,6 +1353,8 @@ class _HomeScreenState extends State<HomeScreen>
                         color: Colors.white,
                         letterSpacing: 0.3,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 4),
                     Text(
@@ -1294,6 +1363,8 @@ class _HomeScreenState extends State<HomeScreen>
                         fontSize: 13,
                         color: Colors.white.withOpacity(0.85),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -1334,24 +1405,21 @@ class _HomeScreenState extends State<HomeScreen>
           title: 'Post Your Skill',
           subtitle: 'Let employers find you',
           color: Colors.teal,
-          onTap: () {
-          },
+          onTap: () {},
         ),
         _buildQuickAccessTile(
           icon: Icons.calendar_today,
           title: 'View Calendar',
           subtitle: 'Check upcoming events',
           color: Colors.indigo,
-          onTap: () {
-          },
+          onTap: () {},
         ),
         _buildQuickAccessTile(
           icon: Icons.location_on,
           title: 'Find Nearby',
           subtitle: 'Workers in your area',
           color: Colors.red,
-          onTap: () {
-          },
+          onTap: () {},
         ),
       ],
     );

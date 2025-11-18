@@ -160,7 +160,10 @@ class _DocumentAssistantScreenState extends State<DocumentAssistantScreen>
     setState(() {
       _selectedLanguage = languageName;
       _selectedLanguageCode =
-          _languages.firstWhere((l) => l['name'] == languageName)['code']!;
+          _languages.firstWhere(
+            (l) => l['name'] == languageName,
+            orElse: () => _languages.first,
+          )['code']!;
       _localizations = AppLocalizations(_selectedLanguageCode);
     });
   }

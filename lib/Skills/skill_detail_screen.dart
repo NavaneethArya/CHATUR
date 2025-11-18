@@ -771,7 +771,7 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return 'Recently';
     try {
-      final date = (timestamp as Timestamp).toDate();
+      final date = (timestamp as Timestamp?)?.toDate() ?? DateTime.now();
       final now = DateTime.now();
       final diff = now.difference(date);
 

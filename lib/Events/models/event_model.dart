@@ -40,7 +40,7 @@ class EventModel {
       imageUrl: data['imageUrl'],
       createdBy: data['createdBy'] ?? 'Unknown',
       createdByEmail: data['createdByEmail'] ?? '',
-      eventDate: (data['eventDate'] as Timestamp).toDate(),
+      eventDate: (data['eventDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       location: data['location'] as GeoPoint?, // Can be null
       locationName: data['locationName'], // Can be null
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -90,7 +90,7 @@ class Comment {
       userName: map['userName'] ?? '',
       userEmail: map['userEmail'] ?? '',
       text: map['text'] ?? '',
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

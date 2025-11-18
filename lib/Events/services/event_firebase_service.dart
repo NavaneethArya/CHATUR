@@ -377,6 +377,110 @@ class EventFirebaseService {
   }
 
   // ============================================
+  // BOOKMARK / UNBOOKMARK EVENT
+  // ============================================
+
+  static Future<void> toggleBookmark(
+    String userId,
+    DateTime eventDate,
+    String eventId,
+    String eventTitle,
+    String eventImageUrl,
+    String createdBy,
+  ) async {
+    try {
+      final bookmarkRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('bookmarkedEvents')
+          .doc(eventId);
+
+      final bookmarkDoc = await bookmarkRef.get();
+
+      if (bookmarkDoc.exists) {
+        // Unbookmark
+        await bookmarkRef.delete();
+        print('✅ Event unbookmarked successfully');
+      } else {
+        // Bookmark
+        await bookmarkRef.set({
+          'eventId': eventId,
+          'eventDate': Timestamp.fromDate(eventDate),
+          'eventTitle': eventTitle,
+          'eventImageUrl': eventImageUrl,
+          'createdBy': createdBy,
+          'bookmarkedAt': FieldValue.serverTimestamp(),
+        });
+        print('✅ Event bookmarked successfully');
+      }
+    } catch (e) {
+      print('❌ Error toggling bookmark: $e');
+      throw Exception('Failed to toggle bookmark: $e');
+    }
+  }
+
+  // ============================================
+  // GET BOOKMARKED EVENTS
+  // ============================================
+
+  static Stream<List<Map<String, dynamic>>> getBookmarkedEvents(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('bookmarkedEvents')
+        .orderBy('bookmarkedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'bookmarkId': doc.id,
+              'eventId': data['eventId'] ?? '',
+              'eventDate': (data['eventDate'] as Timestamp?)?.toDate(),
+              'eventTitle': data['eventTitle'] ?? '',
+              'eventImageUrl': data['eventImageUrl'],
+              'createdBy': data['createdBy'] ?? '',
+              'bookmarkedAt': (data['bookmarkedAt'] as Timestamp?)?.toDate(),
+            };
+          }).toList();
+        });
+  }
+
+  // ============================================
+  // CHECK IF EVENT IS BOOKMARKED
+  // ============================================
+
+  static Future<bool> isEventBookmarked(String userId, String eventId) async {
+    try {
+      final bookmarkDoc =
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('bookmarkedEvents')
+              .doc(eventId)
+              .get();
+      return bookmarkDoc.exists;
+    } catch (e) {
+      print('❌ Error checking bookmark: $e');
+      return false;
+    }
+  }
+
+  // ============================================
+  // GET BOOKMARK STATUS STREAM
+  // ============================================
+
+  static Stream<bool> getBookmarkStatusStream(String userId, String eventId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('bookmarkedEvents')
+        .doc(eventId)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
+
+  // ============================================
   // CLEAR CACHE (Call on logout or manual refresh)
   // ============================================
 

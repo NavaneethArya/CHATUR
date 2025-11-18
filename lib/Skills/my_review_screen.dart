@@ -344,7 +344,7 @@ class ReviewCard extends StatelessWidget {
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return 'Recently';
     try {
-      final date = (timestamp as Timestamp).toDate();
+      final date = (timestamp as Timestamp?)?.toDate() ?? DateTime.now();
       return DateFormat('MMM d, yyyy').format(date);
     } catch (e) {
       return 'Recently';

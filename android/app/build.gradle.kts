@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.chatur_frontend"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36  // Updated for mobile_scanner plugin requirement
     //ndkVersion = flutter.ndkVersion
     ndkVersion = "27.0.12077973"
 
@@ -39,6 +39,13 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Enable code shrinking, obfuscation, and optimization
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

@@ -38,10 +38,10 @@ class NotificationModel {
       message: data['message'] ?? '',
       eventId: data['eventId'] ?? '',
       eventTitle: data['eventTitle'] ?? '',
-      eventDate: (data['eventDate'] as Timestamp).toDate(),
+      eventDate: (data['eventDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: data['imageUrl'],
       createdBy: data['createdBy'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isRead: data['isRead'] ?? false,
     );
   }

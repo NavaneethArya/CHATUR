@@ -1,85 +1,81 @@
-import 'package:chatur_frontend/Skills/my_review_screen.dart';
 import 'package:chatur_frontend/Skills/qr_scanner_screen.dart';
-import 'package:chatur_frontend/Skills/saved_skills_screen.dart';
 import 'package:chatur_frontend/Skills/skill_detail_screen.dart';
-import 'package:chatur_frontend/Skills/user_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
 class AppColors {
   static const Color primary = Color(0xFF6C63FF);
-  static const Color primaryDark = Color(0xFF5548E0);
   static const Color secondary = Color(0xFF00D4FF);
   static const Color accent = Color(0xFFFF6584);
   static const Color background = Color(0xFFF8F9FE);
-  static const Color cardBg = Color(0xFFFFFFFF);
   static const Color text = Color(0xFF2D3142);
   static const Color textLight = Color(0xFF9E9E9E);
   static const Color success = Color(0xFF00C896);
   static const Color warning = Color(0xFFFFAB00);
   static const Color danger = Color(0xFFFF5252);
 
-  static const LinearGradient primaryGradient = LinearGradient(
+  static const primaryGradient = LinearGradient(
     colors: [Color(0xFF6C63FF), Color(0xFF5548E0)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const accentGradient = LinearGradient(
+    colors: [Color(0xFFFF6584), Color(0xFFFF8A9B)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const successGradient = LinearGradient(
+    colors: [Color(0xFF00C896), Color(0xFF00E5B0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 }
 
 class SkillPost {
-  final String id;
-  final String userId;
-  final String title;
-  final String category;
-  final String description;
-  final int? flatPrice;
-  final int? perKmPrice;
+  final String id, userId, title, category, description, address, status;
+  final int? flatPrice, perKmPrice;
   final List<String> imageUrls;
-  final String address;
   final GeoPoint coordinates;
-  final double serviceRadiusMeters;
+  final double serviceRadiusMeters, rating;
+  final int reviewCount, viewCount, bookingCount;
   final DateTime createdAt;
-  final double rating;
-  final int reviewCount;
-  final int viewCount;
-  final int bookingCount;
-  final String status;
-  final bool isAtWork;
-  final Map<String, dynamic>? availability;
-  final Map<String, dynamic>? profile;
-  final bool verified;
+  final bool isAtWork, verified;
+  final Map<String, dynamic>? availability, profile;
 
   SkillPost.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc)
-      : id = doc.id,
-        userId = doc.data()?['userId'] ?? '',
-        title = doc.data()?['skillTitle'] ?? 'Service',
-        category = doc.data()?['category'] ?? 'General',
-        description = doc.data()?['description'] ?? '',
-        flatPrice = doc.data()?['flatPrice'] as int?,
-        perKmPrice = doc.data()?['perKmPrice'] as int?,
-        imageUrls = (doc.data()?['images'] is List)
-            ? List<String>.from(doc.data()!['images'])
-            : [],
-        address = doc.data()?['address'] ?? '',
-        coordinates = doc.data()?['coordinates'] ?? const GeoPoint(0, 0),
-        serviceRadiusMeters =
-            (doc.data()?['serviceRadiusMeters'] ?? 5000).toDouble(),
-        createdAt =
-            (doc.data()?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        rating = (doc.data()?['rating'] ?? 0.0).toDouble(),
-        reviewCount = doc.data()?['reviewCount'] ?? 0,
-        viewCount = doc.data()?['viewCount'] ?? 0,
-        bookingCount = doc.data()?['bookingCount'] ?? 0,
-        status = doc.data()?['status'] ?? 'active',
-        isAtWork = doc.data()?['isAtWork'] ?? false,
-        availability = doc.data()?['availability'] as Map<String, dynamic>?,
-        profile = doc.data()?['profile'] as Map<String, dynamic>?,
-        verified = doc.data()?['verified'] ?? false;
+    : id = doc.id,
+      userId = doc.data()?['userId'] ?? '',
+      title = doc.data()?['skillTitle'] ?? 'Service',
+      category = doc.data()?['category'] ?? 'General',
+      description = doc.data()?['description'] ?? '',
+      flatPrice = doc.data()?['flatPrice'] as int?,
+      perKmPrice = doc.data()?['perKmPrice'] as int?,
+      imageUrls =
+          (doc.data()?['images'] is List)
+              ? List<String>.from(doc.data()!['images'])
+              : [],
+      address = doc.data()?['address'] ?? '',
+      coordinates = doc.data()?['coordinates'] ?? const GeoPoint(0, 0),
+      serviceRadiusMeters =
+          (doc.data()?['serviceRadiusMeters'] ?? 5000).toDouble(),
+      createdAt =
+          (doc.data()?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      rating = (doc.data()?['rating'] ?? 0.0).toDouble(),
+      reviewCount = doc.data()?['reviewCount'] ?? 0,
+      viewCount = doc.data()?['viewCount'] ?? 0,
+      bookingCount = doc.data()?['bookingCount'] ?? 0,
+      status = doc.data()?['status'] ?? 'active',
+      isAtWork = doc.data()?['isAtWork'] ?? false,
+      availability = doc.data()?['availability'] as Map<String, dynamic>?,
+      profile = doc.data()?['profile'] as Map<String, dynamic>?,
+      verified = doc.data()?['verified'] ?? false;
 
   String get priceDisplay {
     if (flatPrice != null && flatPrice! > 0) return '₹$flatPrice';
@@ -106,35 +102,90 @@ class SkillsScreen extends StatefulWidget {
   State<SkillsScreen> createState() => _SkillsScreenState();
 }
 
-class _SkillsScreenState extends State<SkillsScreen> {
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
-  String _sortBy = 'recent';
+class _SkillsScreenState extends State<SkillsScreen>
+    with TickerProviderStateMixin {
+  String _searchQuery = '', _selectedCategory = 'All', _sortBy = 'recent';
   RangeValues _priceRange = const RangeValues(0, 5000);
   double _maxDistance = 50;
-  bool _showVerifiedOnly = false;
+  bool _showVerifiedOnly = false,
+      _isLoadingLocation = true,
+      _hasLoadedOnce = false;
 
   final Set<String> _savedSkillIds = {};
   LatLng? _userLocation;
   Timer? _searchDebounce;
-  bool _isLoadingLocation = true;
-
-  // Cache for skills to prevent flickering
   List<SkillPost> _cachedSkills = [];
-  bool _hasLoadedOnce = false;
 
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'All', 'icon': Icons.grid_view_rounded, 'color': AppColors.primary},
-    {'name': 'Carpenter', 'icon': Icons.carpenter_outlined, 'color': Color(0xFFFF6B6B)},
-    {'name': 'Electrician', 'icon': Icons.electric_bolt, 'color': Color(0xFFFFD93D)},
-    {'name': 'Plumber', 'icon': Icons.plumbing, 'color': Color(0xFF4ECDC4)},
-    {'name': 'Cook', 'icon': Icons.restaurant, 'color': Color(0xFFFF6584)},
-    {'name': 'Painter', 'icon': Icons.palette, 'color': Color(0xFF95E1D3)},
-    {'name': 'Driver', 'icon': Icons.local_taxi, 'color': Color(0xFF6C5CE7)},
-    {'name': 'Mechanic', 'icon': Icons.build, 'color': Color(0xFFFF7675)},
-    {'name': 'Tutor', 'icon': Icons.school, 'color': Color(0xFF74B9FF)},
-    {'name': 'Gardener', 'icon': Icons.grass, 'color': Color(0xFF55EFC4)},
-    {'name': 'Tailor', 'icon': Icons.checkroom, 'color': Color(0xFFFD79A8)},
+  late AnimationController _fabController, _headerController;
+  final ScrollController _scrollController = ScrollController();
+
+  final _categories = [
+    {
+      'name': 'All',
+      'icon': Icons.grid_view_rounded,
+      'color': Color(0xFF6C63FF),
+      'gradient': [Color(0xFF6C63FF), Color(0xFF8B7FFF)],
+    },
+    {
+      'name': 'Carpenter',
+      'icon': Icons.carpenter_outlined,
+      'color': Color(0xFFFF6B6B),
+      'gradient': [Color(0xFFFF6B6B), Color(0xFFFF8787)],
+    },
+    {
+      'name': 'Electrician',
+      'icon': Icons.electric_bolt,
+      'color': Color(0xFFFFD93D),
+      'gradient': [Color(0xFFFFD93D), Color(0xFFFFE66D)],
+    },
+    {
+      'name': 'Plumber',
+      'icon': Icons.plumbing,
+      'color': Color(0xFF4ECDC4),
+      'gradient': [Color(0xFF4ECDC4), Color(0xFF6FE0D8)],
+    },
+    {
+      'name': 'Cook',
+      'icon': Icons.restaurant,
+      'color': Color(0xFFFF6584),
+      'gradient': [Color(0xFFFF6584), Color(0xFFFF8A9B)],
+    },
+    {
+      'name': 'Painter',
+      'icon': Icons.palette,
+      'color': Color(0xFF95E1D3),
+      'gradient': [Color(0xFF95E1D3), Color(0xFFAFECE0)],
+    },
+    {
+      'name': 'Driver',
+      'icon': Icons.local_taxi,
+      'color': Color(0xFF6C5CE7),
+      'gradient': [Color(0xFF6C5CE7), Color(0xFF8B7FFF)],
+    },
+    {
+      'name': 'Mechanic',
+      'icon': Icons.build,
+      'color': Color(0xFFFF7675),
+      'gradient': [Color(0xFFFF7675), Color(0xFFFF9999)],
+    },
+    {
+      'name': 'Tutor',
+      'icon': Icons.school,
+      'color': Color(0xFF74B9FF),
+      'gradient': [Color(0xFF74B9FF), Color(0xFF94CBFF)],
+    },
+    {
+      'name': 'Gardener',
+      'icon': Icons.grass,
+      'color': Color(0xFF55EFC4),
+      'gradient': [Color(0xFF55EFC4), Color(0xFF7FF5D8)],
+    },
+    {
+      'name': 'Tailor',
+      'icon': Icons.checkroom,
+      'color': Color(0xFFFD79A8),
+      'gradient': [Color(0xFFFD79A8), Color(0xFFFF99BD)],
+    },
   ];
 
   @override
@@ -142,46 +193,46 @@ class _SkillsScreenState extends State<SkillsScreen> {
     super.initState();
     _loadSavedSkills();
     _getUserLocation();
+    _fabController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    )..forward();
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    )..forward();
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _fabController.dispose();
+    _headerController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _getUserLocation() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _userLocation = const LatLng(12.9716, 77.5946);
-          _isLoadingLocation = false;
-        });
-        return;
-      }
+      if (!await Geolocator.isLocationServiceEnabled())
+        throw Exception('Location disabled');
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        setState(() {
-          _userLocation = const LatLng(12.9716, 77.5946);
-          _isLoadingLocation = false;
-        });
-        return;
+        throw Exception('Permission denied');
       }
 
-      Position position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition();
       setState(() {
         _userLocation = LatLng(position.latitude, position.longitude);
         _isLoadingLocation = false;
       });
     } catch (e) {
-      debugPrint('Location error: $e');
       setState(() {
         _userLocation = const LatLng(12.9716, 77.5946);
         _isLoadingLocation = false;
@@ -194,15 +245,13 @@ class _SkillsScreenState extends State<SkillsScreen> {
     if (user == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('savedSkills')
-          .get();
-
-      setState(() {
-        _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id));
-      });
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('savedSkills')
+              .get();
+      setState(() => _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id)));
     } catch (e) {
       debugPrint('Error loading saved skills: $e');
     }
@@ -243,77 +292,82 @@ class _SkillsScreenState extends State<SkillsScreen> {
     }
   }
 
-  Future<void> _makeCall(String? phoneNumber, String skillTitle) async {
+  Future<void> _makeCall(String? phoneNumber) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
       _showSnackBar('Phone number not available', AppColors.danger);
       return;
     }
 
-    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
-      if (await canLaunchUrl(phoneUri)) {
-        await launchUrl(phoneUri);
-      }
+      final uri = Uri(scheme: 'tel', path: phoneNumber);
+      if (await canLaunchUrl(uri)) await launchUrl(uri);
     } catch (e) {
       _showSnackBar('Cannot make call', AppColors.danger);
     }
   }
 
   void _onSearchChanged(String query) {
-    if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
+    _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
       setState(() => _searchQuery = query);
     });
   }
 
   List<SkillPost> _filterAndSortSkills(List<SkillPost> skills) {
-    var filtered = skills.where((skill) {
-      final matchesSearch =
-          _searchQuery.isEmpty ||
-          skill.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          skill.category.toLowerCase().contains(_searchQuery.toLowerCase());
+    var filtered =
+        skills.where((skill) {
+          final matchesSearch =
+              _searchQuery.isEmpty ||
+              skill.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              skill.category.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      final matchesCategory =
-          _selectedCategory == 'All' || skill.category == _selectedCategory;
-      
-      final price = skill.flatPrice ?? skill.perKmPrice ?? 0;
-      final matchesPrice =
-          price == 0 || (price >= _priceRange.start && price <= _priceRange.end);
+          final matchesCategory =
+              _selectedCategory == 'All' || skill.category == _selectedCategory;
 
-      bool matchesDistance = true;
-      if (_userLocation != null && !_isLoadingLocation && _maxDistance < 100) {
-        try {
-          final distance = const Distance().as(
-            LengthUnit.Kilometer,
-            _userLocation!,
-            LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
-          );
-          matchesDistance = distance <= _maxDistance;
-        } catch (e) {
-          matchesDistance = true;
-        }
-      }
+          final price = skill.flatPrice ?? skill.perKmPrice ?? 0;
+          final matchesPrice =
+              price == 0 ||
+              (price >= _priceRange.start && price <= _priceRange.end);
 
-      final matchesVerified = !_showVerifiedOnly || skill.isVerified;
-      final isActive = skill.status == 'active';
+          var matchesDistance = true;
+          if (_userLocation != null &&
+              !_isLoadingLocation &&
+              _maxDistance < 100) {
+            try {
+              final distance = const Distance().as(
+                LengthUnit.Kilometer,
+                _userLocation!,
+                LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
+              );
+              matchesDistance = distance <= _maxDistance;
+            } catch (e) {
+              matchesDistance = true;
+            }
+          }
 
-      return matchesSearch &&
-          matchesCategory &&
-          matchesPrice &&
-          matchesDistance &&
-          matchesVerified &&
-          isActive;
-    }).toList();
+          return matchesSearch &&
+              matchesCategory &&
+              matchesPrice &&
+              matchesDistance &&
+              (!_showVerifiedOnly || skill.isVerified) &&
+              skill.status == 'active';
+        }).toList();
 
     filtered.sort((a, b) {
       switch (_sortBy) {
         case 'nearby':
           if (_userLocation == null) return 0;
           try {
-            final distA = const Distance().as(LengthUnit.Kilometer, _userLocation!,
-                LatLng(a.coordinates.latitude, a.coordinates.longitude));
-            final distB = const Distance().as(LengthUnit.Kilometer, _userLocation!,
-                LatLng(b.coordinates.latitude, b.coordinates.longitude));
+            final distA = const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(a.coordinates.latitude, a.coordinates.longitude),
+            );
+            final distB = const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(b.coordinates.latitude, b.coordinates.longitude),
+            );
             return distA.compareTo(distB);
           } catch (e) {
             return 0;
@@ -321,13 +375,13 @@ class _SkillsScreenState extends State<SkillsScreen> {
         case 'rating':
           return b.rating.compareTo(a.rating);
         case 'price_low':
-          final priceA = a.flatPrice ?? a.perKmPrice ?? 99999;
-          final priceB = b.flatPrice ?? b.perKmPrice ?? 99999;
-          return priceA.compareTo(priceB);
+          return (a.flatPrice ?? a.perKmPrice ?? 99999).compareTo(
+            b.flatPrice ?? b.perKmPrice ?? 99999,
+          );
         case 'price_high':
-          final priceA = a.flatPrice ?? a.perKmPrice ?? 0;
-          final priceB = b.flatPrice ?? b.perKmPrice ?? 0;
-          return priceB.compareTo(priceA);
+          return (b.flatPrice ?? b.perKmPrice ?? 0).compareTo(
+            a.flatPrice ?? a.perKmPrice ?? 0,
+          );
         case 'popular':
           return b.bookingCount.compareTo(a.bookingCount);
         default:
@@ -341,30 +395,33 @@ class _SkillsScreenState extends State<SkillsScreen> {
   void _showLoginPrompt() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
-            Icon(Icons.lock_outline, color: AppColors.primary),
-            SizedBox(width: 12),
-            Text('Login Required'),
-          ],
-        ),
-        content: const Text('Please login to access this feature.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.lock_outline, color: AppColors.primary),
+                SizedBox(width: 12),
+                Text('Login Required'),
+              ],
+            ),
+            content: const Text('Please login to access this feature.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/login');
+                },
+                child: const Text('Login'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/login');
-            },
-            child: const Text('Login'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -383,73 +440,143 @@ class _SkillsScreenState extends State<SkillsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Discover Services'),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-      ),
-      drawer: _buildAppDrawer(),
-      body: Column(
-        children: [
-          _buildSearchHeader(),
-          _buildCategoryChips(),
-          Expanded(child: _buildSkillsList()),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          _buildAppBar(),
+          SliverToBoxAdapter(child: _buildSearchHeader()),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _CategoryHeaderDelegate(
+              child: _buildCategoryChips(),
+              minHeight: 85,
+              maxHeight: 85,
+            ),
+          ),
+          _buildSkillsList(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            _showLoginPrompt();
-          } else {
-            Navigator.pushNamed(context, '/post-skill');
-          }
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text('Post Service'),
+      drawer: _buildDrawer(),
+      floatingActionButton: _buildFAB(),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      expandedHeight: 100, // Reduced from 120
+      floating: false,
+      pinned: true,
+      snap: false,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ), // Reduced vertical padding
+            child: Row(
+              children: [
+                const SizedBox(width: 48),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.explore,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Text(
+                  'Discover Services',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton(
+    IconData icon,
+    VoidCallback onPressed,
+    LinearGradient gradient,
+  ) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: gradient.colors.first.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }
 
   Widget _buildSearchHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextField(
-        onChanged: _onSearchChanged,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search services...',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.tune, color: Colors.white),
-                onPressed: _showFilterSheet,
-              ),
-              IconButton(
-                icon: const Icon(Icons.sort, color: Colors.white),
-                onPressed: _showSortSheet,
-              ),
-            ],
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.2),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: TextField(
+          onChanged: _onSearchChanged,
+          style: const TextStyle(color: AppColors.text, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: 'Search services...',
+            hintStyle: TextStyle(color: AppColors.textLight.withOpacity(0.6)),
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildIconButton(
+                  Icons.tune_rounded,
+                  _showFilterSheet,
+                  AppColors.accentGradient,
+                ),
+                const SizedBox(width: 8),
+                _buildIconButton(
+                  Icons.sort_rounded,
+                  _showSortSheet,
+                  AppColors.successGradient,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+            border: InputBorder.none,
           ),
         ),
       ),
@@ -457,47 +584,65 @@ class _SkillsScreenState extends State<SkillsScreen> {
   }
 
   Widget _buildCategoryChips() {
-    return SizedBox(
-      height: 90,
+    return Container(
+      height: 85,
+      color: AppColors.background,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           final category = _categories[index];
           final isSelected = _selectedCategory == category['name'];
+
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = category['name'] as String),
-            child: Container(
+            onTap:
+                () => setState(
+                  () => _selectedCategory = category['name'] as String,
+                ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                gradient: isSelected ? AppColors.primaryGradient : null,
+                gradient:
+                    isSelected
+                        ? LinearGradient(
+                          colors: (category['gradient'] as List).cast<Color>(),
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                        : null,
                 color: isSelected ? null : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color:
+                        isSelected
+                            ? (category['color'] as Color).withOpacity(0.4)
+                            : Colors.black.withOpacity(0.08),
+                    blurRadius: isSelected ? 12 : 8,
+                    offset: Offset(0, isSelected ? 6 : 2),
                   ),
                 ],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     category['icon'] as IconData,
-                    color: isSelected ? Colors.white : category['color'] as Color,
-                    size: 24,
+                    color:
+                        isSelected ? Colors.white : category['color'] as Color,
+                    size: isSelected ? 20 : 18,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     category['name'] as String,
                     style: TextStyle(
                       color: isSelected ? Colors.white : AppColors.text,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -511,161 +656,80 @@ class _SkillsScreenState extends State<SkillsScreen> {
 
   Widget _buildSkillsList() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      // CRITICAL FIX: Fetch ALL skills from ALL users
-      // This query gets EVERY skill document across ALL user collections
-      stream: FirebaseFirestore.instance
-          .collectionGroup('skills')
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collectionGroup('skills').snapshots(),
       builder: (context, snapshot) {
-        // Extensive debug information
-        debugPrint('=== SKILLS SCREEN DEBUG ===');
-        debugPrint('Connection state: ${snapshot.connectionState}');
-        debugPrint('Has data: ${snapshot.hasData}');
-        debugPrint('Has error: ${snapshot.hasError}');
-        
-        if (snapshot.hasError) {
-          debugPrint('Error details: ${snapshot.error}');
-          debugPrint('Stack trace: ${snapshot.stackTrace}');
-        }
-        
-        if (snapshot.hasData) {
-          debugPrint('Total documents received: ${snapshot.data!.docs.length}');
-          // Print each skill for verification
-          for (var doc in snapshot.data!.docs) {
-            debugPrint('  - Skill: ${doc.data()['skillTitle']} (User: ${doc.data()['userId']})');
-          }
-        }
-        
-        if (snapshot.hasError) {
-          debugPrint('Error: ${snapshot.error}');
-          debugPrint('Stack trace: ${snapshot.stackTrace}');
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting && !_hasLoadedOnce) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text('Error loading skills'),
-                const SizedBox(height: 8),
-                Text(
-                  snapshot.error.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => setState(() {}),
-                  child: const Text('Retry'),
-                ),
-              ],
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !_hasLoadedOnce) {
+          return SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ShaderMask(
+                    shaderCallback:
+                        (bounds) =>
+                            AppColors.primaryGradient.createShader(bounds),
+                    child: const Icon(
+                      Icons.explore,
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Loading services...',
+                    style: TextStyle(color: AppColors.textLight),
+                  ),
+                ],
+              ),
             ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return SliverFillRemaining(
+            child: Center(child: Text('Error: ${snapshot.error}')),
           );
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          debugPrint('No documents found');
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.work_off, size: 80, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                const Text('No services available', style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8),
-                const Text('Be the first to post a service!'),
-              ],
-            ),
-          );
+          return SliverFillRemaining(child: _buildEmptyState());
         }
 
         try {
-          var skills = snapshot.data!.docs
-              .map((doc) {
-                try {
-                  return SkillPost.fromFirestore(doc);
-                } catch (e) {
-                  debugPrint('Error parsing skill ${doc.id}: $e');
-                  return null;
-                }
-              })
-              .whereType<SkillPost>()
-              .toList();
+          var skills =
+              snapshot.data!.docs
+                  .map((doc) {
+                    try {
+                      return SkillPost.fromFirestore(doc);
+                    } catch (e) {
+                      return null;
+                    }
+                  })
+                  .whereType<SkillPost>()
+                  .toList();
 
-          debugPrint('Total skills loaded: ${skills.length}');
-          
-          // Sort in-memory after fetching (no index needed)
           skills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          
-          // Update cache
           _cachedSkills = skills;
           _hasLoadedOnce = true;
 
           final filteredSkills = _filterAndSortSkills(skills);
-          debugPrint('Filtered skills: ${filteredSkills.length}');
 
           if (filteredSkills.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  const Text('No results found', style: TextStyle(fontSize: 18)),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _searchQuery = '';
-                        _selectedCategory = 'All';
-                        _maxDistance = 50;
-                        _priceRange = const RangeValues(0, 5000);
-                        _showVerifiedOnly = false;
-                      });
-                    },
-                    child: const Text('Reset Filters'),
-                  ),
-                ],
-              ),
-            );
+            return SliverFillRemaining(child: _buildNoResultsState());
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {});
-              await Future.delayed(const Duration(seconds: 1));
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredSkills.length,
-              itemBuilder: (context, index) {
-                return _buildSkillCard(filteredSkills[index]);
-              },
+          return SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildSkillCard(filteredSkills[index]),
+                childCount: filteredSkills.length,
+              ),
             ),
           );
         } catch (e) {
-          debugPrint('Error building skills list: $e');
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text('Error: $e'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => setState(() {}),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
+          return SliverFillRemaining(child: Center(child: Text('Error: $e')));
         }
       },
     );
@@ -673,284 +737,291 @@ class _SkillsScreenState extends State<SkillsScreen> {
 
   Widget _buildSkillCard(SkillPost skill) {
     final isSaved = _savedSkillIds.contains(skill.id);
-    final distance = _userLocation != null
-        ? const Distance().as(
-            LengthUnit.Kilometer,
-            _userLocation!,
-            LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
-          )
-        : null;
+    final distance =
+        _userLocation != null
+            ? const Distance().as(
+              LengthUnit.Kilometer,
+              _userLocation!,
+              LatLng(skill.coordinates.latitude, skill.coordinates.longitude),
+            )
+            : null;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 4,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: skill.imageUrls.isNotEmpty
-                    ? Image.network(
-                        skill.imageUrls.first,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 200,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 60),
-                        ),
-                      )
-                    : Container(
-                        height: 200,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.image, size: 60),
-                      ),
-              ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Row(
-                  children: [
-                    if (skill.isVerified)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.verified, color: Colors.white, size: 14),
-                            SizedBox(width: 4),
-                            Text('Verified',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    if (skill.isAtWork) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.work, color: Colors.white, size: 14),
-                            SizedBox(width: 4),
-                            Text('At Work',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Row(
-                  children: [
-                    if (skill.rating > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              skill.rating.toStringAsFixed(1),
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              ' (${skill.reviewCount})',
-                              style: const TextStyle(color: Colors.white70, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _toggleSave(skill),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isSaved ? Icons.favorite : Icons.favorite_border,
-                          color: isSaved ? AppColors.danger : AppColors.textLight,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.white,
+          child: InkWell(
+            onTap:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => EnhancedSkillDetailScreen(
+                          skillId: skill.id,
+                          userId: skill.userId,
+                        ),
+                  ),
+                ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        skill.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.text,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        skill.priceDisplay,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  skill.description,
-                  style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        skill.category,
-                        style: const TextStyle(
-                          color: AppColors.secondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                SizedBox(
+                  height: 200,
+                  child: Stack(
+                    children: [
+                      skill.imageUrls.isNotEmpty
+                          ? Image.network(
+                            skill.imageUrls.first,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          )
+                          : _buildPlaceholder(),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    if (distance != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: GestureDetector(
+                          onTap: () => _toggleSave(skill),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      isSaved
+                                          ? AppColors.danger.withOpacity(0.4)
+                                          : Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              isSaved ? Icons.favorite : Icons.favorite_border,
+                              color:
+                                  isSaved
+                                      ? AppColors.danger
+                                      : AppColors.textLight,
+                              size: 20,
+                            ),
+                          ),
                         ),
+                      ),
+                      Positioned(
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.location_on, size: 12, color: AppColors.accent),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${distance.toStringAsFixed(1)} km',
-                              style: const TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                            Expanded(
+                              child: Text(
+                                skill.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black45,
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                skill.priceDisplay,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-                    const Spacer(),
-                    Text(
-                      skill.timeAgo,
-                      style: const TextStyle(color: AppColors.textLight, fontSize: 11),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _makeCall(skill.phoneNumber, skill.title),
-                        icon: const Icon(Icons.phone, size: 16),
-                        label: const Text('Call'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secondary,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        skill.description,
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 13,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EnhancedSkillDetailScreen(
-                                  skillId: skill.id,
-                                  userId: skill.userId,
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _buildChip(
+                            Icons.category,
+                            skill.category,
+                            AppColors.primaryGradient,
+                          ),
+                          if (distance != null)
+                            _buildChip(
+                              Icons.location_on,
+                              '${distance.toStringAsFixed(1)} km',
+                              AppColors.accentGradient,
+                            ),
+                          _buildChip(
+                            Icons.access_time,
+                            skill.timeAgo,
+                            LinearGradient(
+                              colors: [Colors.grey[600]!, Colors.grey[500]!],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildButton(
+                              Icons.phone,
+                              'Call',
+                              AppColors.successGradient,
+                              () => _makeCall(skill.phoneNumber),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildButton(
+                              Icons.visibility,
+                              'View',
+                              LinearGradient(
+                                colors: [Color(0xFF2196F3), Color(0xFF42A5F5)],
+                              ),
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => EnhancedSkillDetailScreen(
+                                        skillId: skill.id,
+                                        userId: skill.userId,
+                                      ),
                                 ),
                               ),
-                            );
-                          },
-                        icon: const Icon(Icons.visibility, size: 16),
-                        label: const Text('View'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.3),
+            AppColors.secondary.withOpacity(0.3),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.image,
+          size: 60,
+          color: Colors.white.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChip(IconData icon, String label, LinearGradient gradient) {
+    final color = gradient.colors.first;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white, // Changed: white background
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          // Added: colored border
+          width: 1.5,
+          color: color,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1), // Changed: lighter shadow
+            blurRadius: 4, // Changed: reduced blur
+            offset: const Offset(0, 2), // Changed: reduced offset
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color), // Changed: colored icon
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              // Changed: colored text
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -958,16 +1029,170 @@ class _SkillsScreenState extends State<SkillsScreen> {
     );
   }
 
-  Widget _buildAppDrawer() {
-    final user = FirebaseAuth.instance.currentUser;
+  Widget _buildButton(
+    IconData icon,
+    String label,
+    LinearGradient gradient,
+    VoidCallback onPressed,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ShaderMask(
+            shaderCallback:
+                (bounds) => AppColors.primaryGradient.createShader(bounds),
+            child: const Icon(Icons.work_off, size: 100, color: Colors.white),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'No services available',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text('Be the first to post a service!'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResultsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ShaderMask(
+            shaderCallback:
+                (bounds) => AppColors.accentGradient.createShader(bounds),
+            child: const Icon(Icons.search_off, size: 100, color: Colors.white),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'No results found',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _searchQuery = '';
+                _selectedCategory = 'All';
+                _maxDistance = 50;
+                _priceRange = const RangeValues(0, 5000);
+                _showVerifiedOnly = false;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: const Text('Reset Filters'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFAB() {
+    return ScaleTransition(
+      scale: CurvedAnimation(parent: _fabController, curve: Curves.elasticOut),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          final user = FirebaseAuth.instance.currentUser;
+          if (user == null) {
+            _showLoginPrompt();
+          } else {
+            Navigator.pushNamed(context, '/post-skill');
+          }
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        label: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.5),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: const [
+              Icon(Icons.add_circle, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Post Service',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    final user = FirebaseAuth.instance.currentUser;
     return Drawer(
       child: Column(
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-            decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -975,17 +1200,24 @@ class _SkillsScreenState extends State<SkillsScreen> {
                   radius: 40,
                   backgroundColor: Colors.white,
                   backgroundImage:
-                      user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                  child: user?.photoURL == null
-                      ? const Icon(Icons.person, size: 40, color: AppColors.primary)
-                      : null,
+                      user?.photoURL != null
+                          ? NetworkImage(user!.photoURL!)
+                          : null,
+                  child:
+                      user?.photoURL == null
+                          ? const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: AppColors.primary,
+                          )
+                          : null,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   user?.displayName ?? 'Guest User',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1000,117 +1232,90 @@ class _SkillsScreenState extends State<SkillsScreen> {
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
-              children: [
-                if (user != null) ...[
-                  _buildDrawerItem(
-                    icon: Icons.add_circle,
-                    title: 'Post New Service',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/post-skill');
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.work,
-                    title: 'My Services',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/my-skills');
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.favorite,
-                    title: 'Saved Services',
-                    badge: _savedSkillIds.length > 0 ? _savedSkillIds.length.toString() : null,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SavedSkillsScreen(),
+              children:
+                  user != null
+                      ? [
+                        _buildDrawerItem(
+                          Icons.add_circle,
+                          'Post New Service',
+                          AppColors.primaryGradient,
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/post-skill');
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  _buildDrawerItem(
-                    icon: Icons.qr_code_scanner,
-                    title: 'Scan QR to Rate',
-                    subtitle: 'Rate a service',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => QRScannerScreen(),
+                        _buildDrawerItem(
+                          Icons.work,
+                          'My Services',
+                          AppColors.accentGradient,
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/my-skills');
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.rate_review,
-                    title: 'My Reviews',
-                    subtitle: 'View & edit reviews',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MyReviewsScreen(),
+                        _buildDrawerItem(
+                          Icons.favorite,
+                          'Saved Services',
+                          LinearGradient(
+                            colors: [AppColors.danger, Color(0xFFFF8A9B)],
+                          ),
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/saved-skills');
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  _buildDrawerItem(
-                    icon: Icons.person,
-                    title: 'My Profile',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UserProfileScreen(),
+                        const Divider(height: 32),
+                        _buildDrawerItem(
+                          Icons.qr_code_scanner,
+                          'Scan QR to Rate',
+                          AppColors.successGradient,
+                          () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => QRScannerScreen(),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.help,
-                    title: 'Help & Support',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  const Divider(),
-                  _buildDrawerItem(
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await FirebaseAuth.instance.signOut();
-                      _showSnackBar('Logged out successfully', AppColors.success);
-                    },
-                  ),
-                ] else ...[
-                  _buildDrawerItem(
-                    icon: Icons.login,
-                    title: 'Login',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/login');
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'CHATUR v1.0.0',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12),
-              textAlign: TextAlign.center,
+                        _buildDrawerItem(
+                          Icons.person,
+                          'My Profile',
+                          AppColors.primaryGradient,
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/profile');
+                          },
+                        ),
+                        const Divider(height: 32),
+                        _buildDrawerItem(
+                          Icons.logout,
+                          'Logout',
+                          LinearGradient(
+                            colors: [Colors.grey[600]!, Colors.grey[500]!],
+                          ),
+                          () async {
+                            Navigator.pop(context);
+                            await FirebaseAuth.instance.signOut();
+                            _showSnackBar(
+                              'Logged out successfully',
+                              AppColors.success,
+                            );
+                          },
+                        ),
+                      ]
+                      : [
+                        _buildDrawerItem(
+                          Icons.login,
+                          'Login',
+                          AppColors.primaryGradient,
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/login');
+                          },
+                        ),
+                      ],
             ),
           ),
         ],
@@ -1118,47 +1323,54 @@ class _SkillsScreenState extends State<SkillsScreen> {
     );
   }
 
-  Widget _buildDrawerItem({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    String? badge,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: AppColors.primary, size: 24),
-      ),
-      title: Row(
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-          if (badge != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                badge,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    LinearGradient gradient,
+    VoidCallback onTap,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: gradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradient.colors.first.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.grey[400]),
+              ],
             ),
-          ],
-        ],
+          ),
+        ),
       ),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
-      onTap: onTap,
     );
   }
 
@@ -1167,140 +1379,266 @@ class _SkillsScreenState extends State<SkillsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _maxDistance = 50;
+                          _priceRange = const RangeValues(0, 5000);
+                          _showVerifiedOnly = false;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _maxDistance = 50;
-                      _priceRange = const RangeValues(0, 5000);
-                      _showVerifiedOnly = false;
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Reset'),
+                const SizedBox(height: 24),
+                Text(
+                  'Max Distance: ${_maxDistance.toInt()} km',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                Slider(
+                  value: _maxDistance,
+                  min: 1,
+                  max: 100,
+                  divisions: 99,
+                  label: '${_maxDistance.toInt()} km',
+                  onChanged: (val) => setState(() => _maxDistance = val),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Price Range: ₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                RangeSlider(
+                  values: _priceRange,
+                  min: 0,
+                  max: 10000,
+                  divisions: 100,
+                  labels: RangeLabels(
+                    '₹${_priceRange.start.toInt()}',
+                    '₹${_priceRange.end.toInt()}',
+                  ),
+                  onChanged: (val) => setState(() => _priceRange = val),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text(
+                    'Verified Providers Only',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text('4.5+ rating & 10+ reviews'),
+                  value: _showVerifiedOnly,
+                  activeColor: AppColors.success,
+                  onChanged: (val) => setState(() => _showVerifiedOnly = val),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: AppColors.primary,
+                    ),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Text('Max Distance: ${_maxDistance.toInt()} km',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            Slider(
-              value: _maxDistance,
-              min: 1,
-              max: 100,
-              divisions: 99,
-              label: '${_maxDistance.toInt()} km',
-              onChanged: (val) => setState(() => _maxDistance = val),
-            ),
-            const SizedBox(height: 16),
-            Text(
-                'Price Range: ₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            RangeSlider(
-              values: _priceRange,
-              min: 0,
-              max: 10000,
-              divisions: 100,
-              labels: RangeLabels(
-                '₹${_priceRange.start.toInt()}',
-                '₹${_priceRange.end.toInt()}',
-              ),
-              onChanged: (val) => setState(() => _priceRange = val),
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Verified Providers Only'),
-              subtitle: const Text('4.5+ rating & 10+ reviews'),
-              value: _showVerifiedOnly,
-              onChanged: (val) => setState(() => _showVerifiedOnly = val),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Apply Filters',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   void _showSortSheet() {
+    final sortOptions = [
+      {'key': 'recent', 'label': 'Most Recent', 'icon': Icons.access_time},
+      {'key': 'nearby', 'label': 'Nearest First', 'icon': Icons.location_on},
+      {'key': 'rating', 'label': 'Highest Rated', 'icon': Icons.star},
+      {'key': 'popular', 'label': 'Most Popular', 'icon': Icons.trending_up},
+      {
+        'key': 'price_low',
+        'label': 'Price: Low to High',
+        'icon': Icons.arrow_upward,
+      },
+      {
+        'key': 'price_high',
+        'label': 'Price: High to Low',
+        'icon': Icons.arrow_downward,
+      },
+    ];
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Sort By',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
-            const SizedBox(height: 16),
-            ...[
-              {'key': 'recent', 'label': 'Most Recent', 'icon': Icons.access_time},
-              {'key': 'nearby', 'label': 'Nearest First', 'icon': Icons.location_on},
-              {'key': 'rating', 'label': 'Highest Rated', 'icon': Icons.star},
-              {'key': 'popular', 'label': 'Most Popular', 'icon': Icons.trending_up},
-              {'key': 'price_low', 'label': 'Price: Low to High', 'icon': Icons.arrow_upward},
-              {'key': 'price_high', 'label': 'Price: High to Low', 'icon': Icons.arrow_downward},
-            ].map((option) {
-              final isSelected = _sortBy == option['key'];
-              return ListTile(
-                leading: Icon(option['icon'] as IconData,
-                    color: isSelected ? AppColors.primary : AppColors.textLight),
-                title: Text(
-                  option['label'] as String,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? AppColors.primary : AppColors.text,
-                  ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sort By',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
-                trailing:
-                    isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
-                onTap: () {
-                  setState(() => _sortBy = option['key'] as String);
-                  Navigator.pop(context);
-                },
-              );
-            }),
-          ],
-        ),
-      ),
+                const SizedBox(height: 20),
+                ...sortOptions.map((option) {
+                  final isSelected = _sortBy == option['key'];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() => _sortBy = option['key'] as String);
+                          Navigator.pop(context);
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : AppColors.background,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                option['icon'] as IconData,
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  option['label'] as String,
+                                  style: TextStyle(
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
+                                    color:
+                                        isSelected
+                                            ? Colors.white
+                                            : AppColors.text,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
     );
   }
+}
+
+class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double minHeight, maxHeight;
+
+  _CategoryHeaderDelegate({
+    required this.child,
+    required this.minHeight,
+    required this.maxHeight,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        boxShadow:
+            shrinkOffset > 0
+                ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : null,
+      ),
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      true;
 }
