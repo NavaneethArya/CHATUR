@@ -1,4 +1,6 @@
+import 'package:chatur_frontend/Other/profile_icon.dart';
 import 'package:chatur_frontend/Skills/qr_scanner_screen.dart';
+import 'package:chatur_frontend/Skills/saved_skills_screen.dart';
 import 'package:chatur_frontend/Skills/skill_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1261,7 +1263,12 @@ class _SkillsScreenState extends State<SkillsScreen>
                           ),
                           () {
                             Navigator.pop(context);
-                            Navigator.pushNamed(context, '/saved-skills');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SavedSkillsScreen(),
+                              ),
+                            );
                           },
                         ),
                         const Divider(height: 32),
@@ -1285,7 +1292,13 @@ class _SkillsScreenState extends State<SkillsScreen>
                           AppColors.primaryGradient,
                           () {
                             Navigator.pop(context);
-                            Navigator.pushNamed(context, '/profile');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileIcon(),
+                              ),
+                            );
+                            
                           },
                         ),
                         const Divider(height: 32),

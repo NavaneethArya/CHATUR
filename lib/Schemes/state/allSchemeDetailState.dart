@@ -262,7 +262,7 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> {
 
       if (cacheValid) {
         // Load from cache
-        print('Loading schemes from cache...');
+        //print('Loading schemes from cache...');
         final cachedSchemes = await _loadSchemesFromCache();
 
         if (cachedSchemes != null && cachedSchemes.isNotEmpty) {
@@ -273,18 +273,18 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> {
             _isLoading = false;
           });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Loaded schemes from cache'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   //SnackBar(
+          //     //content: Text('Loaded schemes from cache'),
+          //     //duration: Duration(seconds: 2),
+          //   //),
+          // );
           return;
         }
       }
 
       // Cache is invalid or empty, fetch from API
-      print('Fetching schemes from API...');
+      //print('Fetching schemes from API...');
       final data = await fetchKarnatakaSchemes(language: _selectedLanguage);
 
       // Save to cache
@@ -297,19 +297,19 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Schemes loaded and cached for 7 days'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('Schemes loaded and cached for 7 days'),
+      //     duration: Duration(seconds: 2),
+      //   ),
+      // );
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to fetch schemes: $e")));
+        // ScaffoldMessenger.of(
+        //   context,
+        // ).showSnackBar(SnackBar(content: Text("Failed to fetch schemes: $e")));
     }
   }
 
@@ -597,13 +597,13 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> {
                         await _clearCache();
                         Navigator.pop(context);
                         _loadKarnatakaSchemes();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Cache cleared. Refreshing schemes...',
-                            ),
-                          ),
-                        );
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text(
+                        //       'Cache cleared. Refreshing schemes...',
+                        //     ),
+                        //   ),
+                        // );
                       },
                       icon: Icon(Icons.refresh, color: Colors.redAccent),
                       label: Text(

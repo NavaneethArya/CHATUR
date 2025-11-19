@@ -235,12 +235,12 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
                 color: _isSaved ? Colors.red : Colors.white,
                 onPressed: _toggleSave,
               ),
-              IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {
-                  // Share functionality
-                },
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.share),
+              //   onPressed: () {
+              //     // Share functionality
+              //   },
+              // ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: images.isNotEmpty
@@ -419,10 +419,10 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
                                 icon: const Icon(Icons.phone, color: Colors.green),
                                 onPressed: () => _makeCall(profile?['phone'] ?? ''),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.chat, color: Colors.blue),
-                                onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
-                              ),
+                              // IconButton(
+                              //   icon: const Icon(Icons.chat, color: Colors.blue),
+                              //   onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
+                              // ),
                             ],
                           ),
                         ],
@@ -549,18 +549,18 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
-                  icon: const Icon(Icons.chat),
-                  label: const Text('Chat'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.green,
-                    side: const BorderSide(color: Colors.green),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
+              // Expanded(
+              //   child: OutlinedButton.icon(
+              //     onPressed: () => _openWhatsApp(profile?['phone'] ?? ''),
+              //     icon: const Icon(Icons.chat),
+              //     label: const Text('Chat'),
+              //     style: OutlinedButton.styleFrom(
+              //       foregroundColor: Colors.green,
+              //       side: const BorderSide(color: Colors.green),
+              //       padding: const EdgeInsets.symmetric(vertical: 16),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

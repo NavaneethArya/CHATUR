@@ -1,10 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
+import 'package:chatur_frontend/Documents/document.dart';
+import 'package:chatur_frontend/Events/add_event.dart';
+import 'package:chatur_frontend/Events/screens/all_events.dart';
+import 'package:chatur_frontend/Events/screens/panchayat_login_screen.dart';
 import 'package:chatur_frontend/Other/profile_icon.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
+import 'package:chatur_frontend/Schemes/state/schemeAPI.dart';
+import 'package:chatur_frontend/Schemes/state/schemeEligibilityIndividual.dart';
+import 'package:chatur_frontend/Schemes/state/geminiAPI.dart';
+import 'package:chatur_frontend/Skills/Post_skill.dart';
+import 'package:flutter/foundation.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
-import 'package:chatur_frontend/Screens/search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -21,7 +29,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final currentUser = FirebaseAuth.instance.currentUser;
-  final TextEditingController _searchController = TextEditingController();
   final PageController _pageController = PageController(viewportFraction: 0.9);
 
   int currentPage = 0;
@@ -149,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _autoSlideTimer?.cancel();
     _animationController.dispose();
-    _searchController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -216,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "Chatur",
+                        "CHATUR",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -325,112 +331,6 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   SizedBox(height: 16),
 
-                  /// ✅ Enhanced Search bar
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) {
-                          setState(
-                            () {},
-                          ); // Update UI to show/hide clear button
-                        },
-                        onSubmitted: (value) {
-                          if (value.trim().isNotEmpty) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => SearchResultsScreen(
-                                      searchQuery: value.trim(),
-                                    ),
-                              ),
-                            );
-                          }
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Search services, schemes, skills...',
-                          hintStyle: TextStyle(color: Colors.grey[500]),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Colors.deepPurple,
-                            size: 24,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          suffixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (_searchController.text.isNotEmpty)
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: Colors.grey[600],
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {});
-                                  },
-                                ),
-                              Container(
-                                margin: EdgeInsets.only(right: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.search,
-                                    color: Colors.deepPurple,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    if (_searchController.text
-                                        .trim()
-                                        .isNotEmpty) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) => SearchResultsScreen(
-                                                searchQuery:
-                                                    _searchController.text
-                                                        .trim(),
-                                              ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 24),
-
                   /// ✅ Enhanced Greeting
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
@@ -497,98 +397,141 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             );
                           },
-                          child: Container(
-                            margin: EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                // Navigate based on card title
+                                final title = card["title"]!;
+                                if (title == "Find Local Jobs") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SkillsScreen(),
+                                    ),
+                                  );
+                                } else if (title == "Government Schemes") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SchemeDetailPage(),
+                                    ),
+                                  );
+                                } else if (title == "Post Skills") {
+                                  Navigator.pushNamed(context, '/post-skill');
+                                } else if (title == "Community Events") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MainEventScreen(),
+                                    ),
+                                  );
+                                } else if (title == "Ask AI Assistant") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChaturChatbot(),
+                                    ),
+                                  );
+                                }
+                              },
                               borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 15,
-                                  offset: Offset(0, 8),
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 15,
+                                      offset: Offset(0, 8),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  CachedNetworkImage(
-                                    imageUrl: card["img"]!,
-                                    fit: BoxFit.cover,
-                                    placeholder:
-                                        (context, url) => Container(
-                                          color: Colors.grey[300],
-                                          child: Center(
-                                            child: CircularProgressIndicator(),
-                                          ),
-                                        ),
-                                    errorWidget:
-                                        (context, url, error) => Container(
-                                          color: Colors.grey[300],
-                                          child: Icon(Icons.error, size: 50),
-                                        ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.black.withOpacity(0.7),
-                                          Colors.transparent,
-                                          Colors.transparent,
-                                        ],
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 20,
-                                    left: 20,
-                                    right: 20,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          card["title"]!,
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.5,
-                                                ),
-                                                blurRadius: 4,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      CachedNetworkImage(
+                                        imageUrl: card["img"]!,
+                                        fit: BoxFit.cover,
+                                        placeholder:
+                                            (context, url) => Container(
+                                              color: Colors.grey[300],
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          card["sub"]!,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white.withOpacity(
-                                              0.9,
                                             ),
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.5,
-                                                ),
-                                                blurRadius: 4,
+                                        errorWidget:
+                                            (context, url, error) => Container(
+                                              color: Colors.grey[300],
+                                              child: Icon(
+                                                Icons.error,
+                                                size: 50,
                                               ),
+                                            ),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.black.withOpacity(0.7),
+                                              Colors.transparent,
+                                              Colors.transparent,
                                             ],
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Positioned(
+                                        bottom: 20,
+                                        left: 20,
+                                        right: 20,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              card["title"]!,
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.5),
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              card["sub"]!,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.5),
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -629,31 +572,32 @@ class _HomeScreenState extends State<HomeScreen>
                   SizedBox(height: 32),
 
                   // Main Features Grid
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Explore Features',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                  ...[
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Explore Features',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
-                        ),
-                        TextButton(onPressed: () {}, child: Text('See all →')),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 16),
+                    SizedBox(height: 16),
 
-                  _buildFeaturesGrid(),
+                    _buildFeaturesGrid(),
 
-                  SizedBox(height: 32),
+                    SizedBox(height: 32),
 
-                  // Quick Access Section
-                  _buildQuickAccessSection(),
+                    // Quick Access Section
+                    _buildQuickAccessSection(),
+                  ],
 
                   SizedBox(height: 32),
                 ],
@@ -898,41 +842,21 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          category.toUpperCase(),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      category.toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.bookmark_border,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   Spacer(),
                   Text(
@@ -1015,15 +939,6 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.share, color: Colors.white, size: 20),
-                      ),
                     ],
                   ),
                 ],
@@ -1033,6 +948,235 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _navigateToEligibilityCheck(dynamic scheme) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.deepPurple),
+                    SizedBox(height: 20),
+                    Text(
+                      'AI is analyzing eligibility criteria...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Generating personalized questions',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
+
+      // Helper function to parse lists
+      List<String> parseList(dynamic data) {
+        if (data == null) return [];
+        if (data is List) {
+          return data.map((item) => item.toString()).toList();
+        }
+        if (data is String && data.isNotEmpty) {
+          if (data.contains('\n')) {
+            return data.split('\n').where((s) => s.trim().isNotEmpty).toList();
+          }
+          if (data.contains(',')) {
+            return data
+                .split(',')
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+          }
+          return [data];
+        }
+        return [];
+      }
+
+      Scheme schemeObj;
+
+      // If eligibility is missing or empty, try to fetch from API
+      final eligibility = scheme['eligibility'] ?? scheme['Eligibility'];
+      if (eligibility == null ||
+          (eligibility is List && eligibility.isEmpty) ||
+          (eligibility is String && eligibility.trim().isEmpty)) {
+        try {
+          // Fetch all schemes and find matching one
+          final schemes = await fetchKarnatakaSchemes();
+          final schemeTitle =
+              scheme['title']?.toString() ?? scheme['name']?.toString() ?? '';
+
+          final matchingScheme = schemes.firstWhere(
+            (s) => s.title.toLowerCase() == schemeTitle.toLowerCase(),
+            orElse:
+                () =>
+                    schemes.isNotEmpty
+                        ? schemes.first
+                        : throw Exception('No schemes found'),
+          );
+
+          schemeObj = matchingScheme;
+        } catch (e) {
+          debugPrint('Error fetching full scheme: $e');
+          // Fall back to converting the dynamic scheme
+          schemeObj = Scheme(
+            title:
+                scheme['title']?.toString() ??
+                scheme['name']?.toString() ??
+                scheme['Title']?.toString() ??
+                'Scheme',
+            description:
+                scheme['description']?.toString() ??
+                scheme['details']?.toString() ??
+                scheme['Description']?.toString() ??
+                '',
+            tags:
+                scheme['tags']?.toString() ??
+                scheme['category']?.toString() ??
+                scheme['Tags']?.toString() ??
+                '',
+            details: parseList(
+              scheme['details'] ?? scheme['description'] ?? scheme['Details'],
+            ),
+            benefits: parseList(scheme['benefits'] ?? scheme['Benefits']),
+            eligibility: parseList(
+              scheme['eligibility'] ?? scheme['Eligibility'],
+            ),
+            applicationProcess: parseList(
+              scheme['how_to_apply'] ??
+                  scheme['application'] ??
+                  scheme['Application Process'] ??
+                  scheme['applicationProcess'],
+            ),
+            documentsRequired: parseList(
+              scheme['documents_required'] ??
+                  scheme['documents'] ??
+                  scheme['Documents Required'] ??
+                  scheme['documentsRequired'],
+            ),
+            link:
+                scheme['link']?.toString() ?? scheme['Link']?.toString() ?? '',
+            id:
+                scheme['id']?.toString() ??
+                scheme['Id']?.toString() ??
+                scheme['title']?.toString() ??
+                '',
+          );
+        }
+      } else {
+        // Convert dynamic scheme to Scheme object
+        schemeObj = Scheme(
+          title:
+              scheme['title']?.toString() ??
+              scheme['name']?.toString() ??
+              scheme['Title']?.toString() ??
+              'Scheme',
+          description:
+              scheme['description']?.toString() ??
+              scheme['details']?.toString() ??
+              scheme['Description']?.toString() ??
+              '',
+          tags:
+              scheme['tags']?.toString() ??
+              scheme['category']?.toString() ??
+              scheme['Tags']?.toString() ??
+              '',
+          details: parseList(
+            scheme['details'] ?? scheme['description'] ?? scheme['Details'],
+          ),
+          benefits: parseList(scheme['benefits'] ?? scheme['Benefits']),
+          eligibility: parseList(
+            scheme['eligibility'] ?? scheme['Eligibility'],
+          ),
+          applicationProcess: parseList(
+            scheme['how_to_apply'] ??
+                scheme['application'] ??
+                scheme['Application Process'] ??
+                scheme['applicationProcess'],
+          ),
+          documentsRequired: parseList(
+            scheme['documents_required'] ??
+                scheme['documents'] ??
+                scheme['Documents Required'] ??
+                scheme['documentsRequired'],
+          ),
+          link: scheme['link']?.toString() ?? scheme['Link']?.toString() ?? '',
+          id:
+              scheme['id']?.toString() ??
+              scheme['Id']?.toString() ??
+              scheme['title']?.toString() ??
+              '',
+        );
+      }
+
+      // Validate that we have at least some eligibility data
+      if (schemeObj.eligibility.isEmpty) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Eligibility information not available for this scheme. Please check the full scheme details.',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      // Generate questions using Gemini AI (CRITICAL - this was missing!)
+      final questions = await GeminiService.generateEligibilityQuestions(
+        schemeObj.eligibility,
+        schemeObj.documentsRequired,
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Navigate to eligibility check with AI-generated questions
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => SchemeEligibilityPage(
+                scheme: schemeObj,
+                isDarkMode: false,
+                textSizeMultiplier: 1.0,
+                selectedLanguage: 'English',
+                aiGeneratedQuestions: questions, // Pass the generated questions
+              ),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Close loading in case of error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading eligibility check: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      debugPrint('Error in _navigateToEligibilityCheck: $e');
+    }
   }
 
   void _showSchemeDetails(dynamic scheme) {
@@ -1134,40 +1278,20 @@ class _HomeScreenState extends State<HomeScreen>
                           Icons.description,
                           description,
                         ),
-                        SizedBox(height: 20),
-                        _buildDetailSection(
-                          'Benefits',
-                          Icons.card_giftcard,
-                          benefits,
-                        ),
-                        SizedBox(height: 20),
-                        _buildDetailSection(
-                          'Eligibility',
-                          Icons.check_circle_outline,
-                          eligibility,
-                        ),
-                        SizedBox(height: 20),
-                        _buildDetailSection(
-                          'How to Apply',
-                          Icons.assignment_turned_in,
-                          howToApply,
-                        ),
                         SizedBox(height: 32),
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Application process coming soon!',
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            );
+                            _navigateToEligibilityCheck(scheme);
                           },
+                          icon: Icon(Icons.psychology, size: 24),
+                          label: Text(
+                            'AI Eligibility Check',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
                             foregroundColor: Colors.white,
@@ -1176,13 +1300,6 @@ class _HomeScreenState extends State<HomeScreen>
                               borderRadius: BorderRadius.circular(16),
                             ),
                             elevation: 0,
-                          ),
-                          child: Text(
-                            'Apply Now',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
                           ),
                         ),
                       ],
@@ -1285,13 +1402,13 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           _buildFeatureCard(
             icon: Icons.account_balance_rounded,
-            title: 'Schemes',
-            subtitle: 'Govt benefits',
+            title: 'Documents',
+            subtitle: 'Docs Assist',
             gradient: [Color(0xFFE67E22), Color(0xFFD35400)],
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => SchemeDetailPage()),
+                MaterialPageRoute(builder: (_) => DocumentAssistantScreen()),
               );
             },
           ),
@@ -1405,22 +1522,37 @@ class _HomeScreenState extends State<HomeScreen>
           title: 'Post Your Skill',
           subtitle: 'Let employers find you',
           color: Colors.teal,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ImprovedPostSkillScreen()),
+            );
+          },
         ),
         _buildQuickAccessTile(
           icon: Icons.calendar_today,
           title: 'View Calendar',
           subtitle: 'Check upcoming events',
           color: Colors.indigo,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AllEventsPage()),
+            );
+          },
         ),
-        _buildQuickAccessTile(
-          icon: Icons.location_on,
-          title: 'Find Nearby',
-          subtitle: 'Workers in your area',
-          color: Colors.red,
-          onTap: () {},
-        ),
+        // _buildQuickAccessTile(
+        //   icon: Icons.location_on,
+        //   title: 'Add Event',
+        //   subtitle: 'Post upcoming events',
+        //   color: Colors.red,
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (_) => PanchayatLoginScreen()),
+        //     );
+        //   },
+        // ),
       ],
     );
   }
