@@ -28,11 +28,11 @@ class _MyStorePageState extends State<MyStorePage>
   final ProductManager _productManager = ProductManager();
   late AnimationController _fabController;
   late Animation<double> _fabAnimation;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _checkStoreCreation();
 
     _fabController = AnimationController(
       vsync: this,
@@ -43,28 +43,21 @@ class _MyStorePageState extends State<MyStorePage>
       curve: Curves.easeInOut,
     );
     _fabController.forward();
-
-    print('MyStore initialized with ${_productManager.productCount} products');
 
     _initializeFromFirebase();
-
-    _fabController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 300),
-    );
-    _fabAnimation = CurvedAnimation(
-      parent: _fabController,
-      curve: Curves.easeInOut,
-    );
-    _fabController.forward();
   }
 
   Future<void> _initializeFromFirebase() async {
-    await _productManager.initializeStore();
-    await _productManager.loadProducts();
+    setState(() => _isLoading = true);
+
+    // Load store and products in parallel for faster loading
+    await Future.wait([
+      _productManager.initializeStore(),
+      _productManager.loadProducts(),
+    ]);
 
     if (mounted) {
-      setState(() {});
+      setState(() => _isLoading = false);
       _checkStoreCreation();
     }
 
@@ -160,6 +153,9 @@ class _MyStorePageState extends State<MyStorePage>
   }
 
   void _showMenuOptions() {
+    // Check if store is deactivated
+    final isDeactivated = _productManager.isStoreDeactivated;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -191,6 +187,22 @@ class _MyStorePageState extends State<MyStorePage>
                   ),
                 ),
                 SizedBox(height: 20),
+
+                // Add Activate Store option if deactivated
+                if (isDeactivated) ...[
+                  _buildMenuOption(
+                    icon: Icons.check_circle_outline,
+                    title: 'Activate Store',
+                    subtitle: 'Reactivate your store immediately',
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showActivateStoreDialog();
+                    },
+                  ),
+                  Divider(height: 1),
+                ],
+
                 _buildMenuOption(
                   icon: Icons.edit,
                   title: 'Edit Store',
@@ -213,17 +225,22 @@ class _MyStorePageState extends State<MyStorePage>
                   },
                 ),
                 Divider(height: 1),
-                _buildMenuOption(
-                  icon: Icons.pause_circle_outline,
-                  title: 'Deactivate Store Temporarily',
-                  subtitle: 'Hide store but keep data saved',
-                  color: Colors.amber,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showDeactivateStoreDialog();
-                  },
-                ),
-                Divider(height: 1),
+
+                // Only show deactivate if not already deactivated
+                if (!isDeactivated) ...[
+                  _buildMenuOption(
+                    icon: Icons.pause_circle_outline,
+                    title: 'Deactivate Store Temporarily',
+                    subtitle: 'Hide store but keep data saved',
+                    color: Colors.amber,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDeactivateStoreDialog();
+                    },
+                  ),
+                  Divider(height: 1),
+                ],
+
                 _buildMenuOption(
                   icon: Icons.delete_forever,
                   title: 'Delete Store',
@@ -485,6 +502,102 @@ class _MyStorePageState extends State<MyStorePage>
                 ),
                 child: Text(
                   'Deactivate',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showActivateStoreDialog() {
+    final deactivateUntil = _productManager.deactivatedUntil;
+    final daysLeft =
+        deactivateUntil != null
+            ? deactivateUntil.difference(DateTime.now()).inDays + 1
+            : 0;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.green, size: 28),
+                SizedBox(width: 10),
+                Expanded(child: Text('Activate Store')),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.store,
+                  size: 60,
+                  color: Colors.green.withOpacity(0.5),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'Reactivate your store now?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Your store was scheduled to be inactive for $daysLeft more day${daysLeft > 1 ? 's' : ''}. Do you want to activate it immediately?',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final success = await _productManager.reactivateStore();
+
+                  Navigator.pop(context);
+
+                  if (success) {
+                    setState(() {}); // Refresh UI
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white),
+                            SizedBox(width: 10),
+                            Text('Store activated successfully!'),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to activate store'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Activate Now',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -756,32 +869,60 @@ class _MyStorePageState extends State<MyStorePage>
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(products.length),
-              Expanded(
-                child:
-                    products.isEmpty
-                        ? _buildEmptyState()
-                        : _buildProductsList(products),
+          child:
+              _isLoading
+                  ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          color: Colors.deepPurple,
+                          strokeWidth: 3,
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Loading your store...',
+                          style: TextStyle(
+                            color: Colors.deepPurple,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  : Column(
+                    children: [
+                      _buildAppBar(products.length),
+                      Expanded(
+                        child:
+                            products.isEmpty
+                                ? _buildEmptyState()
+                                : _buildProductsList(products),
+                      ),
+                    ],
+                  ),
+        ),
+      ),
+      floatingActionButton:
+          _isLoading
+              ? null
+              : ScaleTransition(
+                scale: _fabAnimation,
+                child: FloatingActionButton.extended(
+                  onPressed: _navigateToAddProduct,
+                  backgroundColor: Colors.deepPurple,
+                  icon: Icon(Icons.add, color: Colors.white),
+                  label: Text(
+                    'Add Product',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  elevation: 8,
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: ScaleTransition(
-        scale: _fabAnimation,
-        child: FloatingActionButton.extended(
-          onPressed: _navigateToAddProduct,
-          backgroundColor: Colors.deepPurple,
-          icon: Icon(Icons.add, color: Colors.white),
-          label: Text(
-            'Add Product',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          elevation: 8,
-        ),
-      ),
     );
   }
 

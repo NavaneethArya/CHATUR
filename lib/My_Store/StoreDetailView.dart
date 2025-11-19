@@ -3,6 +3,8 @@ import 'package:chatur_frontend/My_Store/productDetailMyStore.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'MainStorePage.dart'; // Import for StoreProductsPage
 
 class StoreDetailView extends StatefulWidget {
   final Product product;
@@ -38,6 +40,50 @@ class _StoreDetailViewState extends State<StoreDetailView> {
       setState(() {
         _showAppBarTitle = false;
       });
+    }
+  }
+
+  Future<void> _navigateToStore(BuildContext context) async {
+    try {
+      // Get the store ID by querying Firestore
+      final storesSnapshot =
+          await FirebaseFirestore.instance
+              .collection('stores')
+              .where('storeName', isEqualTo: widget.storeData.storeName)
+              .where('phoneNumber', isEqualTo: widget.storeData.phoneNumber)
+              .limit(1)
+              .get();
+
+      if (storesSnapshot.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Store not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final storeDoc = storesSnapshot.docs.first;
+      final storeId = storeDoc.id;
+      final storeData = storeDoc.data();
+
+      // Navigate to StoreProductsPage
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) =>
+                  StoreProductsPage(storeData: storeData, storeId: storeId),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error navigating to store'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -362,42 +408,50 @@ class _StoreDetailViewState extends State<StoreDetailView> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.deepPurple,
-                                width: 2,
+                          InkWell(
+                            onTap: () => _navigateToStore(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.deepPurple,
+                                  width: 2,
+                                ),
+                                color: Colors.white,
                               ),
-                              color: Colors.white,
-                            ),
-                            child:
-                                widget.storeData.storeLogo != null
-                                    ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.file(
-                                        widget.storeData.storeLogo!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Icon(
-                                            Icons.store,
-                                            color: Colors.deepPurple,
-                                            size: 30,
-                                          );
-                                        },
+                              child:
+                                  widget.storeData.storeLogoUrl != null
+                                      ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: CachedNetworkImage(
+                                          imageUrl:
+                                              widget.storeData.storeLogoUrl!,
+                                          fit: BoxFit.cover,
+                                          placeholder:
+                                              (context, url) => Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.deepPurple,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                          errorWidget:
+                                              (context, url, error) => Icon(
+                                                Icons.store,
+                                                color: Colors.deepPurple,
+                                                size: 30,
+                                              ),
+                                        ),
+                                      )
+                                      : Icon(
+                                        Icons.store,
+                                        color: Colors.deepPurple,
+                                        size: 30,
                                       ),
-                                    )
-                                    : Icon(
-                                      Icons.store,
-                                      color: Colors.deepPurple,
-                                      size: 30,
-                                    ),
+                            ),
                           ),
                           SizedBox(width: 15),
                           Expanded(
