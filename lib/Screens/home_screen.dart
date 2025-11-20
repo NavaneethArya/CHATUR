@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatur_frontend/Events/screens/main_event_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -272,7 +273,10 @@ class _HomeScreenState extends State<HomeScreen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => ProfileIcon()),
-                      );
+                      ).then((_) {
+                        // Refresh profile image when returning from profile screen
+                        setState(() {});
+                      });
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -286,22 +290,48 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ],
                       ),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white,
-                        backgroundImage:
-                            currentUser?.photoURL != null
-                                ? NetworkImage(currentUser!.photoURL!)
-                                : null,
-                        child:
-                            currentUser?.photoURL == null
-                                ? Icon(
-                                  Icons.person,
-                                  color: Colors.deepPurple,
-                                  size: 20,
-                                )
-                                : null,
-                      ),
+                      child: currentUser != null
+                          ? StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.uid)
+                                  .collection('Profile')
+                                  .doc('main')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                String? profilePhotoUrl;
+                                if (snapshot.hasData && snapshot.data!.exists) {
+                                  final data = snapshot.data!.data() as Map<String, dynamic>?;
+                                  profilePhotoUrl = data?['photoUrl'] as String?;
+                                }
+                                // Fallback to Firebase Auth photoURL if Firestore doesn't have it
+                                profilePhotoUrl ??= currentUser?.photoURL;
+                                
+                                return CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: profilePhotoUrl != null && profilePhotoUrl.isNotEmpty
+                                      ? CachedNetworkImageProvider(profilePhotoUrl)
+                                      : null,
+                                  child: profilePhotoUrl == null || profilePhotoUrl.isEmpty
+                                      ? Icon(
+                                        Icons.person,
+                                        color: Colors.deepPurple,
+                                        size: 20,
+                                      )
+                                      : null,
+                                );
+                              },
+                            )
+                          : CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.deepPurple,
+                                size: 20,
+                              ),
+                            ),
                     ),
                   ),
                 ],

@@ -122,6 +122,13 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     _initializeTts();
     _initializeAnimation();
     _loadChatHistory(); // Load previous chat on startup
+
+    // Add listener to update UI when text changes
+    _messageController.addListener(() {
+      setState(() {
+        // This will trigger a rebuild when text changes
+      });
+    });
   }
 
   // ============ CHAT HISTORY MANAGEMENT ============
@@ -800,6 +807,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -1186,7 +1194,12 @@ class _ChaturChatbotState extends State<ChaturChatbot>
 
   Widget _buildInputArea(Color cardColor, Color textColor) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
         boxShadow: [
@@ -1197,109 +1210,139 @@ class _ChaturChatbotState extends State<ChaturChatbot>
           ),
         ],
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _toggleListening,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient:
-                    _isListening
-                        ? LinearGradient(
-                          colors: [Colors.red.shade400, Colors.red.shade600],
-                        )
-                        : LinearGradient(
-                          colors: [Colors.grey.shade200, Colors.grey.shade300],
-                        ),
-                shape: BoxShape.circle,
-                boxShadow:
-                    _isListening
-                        ? [
-                          BoxShadow(
-                            color: Colors.red.withOpacity(0.4),
-                            blurRadius: 10,
-                            spreadRadius: 2,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: _toggleListening,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient:
+                      _isListening
+                          ? LinearGradient(
+                            colors: [Colors.red.shade400, Colors.red.shade600],
+                          )
+                          : LinearGradient(
+                            colors: [
+                              Colors.grey.shade200,
+                              Colors.grey.shade300,
+                            ],
                           ),
-                        ]
-                        : [],
-              ),
-              child: Icon(
-                _isListening ? Icons.mic_off : Icons.mic,
-                color: _isListening ? Colors.white : Colors.grey.shade600,
+                  shape: BoxShape.circle,
+                  boxShadow:
+                      _isListening
+                          ? [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.4),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                          : [],
+                ),
+                child: Icon(
+                  _isListening ? Icons.mic_off : Icons.mic,
+                  color: _isListening ? Colors.white : Colors.grey.shade600,
+                ),
               ),
             ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color:
-                    widget.isDarkMode
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _messageController,
-                enabled: !_isLoading && !_isListening,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 15 * _textSizeMultiplier,
+            SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color:
+                      widget.isDarkMode
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                decoration: InputDecoration(
-                  hintText: _isListening ? _t('listening') : _t('placeholder'),
-                  hintStyle: TextStyle(
-                    color: textColor.withOpacity(0.5),
+                child: TextField(
+                  controller: _messageController,
+                  enabled: !_isLoading && !_isListening,
+                  style: TextStyle(
+                    color: textColor,
                     fontSize: 15 * _textSizeMultiplier,
                   ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                  decoration: InputDecoration(
+                    hintText:
+                        _isListening ? _t('listening') : _t('placeholder'),
+                    hintStyle: TextStyle(
+                      color: textColor.withOpacity(0.5),
+                      fontSize: 15 * _textSizeMultiplier,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  maxLines: null,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (text) {
+                    if (text.trim().isNotEmpty && !_isListening) {
+                      _sendMessage(text);
+                    }
+                  },
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            GestureDetector(
+              onTap: () {
+                final text = _messageController.text.trim();
+                if (text.isNotEmpty && !_isLoading && !_isListening) {
+                  _sendMessage(text);
+                }
+              },
+              child: IgnorePointer(
+                ignoring:
+                    _isListening ||
+                    _messageController.text.trim().isEmpty ||
+                    _isLoading,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient:
+                        _messageController.text.trim().isEmpty ||
+                                _isLoading ||
+                                _isListening
+                            ? LinearGradient(
+                              colors: [
+                                Colors.grey.shade300,
+                                Colors.grey.shade400,
+                              ],
+                            )
+                            : LinearGradient(
+                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                            ),
+                    shape: BoxShape.circle,
+                    boxShadow:
+                        _messageController.text.trim().isEmpty ||
+                                _isLoading ||
+                                _isListening
+                            ? []
+                            : [
+                              BoxShadow(
+                                color: Color(0xFF667eea).withOpacity(0.4),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                  ),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (text) => _sendMessage(text),
               ),
             ),
-          ),
-          SizedBox(width: 12),
-          GestureDetector(
-            onTap:
-                _messageController.text.trim().isEmpty || _isLoading
-                    ? null
-                    : () => _sendMessage(_messageController.text),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient:
-                    _messageController.text.trim().isEmpty || _isLoading
-                        ? LinearGradient(
-                          colors: [Colors.grey.shade300, Colors.grey.shade400],
-                        )
-                        : LinearGradient(
-                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                        ),
-                shape: BoxShape.circle,
-                boxShadow:
-                    _messageController.text.trim().isEmpty || _isLoading
-                        ? []
-                        : [
-                          BoxShadow(
-                            color: Color(0xFF667eea).withOpacity(0.4),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          ),
-                        ],
-              ),
-              child: Icon(Icons.send_rounded, color: Colors.white, size: 22),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

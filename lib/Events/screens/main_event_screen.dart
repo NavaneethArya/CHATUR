@@ -2341,7 +2341,12 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         ),
               ),
               Container(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -2353,6 +2358,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                   ],
                 ),
                 child: SafeArea(
+                  top: false,
                   child: Row(
                     children: [
                       Expanded(
@@ -2372,6 +2378,12 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                               ),
                             ),
                             maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (text) {
+                              if (text.trim().isNotEmpty) {
+                                _postComment();
+                              }
+                            },
                           ),
                         ),
                       ),

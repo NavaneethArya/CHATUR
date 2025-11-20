@@ -117,6 +117,7 @@ class _SkillsScreenState extends State<SkillsScreen>
   LatLng? _userLocation;
   Timer? _searchDebounce;
   List<SkillPost> _cachedSkills = [];
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   late AnimationController _fabController, _headerController;
   final ScrollController _scrollController = ScrollController();
@@ -259,6 +260,38 @@ class _SkillsScreenState extends State<SkillsScreen>
     }
   }
 
+  Future<void> _refreshSkills() async {
+    if (!mounted) return;
+    
+    try {
+      // Reset state to trigger reload
+      if (mounted) {
+        setState(() {
+          _hasLoadedOnce = false;
+          _cachedSkills = [];
+        });
+      }
+      
+      // Reload saved skills in background (don't block refresh)
+      _loadSavedSkills();
+      
+      // Only refresh location if it's not already loaded (don't block)
+      if (_userLocation == null || _isLoadingLocation) {
+        _getUserLocation();
+      }
+      
+      // Small delay to allow UI to update
+      // The StreamBuilder will automatically update when new data arrives
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+    } catch (e) {
+      debugPrint('Error refreshing skills: $e');
+    }
+    
+    // Always ensure the refresh completes
+    // The RefreshIndicator needs the Future to complete to stop spinning
+  }
+
   Future<void> _toggleSave(SkillPost skill) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -332,9 +365,12 @@ class _SkillsScreenState extends State<SkillsScreen>
               (price >= _priceRange.start && price <= _priceRange.end);
 
           var matchesDistance = true;
+          // Only apply distance filter if location is available and distance filter is set to less than 100km
           if (_userLocation != null &&
               !_isLoadingLocation &&
-              _maxDistance < 100) {
+              _maxDistance < 100 &&
+              skill.coordinates.latitude != 0 &&
+              skill.coordinates.longitude != 0) {
             try {
               final distance = const Distance().as(
                 LengthUnit.Kilometer,
@@ -343,6 +379,7 @@ class _SkillsScreenState extends State<SkillsScreen>
               );
               matchesDistance = distance <= _maxDistance;
             } catch (e) {
+              // If distance calculation fails, don't filter out the skill
               matchesDistance = true;
             }
           }
@@ -442,21 +479,27 @@ class _SkillsScreenState extends State<SkillsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          _buildAppBar(),
-          SliverToBoxAdapter(child: _buildSearchHeader()),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _CategoryHeaderDelegate(
-              child: _buildCategoryChips(),
-              minHeight: 85,
-              maxHeight: 85,
+      body: RefreshIndicator(
+        key: _refreshIndicatorKey,
+        onRefresh: _refreshSkills,
+        color: AppColors.primary,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(child: _buildSearchHeader()),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _CategoryHeaderDelegate(
+                child: _buildCategoryChips(),
+                minHeight: 85,
+                maxHeight: 85,
+              ),
             ),
-          ),
-          _buildSkillsList(),
-        ],
+            _buildSkillsList(),
+          ],
+        ),
       ),
       drawer: _buildDrawer(),
       floatingActionButton: _buildFAB(),
@@ -469,6 +512,16 @@ class _SkillsScreenState extends State<SkillsScreen>
       floating: false,
       pinned: true,
       snap: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          onPressed: () async {
+            await _refreshSkills();
+          },
+          tooltip: 'Refresh',
+        ),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: Container(
         decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         child: SafeArea(
@@ -690,12 +743,34 @@ class _SkillsScreenState extends State<SkillsScreen>
 
         if (snapshot.hasError) {
           return SliverFillRemaining(
-            child: Center(child: Text('Error: ${snapshot.error}')),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+                  const SizedBox(height: 16),
+                  Text('Error: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => _refreshSkills(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return SliverFillRemaining(child: _buildEmptyState());
+          return SliverFillRemaining(
+            child: _buildEmptyState(),
+          );
         }
 
         try {
@@ -716,9 +791,25 @@ class _SkillsScreenState extends State<SkillsScreen>
           _hasLoadedOnce = true;
 
           final filteredSkills = _filterAndSortSkills(skills);
+          
+          // Debug: Print skill counts
+          debugPrint('Total skills: ${skills.length}, Filtered skills: ${filteredSkills.length}');
+          if (skills.isNotEmpty && filteredSkills.isEmpty) {
+            debugPrint('Filters are active: Category=$_selectedCategory, Distance=$_maxDistance, Price=${_priceRange.start}-${_priceRange.end}, Search=$_searchQuery');
+          }
 
           if (filteredSkills.isEmpty) {
-            return SliverFillRemaining(child: _buildNoResultsState());
+            return SliverFillRemaining(
+              child: _buildNoResultsState(
+                totalSkills: skills.length,
+                hasFilters: _searchQuery.isNotEmpty || 
+                           _selectedCategory != 'All' || 
+                           _maxDistance < 100 || 
+                           _priceRange.start > 0 || 
+                           _priceRange.end < 10000 ||
+                           _showVerifiedOnly,
+              ),
+            );
           }
 
           return SliverPadding(
@@ -731,7 +822,29 @@ class _SkillsScreenState extends State<SkillsScreen>
             ),
           );
         } catch (e) {
-          return SliverFillRemaining(child: Center(child: Text('Error: $e')));
+          return SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+                  const SizedBox(height: 16),
+                  Text('Error: $e'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => _refreshSkills(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
       },
     );
@@ -1099,41 +1212,85 @@ class _SkillsScreenState extends State<SkillsScreen>
     );
   }
 
-  Widget _buildNoResultsState() {
+  Widget _buildNoResultsState({int totalSkills = 0, bool hasFilters = false}) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ShaderMask(
-            shaderCallback:
-                (bounds) => AppColors.accentGradient.createShader(bounds),
-            child: const Icon(Icons.search_off, size: 100, color: Colors.white),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'No results found',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _searchQuery = '';
-                _selectedCategory = 'All';
-                _maxDistance = 50;
-                _priceRange = const RangeValues(0, 5000);
-                _showVerifiedOnly = false;
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ShaderMask(
+              shaderCallback:
+                  (bounds) => AppColors.accentGradient.createShader(bounds),
+              child: const Icon(Icons.search_off, size: 100, color: Colors.white),
             ),
-            child: const Text('Reset Filters'),
-          ),
-        ],
+            const SizedBox(height: 24),
+            const Text(
+              'No results found',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (totalSkills > 0)
+              Text(
+                '$totalSkills service${totalSkills == 1 ? '' : 's'} available, but none match your filters',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 14,
+                ),
+              )
+            else
+              const Text(
+                'No services match your search criteria',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 14,
+                ),
+              ),
+            const SizedBox(height: 24),
+            if (hasFilters)
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _searchQuery = '';
+                    _selectedCategory = 'All';
+                    _maxDistance = 100; // Increased to 100 to show more results
+                    _priceRange = const RangeValues(0, 10000);
+                    _showVerifiedOnly = false;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.filter_alt_off, color: Colors.white),
+                label: const Text(
+                  'Reset All Filters',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              )
+            else
+              ElevatedButton.icon(
+                onPressed: () => _refreshSkills(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                label: const Text(
+                  'Refresh',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1142,12 +1299,16 @@ class _SkillsScreenState extends State<SkillsScreen>
     return ScaleTransition(
       scale: CurvedAnimation(parent: _fabController, curve: Curves.elasticOut),
       child: FloatingActionButton.extended(
-        onPressed: () {
+        onPressed: () async {
           final user = FirebaseAuth.instance.currentUser;
           if (user == null) {
             _showLoginPrompt();
           } else {
-            Navigator.pushNamed(context, '/post-skill');
+            await Navigator.pushNamed(context, '/post-skill');
+            // Refresh the skills list after posting a new skill
+            if (mounted) {
+              await _refreshSkills();
+            }
           }
         },
         backgroundColor: Colors.transparent,
@@ -1195,41 +1356,91 @@ class _SkillsScreenState extends State<SkillsScreen>
             decoration: const BoxDecoration(
               gradient: AppColors.primaryGradient,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.white,
-                  backgroundImage:
-                      user?.photoURL != null
-                          ? NetworkImage(user!.photoURL!)
-                          : null,
-                  child:
-                      user?.photoURL == null
-                          ? const Icon(
-                            Icons.person,
-                            size: 40,
-                            color: AppColors.primary,
-                          )
-                          : null,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  user?.displayName ?? 'Guest User',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+            child: user != null
+                ? StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user!.uid)
+                        .collection('Profile')
+                        .doc('main')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      String? photoUrl;
+                      String? displayName;
+                      
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                        photoUrl = data?['photoUrl'] as String?;
+                        displayName = data?['name'] as String?;
+                      }
+                      
+                      // Fallback to Firebase Auth values
+                      photoUrl ??= user?.photoURL;
+                      displayName ??= user?.displayName;
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: Colors.white,
+                            backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                                ? NetworkImage(photoUrl)
+                                : null,
+                            child: photoUrl == null || photoUrl.isEmpty
+                                ? const Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: AppColors.primary,
+                                )
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            displayName ?? 'Guest User',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user?.email ?? 'Not logged in',
+                            style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 40,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Guest User',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Not logged in',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user?.email ?? 'Not logged in',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
-            ),
           ),
           Expanded(
             child: ListView(
@@ -1241,9 +1452,13 @@ class _SkillsScreenState extends State<SkillsScreen>
                           Icons.add_circle,
                           'Post New Service',
                           AppColors.primaryGradient,
-                          () {
+                          () async {
                             Navigator.pop(context);
-                            Navigator.pushNamed(context, '/post-skill');
+                            await Navigator.pushNamed(context, '/post-skill');
+                            // Refresh the skills list after posting a new skill
+                            if (mounted) {
+                              await _refreshSkills();
+                            }
                           },
                         ),
                         _buildDrawerItem(
