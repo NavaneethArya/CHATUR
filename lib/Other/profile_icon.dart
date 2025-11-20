@@ -1,12 +1,14 @@
+// profile_icon.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
-import 'package:chatur_frontend/Documents/document.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:chatur_frontend/Skills/Post_skill.dart';
+import 'package:chatur_frontend/Other/support.dart'; // Add this line
 
 class ProfileIcon extends StatefulWidget {
   const ProfileIcon({super.key});
@@ -20,6 +22,7 @@ class _ProfileIconState extends State<ProfileIcon> {
   String? _photoUrl;
   String? _name;
   String? _phone;
+  String? _email;
   String? _district;
   String? _state;
   final bool _isDarkMode = false;
@@ -46,18 +49,51 @@ class _ProfileIconState extends State<ProfileIcon> {
               .doc('main')
               .get();
 
-      final data = doc.data();
-      setState(() {
-        _name = data?['name'] ?? 'User';
-        _phone =
-            data?['phone'] ??
-            FirebaseAuth.instance.currentUser?.phoneNumber ??
-            '';
-        _district = data?['district'] ?? '';
-        _state = data?['state'] ?? '';
-        _photoUrl = data?['photoUrl'] ?? '';
-        _loading = false;
-      });
+      if (doc.exists) {
+        final data = doc.data();
+        debugPrint('Profile data loaded: $data');
+
+        setState(() {
+          _name = data?['name'] ?? 'User';
+          _phone =
+              data?['phone'] ??
+              FirebaseAuth.instance.currentUser?.phoneNumber ??
+              '';
+          _email =
+              data?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '';
+          _district = data?['district'] ?? '';
+          _state = data?['state'] ?? '';
+          _photoUrl = data?['photoUrl'] ?? '';
+          _loading = false;
+        });
+
+        debugPrint('Email loaded: $_email');
+      } else {
+        // If document doesn't exist, create it with Firebase Auth data
+        final user = FirebaseAuth.instance.currentUser;
+        setState(() {
+          _name = user?.displayName ?? 'User';
+          _phone = user?.phoneNumber ?? '';
+          _email = user?.email ?? '';
+          _loading = false;
+        });
+
+        // Save initial data to Firestore
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('Profile')
+              .doc('main')
+              .set({
+                'name': user.displayName ?? 'User',
+                'phone': user.phoneNumber ?? '',
+                'email': user.email ?? '',
+                'photoUrl': user.photoURL ?? '',
+                'created_at': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+        }
+      }
     } catch (e) {
       debugPrint('Error loading profile: $e');
       setState(() => _loading = false);
@@ -170,6 +206,13 @@ class _ProfileIconState extends State<ProfileIcon> {
     }
   }
 
+  // Reload profile when returning from edit screen
+  Future<void> _navigateToEditProfile() async {
+    await Navigator.pushNamed(context, '/editProfile');
+    // Reload profile after returning from edit screen
+    await _loadProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -268,56 +311,98 @@ class _ProfileIconState extends State<ProfileIcon> {
                 children: [
                   // Location Info Card
                   if (_district != null && _district!.isNotEmpty)
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: Colors.deepOrange,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Location',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
+                    const SizedBox(height: 8),
+
+                  // Email Info Card
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.email, color: Colors.deepOrange),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Email',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '$_district, $_state',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _email != null && _email!.isNotEmpty
+                                      ? _email!
+                                      : 'No email provided',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
 
+                  const SizedBox(height: 10),
+
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            color: Colors.deepOrange,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Location',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$_district, $_state',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
                   // Edit Profile Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/editProfile');
-                      },
+                      onPressed: _navigateToEditProfile,
                       icon: const Icon(Icons.edit),
                       label: const Text('Edit Profile'),
                       style: ElevatedButton.styleFrom(
@@ -339,7 +424,14 @@ class _ProfileIconState extends State<ProfileIcon> {
                     Icons.handyman,
                     'Post Your Skill',
                     'Share your expertise with the community',
-                    onTap: () => Navigator.pushNamed(context, '/SkillPost'),
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const ImprovedPostSkillScreen(),
+                          ),
+                        ),
                   ),
                   _buildMenuCard(
                     Icons.chat_bubble,
@@ -356,19 +448,8 @@ class _ProfileIconState extends State<ProfileIcon> {
 
                   const SizedBox(height: 24),
 
-                  _buildSectionTitle('Settings & Support'),
-                  _buildMenuCard(
-                    Icons.settings,
-                    'Settings',
-                    'Manage your preferences',
-                    onTap: () => Navigator.pushNamed(context, '/settings'),
-                  ),
-                  _buildMenuCard(
-                    Icons.language,
-                    'Language',
-                    'English',
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  ),
+                  _buildSectionTitle('Support & Information'),
+
                   _buildMenuCard(
                     Icons.help_outline,
                     'Help & Support',
@@ -378,7 +459,8 @@ class _ProfileIconState extends State<ProfileIcon> {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => const DocumentAssistantScreen(),
+                                (context) =>
+                                    const SupportScreen(isAboutPage: false),
                           ),
                         ),
                   ),
@@ -386,7 +468,15 @@ class _ProfileIconState extends State<ProfileIcon> {
                     Icons.info_outline,
                     'About CHATUR',
                     'Learn more about the app',
-                    onTap: () => Navigator.pushNamed(context, '/about'),
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    const SupportScreen(isAboutPage: true),
+                          ),
+                        ),
                   ),
 
                   const SizedBox(height: 24),

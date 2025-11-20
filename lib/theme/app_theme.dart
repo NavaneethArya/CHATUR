@@ -32,7 +32,8 @@ class AppTheme {
       surface: Colors.white,
       onSurface: Colors.black87,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
+      // Changed from CardTheme to CardThemeData
       color: Colors.white,
       shadowColor: Colors.black12,
       elevation: 2,
@@ -65,7 +66,8 @@ class AppTheme {
       surface: Color(0xFF1E1E1E),
       onSurface: Colors.white,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
+      // Changed from CardTheme to CardThemeData
       color: const Color(0xFF1E1E1E),
       shadowColor: Colors.black45,
       elevation: 2,

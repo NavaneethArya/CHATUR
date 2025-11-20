@@ -64,7 +64,7 @@ class _E_LoginPageState extends State<E_LoginPage> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + kToolbarHeight,
             left: 16,
@@ -148,7 +148,7 @@ class _E_LoginPageState extends State<E_LoginPage> {
                 ),
               ),
               const Divider(height: 40),
-              Center(child: const Text('or Login/Register with')),
+              const Center(child: Text('or Login/Register with')),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

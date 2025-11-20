@@ -3,7 +3,6 @@ import 'package:chatur_frontend/My_Store/MainStorePage.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {

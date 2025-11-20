@@ -394,42 +394,117 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  void _clearOldNotifications() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Row(
-              children: [
-                Icon(Icons.delete_sweep, color: Colors.orange),
-                SizedBox(width: 10),
-                Text('Clear Old Notifications?'),
+  void _clearOldNotifications() async {
+    try {
+      // Get current notifications from stream
+      final notifications =
+          await NotificationService.getNotificationsStream().first;
+
+      if (notifications.length <= 7) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You have 7 or fewer notifications'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      showDialog(
+        context: context,
+        builder:
+            (BuildContext dialogContext) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.delete_sweep, color: Colors.orange),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Clear Old Notifications?',
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                ],
+              ),
+              content: Text(
+                'This will keep only the 7 most recent notifications and delete ${notifications.length - 7} older ones. Continue?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // Close dialog first
+                    Navigator.pop(dialogContext);
+
+                    // Show loading indicator
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Text('Deleting old notifications...'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 30),
+                      ),
+                    );
+
+                    // Sort by createdAt descending (most recent first)
+                    notifications.sort(
+                      (a, b) => b.createdAt.compareTo(a.createdAt),
+                    );
+
+                    // Get notifications to delete (all except first 7)
+                    final notificationsToDelete =
+                        notifications.skip(7).toList();
+
+                    // Delete old notifications one by one
+                    for (var notification in notificationsToDelete) {
+                      await NotificationService.deleteNotification(
+                        notification.id,
+                      );
+                    }
+
+                    // Hide loading and show success
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${notificationsToDelete.length} old notifications cleared',
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: Text('Clear', style: TextStyle(color: Colors.white)),
+                ),
               ],
             ),
-            content: Text(
-              'This will delete notifications older than 30 days. Continue?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await NotificationService.deleteOldNotifications();
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Old notifications cleared')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('Clear', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-    );
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

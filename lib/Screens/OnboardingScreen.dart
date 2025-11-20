@@ -1,140 +1,5 @@
-// import 'dart:async';
-// import 'package:flutter/material.dart';
-
-// class OnboardingScreen extends StatefulWidget {
-//   const OnboardingScreen({super.key});
-
-//   @override
-//   // ignore: library_private_types_in_public_api
-//   _OnboardingScreenState createState() => _OnboardingScreenState();
-// }
-
-// class _OnboardingScreenState extends State<OnboardingScreen> {
-//   final PageController _controller = PageController();
-//   int _currentPage = 0;
-//   late Timer _timer;
-
-//   final List<Map<String, String>> onboardingData = [
-//     {
-//       "image": "assets/images/onboarding1.jpg",
-//       "title": "Discover Schemes Easily",
-//       "subtitle": "Find government schemes in your language with AI guidance."
-//     },
-//     {
-//       "image": "assets/images/onboarding2.jpg",
-//       "title": "Connect with Skilled People",
-//       "subtitle": "Find and offer services within your own village."
-//     },
-//     {
-//       "image": "assets/images/onboarding3.jpg",
-//       "title": "Stay Updated Locally",
-//       "subtitle": "Get alerts for camps, welfare drives, and local events."
-//     },
-//   ];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
-//       if (_currentPage < onboardingData.length - 1) {
-//         _currentPage++;
-//       } else {
-//         _currentPage = 0;
-//       }
-//       _controller.animateToPage(
-//         _currentPage,
-//         duration: const Duration(milliseconds: 400),
-//         curve: Curves.easeInOut,
-//       );
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _timer.cancel();
-//     _controller.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Stack(
-//         children: [
-//           PageView.builder(
-//             controller: _controller,
-//             itemCount: onboardingData.length,
-//             onPageChanged: (index) => setState(() => _currentPage = index),
-//             itemBuilder: (context, index) {
-//               return Padding(
-//                 padding: const EdgeInsets.all(20.0),
-//                 child: Column(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     Image.asset(onboardingData[index]["image"]!, height: 300),
-//                     const SizedBox(height: 30),
-//                     Text(
-//                       onboardingData[index]["title"]!,
-//                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//                     ),
-//                     const SizedBox(height: 12),
-//                     Text(
-//                       onboardingData[index]["subtitle"]!,
-//                       textAlign: TextAlign.center,
-//                       style: const TextStyle(fontSize: 16, color: Colors.grey),
-//                     ),
-//                   ],
-//                 ),
-//               );
-//             },
-//           ),
-//           Positioned(
-//             bottom: 100,
-//             left: 0,
-//             right: 0,
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: List.generate(onboardingData.length, (index) {
-//                 return AnimatedContainer(
-//                   duration: const Duration(milliseconds: 300),
-//                   margin: const EdgeInsets.symmetric(horizontal: 5),
-//                   height: 8,
-//                   width: _currentPage == index ? 24 : 8,
-//                   decoration: BoxDecoration(
-//                     color: _currentPage == index ? Colors.orange : Colors.grey,
-//                     borderRadius: BorderRadius.circular(5),
-//                   ),
-//                 );
-//               }),
-//             ),
-//           ),
-//           if (_currentPage == onboardingData.length - 1)
-//             Positioned(
-//               bottom: 30,
-//               left: 40,
-//               right: 40,
-//               child: ElevatedButton(
-//                 onPressed: () {
-//                   Navigator.pushReplacementNamed(context, '/Elogin');
-//                 },
-//                 style: ElevatedButton.styleFrom(
-//                   padding: const EdgeInsets.symmetric(vertical: 15),
-//                   backgroundColor: Colors.orange,
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(30),
-//                   ),
-//                 ),
-//                 child: Text("Get Started"),
-//               ),
-//             )
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -150,34 +15,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   late Animation<double> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
-  final List<String> ruralImages = [
-    "https://images.unsplash.com/photo-1610433605854-32371a7aa495?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwZmFybWluZ3xlbnwxfHx8fDE3NjM1MjE3NTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1759738098462-90ffac98c554?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB2aWxsYWdlJTIwY29tbXVuaXR5fGVufDF8fHx8MTc2MzQ0MDAzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1718830243435-a4c469bab12e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwd29ya2Vyc3xlbnwxfHx8fDE3NjM1MjE3NTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1681226298721-88cdb4096e5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBhZ3JpY3VsdHVyZSUyMGZpZWxkc3xlbnwxfHx8fDE3NjM1MjE3NTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1650726583448-dda0065f2f11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwY3JhZnRzbWVufGVufDF8fHx8MTc2MzUyMTc1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1703922055338-1bf44533da53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB2aWxsYWdlJTIwbGlmZXxlbnwxfHx8fDE3NjM1MjE3NTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1640292343595-889db1c8262e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHRyYWRpdGlvbmFsJTIwc2tpbGxzfGVufDF8fHx8MTc2MzUyMTc1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1707721690544-781fe6ede937?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwdGVjaG5vbG9neXxlbnwxfHx8fDE3NjM1MjE3NTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1629288465751-07e42186084f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBmYXJtZXIlMjB3b3JraW5nfGVufDF8fHx8MTc2MzQyODMzNHww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1570966096801-ca0ca3352ea8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHJ1cmFsJTIwd29tZW58ZW58MXx8fHwxNzYzNTIxNzUzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1699799085041-e288623615ed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBoYW5kaWNyYWZ0cyUyMHJ1cmFsfGVufDF8fHx8MTc2MzUyMTc1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1615637765047-c156d0d78869?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHZpbGxhZ2UlMjBtYXJrZXR8ZW58MXx8fHwxNzYzNTIxNzU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1522661067900-ab829854a57f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwZWR1Y2F0aW9ufGVufDF8fHx8MTc2MzUyMTc1NHww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1626358971654-ec3e1eb0439a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBwYW5jaGF5YXQlMjBjb21tdW5pdHl8ZW58MXx8fHwxNzYzNTIxNzU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1489942986787-cded4ecf962e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB2aWxsYWdlJTIwY2hpbGRyZW58ZW58MXx8fHwxNzYzNTIxNzU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1759738102266-bab1d130b557?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwYXJ0aXNhbnN8ZW58MXx8fHwxNzYzNTIxNzU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1685023620523-9c726f2c499b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHRyYWRpdGlvbmFsJTIwZmFybWluZ3xlbnwxfHx8fDE3NjM1MjE3NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1739185127141-bb4aa70ad22a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwd2VhdmluZ3xlbnwxfHx8fDE3NjM1MjE3NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1580746453801-37b0bc56f3b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB2aWxsYWdlJTIwd29tZW4lMjBlbXBvd2VybWVudHxlbnwxfHx8fDE3NjM1MjE3NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1594382029590-64c582afe6c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHJ1cmFsJTIwcG90dGVyeXxlbnwxfHx8fDE3NjM1MjE3NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1698937051291-356eaf4ca3f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBhZ3JpY3VsdHVyZSUyMGhhcnZlc3R8ZW58MXx8fHwxNzYzNDgzNDQ3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1598972676363-683a7b5845a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwY2FycGVudHJ5fGVufDF8fHx8MTc2MzUyMTc1NHww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1595243880357-bcf8de1be94f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHZpbGxhZ2UlMjBnYXRoZXJpbmd8ZW58MXx8fHwxNzYzNTIxNzU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1669556289350-0e2480fe190e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGluZGlhJTIwdGV4dGlsZXN8ZW58MXx8fHwxNzYzNTIxNzU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1606203452426-f5af98e6f96e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBmYXJtZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjM1MjE3NTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1594382029590-64c582afe6c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYSUyMHJ1cmFsJTIwcG90dGVyeXxlbnwxfHx8fDE3NjM1MjE3NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
-  ];
+  // Local asset images - these will be downloaded and compressed by the script
+  final List<String> ruralImages = List.generate(
+    26,
+    (index) =>
+        'assets/images/onboarding/onboarding_${(index + 1).toString().padLeft(2, '0')}.jpg',
+  );
 
   @override
   void initState() {
@@ -210,7 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     _controller.forward();
 
-    // Precache all network images after the first frame
+    // Precache all local images after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _precacheImages();
     });
@@ -218,10 +61,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _precacheImages() {
     if (!mounted) return;
-    for (final imageUrl in ruralImages) {
-      // Preload images into Flutter's image cache for faster loading
-      precacheImage(NetworkImage(imageUrl), context).catchError((_) {
-        // Ignore errors during precaching
+    for (final imagePath in ruralImages) {
+      // Preload local images into Flutter's image cache for instant loading
+      // Silently handle errors if images don't exist yet
+      precacheImage(AssetImage(imagePath), context).catchError((_) {
+        // Ignore errors - images will be downloaded later
       });
     }
   }
@@ -270,31 +114,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ),
                     );
                   },
-                  child: CachedNetworkImage(
-                    imageUrl: ruralImages[index],
+                  child: Image.asset(
+                    ruralImages[index],
                     fit: BoxFit.cover,
-                    placeholder:
-                        (context, url) => Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.grey,
-                            ),
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to gradient background when image is missing
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.blue.shade100,
+                              Colors.green.shade100,
+                              Colors.orange.shade100,
+                            ],
                           ),
                         ),
-                    errorWidget:
-                        (context, url, error) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image, color: Colors.grey),
-                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
           ),
 
-          // Gradient Overlay with Blur Effect
+          // Reduced Gradient Overlay
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -302,10 +147,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.3),
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.7),
-                    Colors.white.withOpacity(0.85),
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0.6),
                   ],
                   stops: const [0.0, 0.3, 0.6, 1.0],
                 ),
@@ -313,9 +158,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
 
-          // Content
-          SafeArea(
-            child: Center(
+          // Content at Bottom with Gradient Background
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
               child: AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
@@ -324,11 +172,25 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     child: Opacity(opacity: _fadeAnimation.value, child: child),
                   );
                 },
-                child: SingleChildScrollView(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.0),
+                        Colors.white.withOpacity(0.3),
+                        Colors.white.withOpacity(0.7),
+                        Colors.white.withOpacity(0.95),
+                        Colors.white,
+                      ],
+                      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+                    ),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    padding: const EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 32.0),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         // Logo with pulse animation
                         TweenAnimationBuilder<double>(
@@ -342,33 +204,33 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             );
                           },
                           child: Container(
-                            width: 100,
-                            height: 100,
-                            margin: const EdgeInsets.only(bottom: 24),
+                            width: 80,
+                            height: 80,
+                            margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white,
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 10),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                   spreadRadius: 0,
                                 ),
                               ],
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(6.0),
                               child: Image.asset(
                                 'assets/images/app_logo.png',
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
+                                  return Center(
                                     child: Text(
                                       'C',
-                                      style: TextStyle(
-                                        color: Color(0xFF2563EB),
-                                        fontSize: 48,
+                                      style: GoogleFonts.playfairDisplay(
+                                        color: const Color(0xFF2563EB),
+                                        fontSize: 42,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -380,31 +242,33 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ),
 
                         // Title
-                        const Text(
+                        Text(
                           'Welcome to CHATUR',
-                          style: TextStyle(
+                          style: GoogleFonts.playfairDisplay(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                            letterSpacing: -0.5,
+                            color: const Color(0xFF1F2937),
+                            letterSpacing: 0.5,
+                            height: 1.2,
                           ),
                           textAlign: TextAlign.center,
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
 
                         // Subtitle
-                        const Text(
+                        Text(
                           'Community Help and Technology\nfor Uplifting Ruralities',
-                          style: TextStyle(
+                          style: GoogleFonts.merriweather(
                             fontSize: 15,
-                            color: Color(0xFF6B7280),
+                            color: const Color(0xFF4B5563),
                             height: 1.5,
+                            fontStyle: FontStyle.italic,
                           ),
                           textAlign: TextAlign.center,
                         ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
 
                         // Buttons
                         ConstrainedBox(
@@ -428,12 +292,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                         borderRadius: BorderRadius.circular(28),
                                       ),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Sign up',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.2,
+                                      style: GoogleFonts.playfairDisplay(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ),
@@ -453,12 +317,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                         borderRadius: BorderRadius.circular(28),
                                       ),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Log in',
-                                      style: TextStyle(
-                                        fontSize: 17,
+                                      style: GoogleFonts.playfairDisplay(
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.2,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ),
@@ -468,7 +332,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
                         // Terms Text
                         Padding(
@@ -476,8 +340,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           child: Text(
                             'By continuing, you agree to CHATUR\'s Terms of Service and acknowledge you\'ve read our Privacy Policy',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: GoogleFonts.merriweather(
+                              fontSize: 11,
                               color: Colors.grey[600],
                               height: 1.5,
                             ),

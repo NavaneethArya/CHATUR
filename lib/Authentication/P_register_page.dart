@@ -56,7 +56,7 @@ class _P_RegisterpageState extends State<P_Registerpage> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + kToolbarHeight,
             left: 16,

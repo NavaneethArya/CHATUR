@@ -367,9 +367,11 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
   }
 
   Future<void> _loadMinistries() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final cacheValid = await _isCacheValid();
@@ -379,12 +381,14 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
         final cachedMinistries = await _loadMinistriesFromCache();
 
         if (cachedMinistries != null && cachedMinistries.isNotEmpty) {
-          setState(() {
-            _ministries = cachedMinistries;
-            _filteredMinistries = cachedMinistries;
-            _ministryCount = cachedMinistries.length;
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _ministries = cachedMinistries;
+              _filteredMinistries = cachedMinistries;
+              _ministryCount = cachedMinistries.length;
+              _isLoading = false;
+            });
+          }
           return;
         }
       }
@@ -394,17 +398,21 @@ class _MinistryDetailPageState extends State<MinistryDetailPage> {
 
       await _saveMinistryToCache(data);
 
-      setState(() {
-        _ministries = data;
-        _filteredMinistries = data;
-        _ministryCount = data.length;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _ministries = data;
+          _filteredMinistries = data;
+          _ministryCount = data.length;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Load ministries error: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

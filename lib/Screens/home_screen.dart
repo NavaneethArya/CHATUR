@@ -2,16 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:chatur_frontend/Chatbot/chatbot.dart';
 import 'package:chatur_frontend/Documents/document.dart';
-import 'package:chatur_frontend/Events/add_event.dart';
 import 'package:chatur_frontend/Events/screens/all_events.dart';
-import 'package:chatur_frontend/Events/screens/panchayat_login_screen.dart';
 import 'package:chatur_frontend/Other/profile_icon.dart';
 import 'package:chatur_frontend/Schemes/state/allSchemeDetailState.dart';
 import 'package:chatur_frontend/Schemes/state/schemeAPI.dart';
 import 'package:chatur_frontend/Schemes/state/schemeEligibilityIndividual.dart';
 import 'package:chatur_frontend/Schemes/state/geminiAPI.dart';
 import 'package:chatur_frontend/Skills/Post_skill.dart';
-import 'package:flutter/foundation.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1541,18 +1538,6 @@ class _HomeScreenState extends State<HomeScreen>
             );
           },
         ),
-        // _buildQuickAccessTile(
-        //   icon: Icons.location_on,
-        //   title: 'Add Event',
-        //   subtitle: 'Post upcoming events',
-        //   color: Colors.red,
-        //   onTap: () {
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(builder: (_) => PanchayatLoginScreen()),
-        //     );
-        //   },
-        // ),
       ],
     );
   }

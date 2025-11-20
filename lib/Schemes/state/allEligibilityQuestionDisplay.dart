@@ -452,10 +452,12 @@ JSON response (ONLY):''';
   Future<void> _translateAllQuestions() async {
     if (_selectedLanguage == 'English') return;
 
-    setState(() {
-      _isTranslating = true;
-      _translationProgress = 0;
-    });
+    if (mounted) {
+      setState(() {
+        _isTranslating = true;
+        _translationProgress = 0;
+      });
+    }
 
     List<int> failedIndices = [];
 
@@ -464,9 +466,11 @@ JSON response (ONLY):''';
       if (_translatedQuestions[i]?[_selectedLanguage] == null) {
         final originalQuestion = _questions[i]['question'] ?? '';
 
-        setState(() {
-          _translationProgress = i + 1;
-        });
+        if (mounted) {
+          setState(() {
+            _translationProgress = i + 1;
+          });
+        }
 
         final translated = await _translateQuestionWithRetry(
           originalQuestion,
@@ -526,10 +530,12 @@ JSON response (ONLY):''';
       }
     }
 
-    setState(() {
-      _isTranslating = false;
-      _translationProgress = 0;
-    });
+    if (mounted) {
+      setState(() {
+        _isTranslating = false;
+        _translationProgress = 0;
+      });
+    }
   }
 
   Future<void> _changeLanguage(String targetLanguage) async {
@@ -537,11 +543,13 @@ JSON response (ONLY):''';
 
     await flutterTts.stop();
 
-    setState(() {
-      _selectedLanguage = targetLanguage;
-      _isTranslating = true;
-      _translationProgress = 0;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedLanguage = targetLanguage;
+        _isTranslating = true;
+        _translationProgress = 0;
+      });
+    }
 
     if (targetLanguage != 'English') {
       await _translateAllQuestions();

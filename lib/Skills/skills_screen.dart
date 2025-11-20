@@ -61,7 +61,7 @@ class SkillPost {
       perKmPrice = doc.data()?['perKmPrice'] as int?,
       imageUrls =
           (doc.data()?['images'] is List)
-              ? List<String>.from(doc.data()!['images'])
+              ? List<String>.from((doc.data()?['images'] as List?) ?? [])
               : [],
       address = doc.data()?['address'] ?? '',
       coordinates = doc.data()?['coordinates'] ?? const GeoPoint(0, 0),

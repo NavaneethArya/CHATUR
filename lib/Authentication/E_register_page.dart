@@ -58,7 +58,7 @@ class _E_RegisterPageState extends State<E_RegisterPage> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + kToolbarHeight,
             left: 16,

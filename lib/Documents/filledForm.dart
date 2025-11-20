@@ -68,10 +68,12 @@ class _FilledFormPageState extends State<FilledFormPage> {
   }
 
   Future<void> _generateFilledFormText() async {
-    setState(() {
-      _isGenerating = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isGenerating = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final prompt = '''
@@ -188,9 +190,11 @@ IMPORTANT:
             throw Exception('Generated text is empty');
           }
 
-          setState(() {
-            _generatedFormText = cleanedText;
-          });
+          if (mounted) {
+            setState(() {
+              _generatedFormText = cleanedText;
+            });
+          }
         } else {
           throw Exception('Invalid response structure from API');
         }
@@ -200,12 +204,16 @@ IMPORTANT:
       }
     } catch (e) {
       print('Error generating form: $e');
-      setState(() {
-        _errorMessage = 'Error: ${e.toString()}';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error: ${e.toString()}';
+        });
+      }
       _showError('Failed to generate form: ${e.toString()}');
     } finally {
-      setState(() => _isGenerating = false);
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
     }
   }
 

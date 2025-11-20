@@ -144,6 +144,9 @@ class _MainEventScreenState extends State<MainEventScreen>
   bool _isRefreshing = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Set<String> _bookmarkedEventIds = {};
+  String? _userPhotoUrl;
+  String? _userName;
+  bool _isLoadingProfile = true;
 
   late AnimationController _fabController;
   late AnimationController _headerController;
@@ -159,6 +162,7 @@ class _MainEventScreenState extends State<MainEventScreen>
     _checkPanchayatStatus();
     _loadEvents();
     _loadBookmarks();
+    _loadUserProfile(); // Add this line
   }
 
   void _loadBookmarks() {
@@ -174,6 +178,46 @@ class _MainEventScreenState extends State<MainEventScreen>
         });
       }
     });
+  }
+
+  Future<void> _loadUserProfile() async {
+    final uid = currentUser?.uid;
+    if (uid == null) {
+      setState(() => _isLoadingProfile = false);
+      return;
+    }
+
+    try {
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('Profile')
+              .doc('main')
+              .get();
+
+      if (doc.exists && mounted) {
+        final data = doc.data();
+        setState(() {
+          _userName = data?['name'] ?? currentUser?.displayName ?? 'User';
+          _userPhotoUrl = data?['photoUrl'] ?? currentUser?.photoURL;
+          _isLoadingProfile = false;
+        });
+      } else {
+        setState(() {
+          _userName = currentUser?.displayName ?? 'User';
+          _userPhotoUrl = currentUser?.photoURL;
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+      setState(() {
+        _userName = currentUser?.displayName ?? 'User';
+        _userPhotoUrl = currentUser?.photoURL;
+        _isLoadingProfile = false;
+      });
+    }
   }
 
   void _initAnimations() {
@@ -604,7 +648,7 @@ class _MainEventScreenState extends State<MainEventScreen>
   }
 
   Widget _buildDrawerHeader() {
-    final userName = currentUser?.displayName ?? 'User';
+    final userName = _userName ?? 'User';
     final userEmail = currentUser?.email ?? 'user@example.com';
 
     return Container(
@@ -642,11 +686,15 @@ class _MainEventScreenState extends State<MainEventScreen>
             ),
             child: ClipOval(
               child:
-                  currentUser?.photoURL != null
+                  _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty
                       ? CachedNetworkImage(
-                        imageUrl: currentUser!.photoURL!,
+                        imageUrl: _userPhotoUrl!,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => CircularProgressIndicator(),
+                        placeholder:
+                            (_, __) => CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: EventColors.primary,
+                            ),
                         errorWidget:
                             (_, __, ___) => Icon(
                               Icons.person,

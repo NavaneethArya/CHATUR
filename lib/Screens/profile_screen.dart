@@ -1,3 +1,4 @@
+//profile screen
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,6 +47,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dobController.dispose();
+    _districtController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadProfile() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -64,25 +75,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final data = doc.data();
 
-      _nameController.text = data?['name'] ?? '';
-      final genderValue = data?['gender'] as String?;
-      _selectedGender = _genders.contains(genderValue) ? genderValue : null;
-      _dobController.text = data?['dob'] ?? '';
-      final stateValue = data?['state'] as String?;
-      _selectedState = _states.contains(stateValue) ? stateValue : null;
-      _districtController.text = data?['district'] ?? '';
-      _phoneController.text =
-          data?['phone'] ??
-          FirebaseAuth.instance.currentUser?.phoneNumber ??
-          '';
-      _emailController.text =
-          data?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '';
-      _photoUrl = data?['photoUrl'] ?? '';
+      setState(() {
+        _nameController.text = data?['name'] ?? '';
+        final genderValue = data?['gender'] as String?;
+        _selectedGender = _genders.contains(genderValue) ? genderValue : null;
+        _dobController.text = data?['dob'] ?? '';
+        final stateValue = data?['state'] as String?;
+        _selectedState = _states.contains(stateValue) ? stateValue : null;
+        _districtController.text = data?['district'] ?? '';
+        _phoneController.text =
+            data?['phone'] ??
+            FirebaseAuth.instance.currentUser?.phoneNumber ??
+            '';
+        _emailController.text =
+            data?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? '';
+        _photoUrl = data?['photoUrl'] ?? '';
+        _loading = false;
+      });
     } catch (e) {
       debugPrint('Error loading profile: $e');
+      setState(() => _loading = false);
     }
-
-    setState(() => _loading = false);
   }
 
   Future<void> _saveProfile() async {
@@ -91,34 +104,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
+      final profileData = {
+        'name': _nameController.text.trim(),
+        'gender': _selectedGender ?? '',
+        'dob': _dobController.text.trim(),
+        'state': _selectedState ?? '',
+        'district': _districtController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'email': _emailController.text.trim(),
+        'photoUrl': _photoUrl ?? '',
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('Profile')
           .doc('main')
-          .set({
-            'name': _nameController.text.trim(),
-            'gender': _selectedGender ?? '',
-            'dob': _dobController.text.trim(),
-            'state': _selectedState ?? '',
-            'district': _districtController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'photoUrl': _photoUrl ?? '',
-            'updated_at': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          .set(profileData, SetOptions(merge: true));
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile updated')));
+      if (!mounted) return;
+      Navigator.pop(context); // Remove loading dialog
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
       setState(() => _editing = false);
+
+      // Reload profile to ensure data is synced
+      await _loadProfile();
     } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Remove loading dialog
+
       debugPrint("Error saving profile: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update profile: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -137,30 +174,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<String?> uploadImageToCloudinary(File imageFile) async {
-    const cloudName = 'drxymvjkq'; // Cloudinary cloud name
-    const uploadPreset = 'CHATUR'; // unsigned preset
-    const folder = 'chatur/images'; // optional folder
+    const cloudName = 'drxymvjkq';
+    const uploadPreset = 'CHATUR';
+    const folder = 'chatur/images';
 
     final url = Uri.parse(
       'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
     );
 
-    final request =
-        http.MultipartRequest('POST', url)
-          ..fields['upload_preset'] = uploadPreset
-          ..fields['folder'] = folder
-          ..files.add(
-            await http.MultipartFile.fromPath('file', imageFile.path),
-          );
+    try {
+      final request =
+          http.MultipartRequest('POST', url)
+            ..fields['upload_preset'] = uploadPreset
+            ..fields['folder'] = folder
+            ..files.add(
+              await http.MultipartFile.fromPath('file', imageFile.path),
+            );
 
-    final response = await request.send();
+      final response = await request.send();
 
-    if (response.statusCode == 200) {
-      final responseData = await response.stream.bytesToString();
-      final data = json.decode(responseData);
-      return data['secure_url'];
-    } else {
-      print("Cloudinary upload failed: ${response.statusCode}");
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final data = json.decode(responseData);
+        return data['secure_url'];
+      } else {
+        debugPrint("Cloudinary upload failed: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Cloudinary upload error: $e");
       return null;
     }
   }
@@ -170,8 +212,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
+    // Show loading
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
     final imageFile = File(picked.path);
     final imageUrl = await uploadImageToCloudinary(imageFile);
+
+    if (!mounted) return;
+    Navigator.pop(context); // Remove loading
 
     if (imageUrl != null) {
       setState(() => _photoUrl = imageUrl);
@@ -184,11 +237,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .collection('Profile')
             .doc('main')
             .set({'photoUrl': imageUrl}, SetOptions(merge: true));
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Image upload failed')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Image upload failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -202,7 +267,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      // Show only a full-screen loader until profile is ready
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -213,6 +277,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
+        backgroundColor: Colors.deepOrange,
+        foregroundColor: Colors.white,
         actions: [
           TextButton(
             onPressed: () {
@@ -224,7 +290,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             child: Text(
               _editing ? 'Save' : 'Edit',
-              style: const TextStyle(color: Colors.black),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           IconButton(
@@ -239,21 +308,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: GestureDetector(
               onTap: _editing ? _pickAndUploadImage : null,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.deepOrange,
-                backgroundImage:
-                    _photoUrl != null && _photoUrl!.isNotEmpty
-                        ? NetworkImage(_photoUrl!)
-                        : null,
-                child:
-                    _photoUrl == null || _photoUrl!.isEmpty
-                        ? const Icon(
-                          Icons.person,
-                          size: 50,
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white,
+                    backgroundImage:
+                        _photoUrl != null && _photoUrl!.isNotEmpty
+                            ? NetworkImage(_photoUrl!)
+                            : null,
+                    child:
+                        _photoUrl == null || _photoUrl!.isEmpty
+                            ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.deepOrange,
+                            )
+                            : null,
+                  ),
+                  if (_editing)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.deepOrange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 18,
                           color: Colors.white,
-                        )
-                        : null,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -292,8 +382,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          filled: !_editing,
+          fillColor: !_editing ? Colors.grey[100] : Colors.white,
         ),
-        validator: (val) => _editing && val!.trim().isEmpty ? 'Required' : null,
+        validator: (val) {
+          if (_editing && (val == null || val.trim().isEmpty)) {
+            return 'Required';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -316,10 +413,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          filled: !_editing,
+          fillColor: !_editing ? Colors.grey[100] : Colors.white,
         ),
-        validator:
-            (val) =>
-                _editing && (val == null || val.isEmpty) ? 'Required' : null,
+        validator: (val) {
+          if (_editing && (val == null || val.isEmpty)) {
+            return 'Required';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -331,14 +433,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         controller: _dobController,
         readOnly: true,
         onTap: _editing ? _pickDOB : null,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Date of Birth',
-          border: OutlineInputBorder(),
-          suffixIcon: Icon(Icons.calendar_today),
+          border: const OutlineInputBorder(),
+          suffixIcon: const Icon(Icons.calendar_today),
+          filled: !_editing,
+          fillColor: !_editing ? Colors.grey[100] : Colors.white,
         ),
-        validator:
-            (val) =>
-                _editing && (val == null || val.isEmpty) ? 'Required' : null,
+        validator: (val) {
+          if (_editing && (val == null || val.isEmpty)) {
+            return 'Required';
+          }
+          return null;
+        },
       ),
     );
   }

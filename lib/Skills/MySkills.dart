@@ -146,7 +146,9 @@ class _MySkillsScreenState extends State<MySkillsScreen>
             Navigator.pushNamed(
               context,
               '/post-skill',
-            ).then((_) => setState(() {}));
+            ).then((_) {
+              if (mounted) setState(() {});
+            });
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -271,7 +273,9 @@ class _MySkillsScreenState extends State<MySkillsScreen>
                         Navigator.pushNamed(
                           context,
                           '/post-skill',
-                        ).then((_) => setState(() {}));
+                        ).then((_) {
+                          if (mounted) setState(() {});
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,

@@ -1,7 +1,5 @@
-import 'package:chatur_frontend/Events/models/event_model.dart';
 import 'package:chatur_frontend/Events/services/event_firebase_service.dart';
 import 'package:chatur_frontend/Events/screens/main_event_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
