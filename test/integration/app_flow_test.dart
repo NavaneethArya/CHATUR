@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:chatur_frontend/main.dart';
+// import 'package:chatur_frontend/main.dart'; // Unused import removed
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

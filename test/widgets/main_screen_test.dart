@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart'; // Unused import removed
 import 'package:flutter_test/flutter_test.dart';
 // Note: MainScreen requires Firebase initialization for child screens
 // These tests are placeholders for when Firebase test setup is configured

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chatur_frontend/Skills/skills_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:collection';
+// import 'dart:collection'; // Unused import removed
 
 void main() {
   group('Skills Filter Logic Tests', () {
