@@ -195,6 +195,7 @@ class _SkillsScreenState extends State<SkillsScreen>
   void initState() {
     super.initState();
     _loadSavedSkills();
+    _listenToSavedSkills(); // Listen to real-time changes
     _getUserLocation();
     _fabController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -254,10 +255,33 @@ class _SkillsScreenState extends State<SkillsScreen>
               .doc(user.uid)
               .collection('savedSkills')
               .get();
-      setState(() => _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id)));
+      setState(() {
+        _savedSkillIds.clear();
+        _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id));
+      });
     } catch (e) {
       debugPrint('Error loading saved skills: $e');
     }
+  }
+  
+  void _listenToSavedSkills() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    // Listen to saved skills changes in real-time
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedSkills')
+        .snapshots()
+        .listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _savedSkillIds.clear();
+          _savedSkillIds.addAll(snapshot.docs.map((doc) => doc.id));
+        });
+      }
+    });
   }
 
   Future<void> _refreshSkills() async {
@@ -422,7 +446,7 @@ class _SkillsScreenState extends State<SkillsScreen>
             a.flatPrice ?? a.perKmPrice ?? 0,
           );
         case 'popular':
-          return b.bookingCount.compareTo(a.bookingCount);
+          return b.reviewCount.compareTo(a.reviewCount);
         default:
           return b.createdAt.compareTo(a.createdAt);
       }
@@ -922,32 +946,75 @@ class _SkillsScreenState extends State<SkillsScreen>
                       Positioned(
                         top: 12,
                         right: 12,
-                        child: GestureDetector(
-                          onTap: () => _toggleSave(skill),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // At Work Badge
+                            if (skill.isAtWork)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFFFAB00), Color(0xFFFFBF3C)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.warning.withOpacity(0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.work, color: Colors.white, size: 14),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'AT WORK',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            // Save button
+                            GestureDetector(
+                              onTap: () => _toggleSave(skill),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          isSaved
+                                              ? AppColors.danger.withOpacity(0.4)
+                                              : Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  isSaved ? Icons.favorite : Icons.favorite_border,
                                   color:
                                       isSaved
-                                          ? AppColors.danger.withOpacity(0.4)
-                                          : Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
+                                          ? AppColors.danger
+                                          : AppColors.textLight,
+                                  size: 20,
                                 ),
-                              ],
+                              ),
                             ),
-                            child: Icon(
-                              isSaved ? Icons.favorite : Icons.favorite_border,
-                              color:
-                                  isSaved
-                                      ? AppColors.danger
-                                      : AppColors.textLight,
-                              size: 20,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
                       Positioned(
@@ -1030,13 +1097,7 @@ class _SkillsScreenState extends State<SkillsScreen>
                               '${distance.toStringAsFixed(1)} km',
                               AppColors.accentGradient,
                             ),
-                          _buildChip(
-                            Icons.access_time,
-                            skill.timeAgo,
-                            LinearGradient(
-                              colors: [Colors.grey[600]!, Colors.grey[500]!],
-                            ),
-                          ),
+                          _buildTimeChip(skill.createdAt),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -1141,6 +1202,36 @@ class _SkillsScreenState extends State<SkillsScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimeChip(DateTime createdAt) {
+    return StreamBuilder<DateTime>(
+      stream: Stream.periodic(const Duration(minutes: 1), (_) => DateTime.now()),
+      builder: (context, snapshot) {
+        final now = snapshot.data ?? DateTime.now();
+        final diff = now.difference(createdAt);
+        String timeText;
+        if (diff.inDays > 30) {
+          timeText = '${(diff.inDays / 30).floor()}mo ago';
+        } else if (diff.inDays > 0) {
+          timeText = '${diff.inDays}d ago';
+        } else if (diff.inHours > 0) {
+          timeText = '${diff.inHours}h ago';
+        } else if (diff.inMinutes > 0) {
+          timeText = '${diff.inMinutes}m ago';
+        } else {
+          timeText = 'Just now';
+        }
+        
+        return _buildChip(
+          Icons.access_time,
+          timeText,
+          LinearGradient(
+            colors: [Colors.grey[600]!, Colors.grey[500]!],
+          ),
+        );
+      },
     );
   }
 

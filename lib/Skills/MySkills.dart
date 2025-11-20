@@ -560,7 +560,7 @@ class MySkillCard extends StatelessWidget {
                           const SizedBox(width: 10),
                           _buildStatChip(
                             Icons.work_outline,
-                            '$bookingCount',
+                            '${skillData['reviewCount'] ?? 0}',
                             AppColors.success,
                           ),
                           const SizedBox(width: 10),

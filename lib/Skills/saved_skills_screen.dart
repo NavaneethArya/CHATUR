@@ -180,6 +180,7 @@ class SavedSkillCard extends StatelessWidget {
           ),
         );
       }
+      // Call onRemove to refresh the list
       onRemove();
     } catch (e) {
       if (context.mounted) {
@@ -202,11 +203,11 @@ class SavedSkillCard extends StatelessWidget {
       elevation: 3,
       child: InkWell(
         onTap: () {
-          // SOLUTION: Navigate directly to AdvancedSkillDetailScreen with arguments
+          // Navigate to proper detail screen
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AdvancedSkillDetailScreen(
+              builder: (context) => EnhancedSkillDetailScreen(
                 skillId: skillId,
                 userId: userId,
               ),
@@ -347,39 +348,6 @@ class SavedSkillCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// IMPORTANT: You need to import this screen
-// Add this at the top of your file:
-// import 'package:your_app/screens/advanced_skill_detail_screen.dart';
-
-// Placeholder for AdvancedSkillDetailScreen
-// Replace this with your actual import
-class AdvancedSkillDetailScreen extends StatelessWidget {
-  final String skillId;
-  final String userId;
-
-  const AdvancedSkillDetailScreen({
-    super.key,
-    required this.skillId,
-    required this.userId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Skill Details')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Skill ID: $skillId'),
-            Text('User ID: $userId'),
           ],
         ),
       ),

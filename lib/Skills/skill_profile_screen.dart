@@ -583,7 +583,7 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                       const SizedBox(width: 12),
                       _buildStatCard(Icons.visibility, '$viewCount', 'Views', Colors.purple),
                       const SizedBox(width: 12),
-                      _buildStatCard(Icons.work, '$bookingCount', 'Jobs', AppColors.success),
+                      _buildStatCard(Icons.work, '$reviewCount', 'Jobs', AppColors.success),
                     ],
                   ),
                 ],
@@ -828,10 +828,10 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
           const SizedBox(height: 16),
           _buildDetailedStatCard(
             'Total Jobs',
-            _skillData!['bookingCount'] ?? 0,
+            _skillData!['reviewCount'] ?? 0,
             Icons.work,
             AppColors.success,
-            'Completed service bookings',
+            'Jobs completed (based on reviews)',
           ),
           const SizedBox(height: 16),
           _buildDetailedStatCard(
