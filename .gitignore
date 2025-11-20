@@ -59,3 +59,69 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+firebase.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API Keys and Secrets
+**/secrets/
+**/*_secret.dart
+**/*_keys.dart
+
+# Generated files
+*.g.dart
+*.freezed.dart
+
+# Coverage
+coverage/
+*.lcov
+
+# Test related
+test/.test_coverage.dart
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package files
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Local configuration
+local.properties
+android/local.properties
+
+# FVM Version Management
+.fvm/
+
+# Exclude large media files (uncomment if needed)
+# assets/videos/
+# assets/images/onboarding/*.jpg

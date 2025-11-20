@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/NavaneethArya/CHATUR/discussions
+    about: Ask questions and discuss ideas
+  - name: 📚 Documentation
+    url: https://github.com/NavaneethArya/CHATUR#readme
+    about: Check the README and documentation
+  - name: 🔒 Security Issue
+    url: https://github.com/NavaneethArya/CHATUR/security
+    about: Report a security vulnerability
+
