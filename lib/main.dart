@@ -36,7 +36,7 @@ class MainApp extends StatelessWidget {
         '/register': (context) => P_Registerpage(),
         '/Elogin': (context) => E_LoginPage(),
         '/Eregister': (context) => E_RegisterPage(),
-        '/editProfile': (context) => ProfileScreen(),
+        '/editProfile': (context) => ProfileScreen(autoEdit: true),
         '/post-skill': (context) => ImprovedPostSkillScreen(),
         '/my-skills': (context) => const MySkillsScreen(),
 

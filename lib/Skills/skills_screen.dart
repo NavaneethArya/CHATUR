@@ -112,6 +112,11 @@ class _SkillsScreenState extends State<SkillsScreen>
   bool _showVerifiedOnly = false,
       _isLoadingLocation = true,
       _hasLoadedOnce = false;
+  
+  // For custom input
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
+  final TextEditingController _customDistanceController = TextEditingController();
 
   final Set<String> _savedSkillIds = {};
   LatLng? _userLocation;
@@ -213,6 +218,9 @@ class _SkillsScreenState extends State<SkillsScreen>
     _fabController.dispose();
     _headerController.dispose();
     _scrollController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    _customDistanceController.dispose();
     super.dispose();
   }
 
@@ -1451,7 +1459,7 @@ class _SkillsScreenState extends State<SkillsScreen>
                 ? StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('users')
-                        .doc(user!.uid)
+                        .doc(user.uid)
                         .collection('Profile')
                         .doc('main')
                         .snapshots(),
@@ -1459,15 +1467,15 @@ class _SkillsScreenState extends State<SkillsScreen>
                       String? photoUrl;
                       String? displayName;
                       
-                      if (snapshot.hasData && snapshot.data!.exists) {
-                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                      if (snapshot.hasData && snapshot.data?.exists == true) {
+                        final data = snapshot.data?.data() as Map<String, dynamic>?;
                         photoUrl = data?['photoUrl'] as String?;
                         displayName = data?['name'] as String?;
                       }
                       
                       // Fallback to Firebase Auth values
-                      photoUrl ??= user?.photoURL;
-                      displayName ??= user?.displayName;
+                      photoUrl ??= user.photoURL;
+                      displayName ??= user.displayName;
                       
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1497,7 +1505,7 @@ class _SkillsScreenState extends State<SkillsScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            user?.email ?? 'Not logged in',
+                            user.email ?? 'Not logged in',
                             style: const TextStyle(color: Colors.white70, fontSize: 14),
                           ),
                         ],
@@ -1694,119 +1702,351 @@ class _SkillsScreenState extends State<SkillsScreen>
   }
 
   void _showFilterSheet() {
+    // Initialize controllers with current values
+    _minPriceController.text = _priceRange.start.toInt().toString();
+    _maxPriceController.text = _priceRange.end.toInt().toString();
+    _customDistanceController.text = _maxDistance.toInt().toString();
+    
+    // Set selected options based on current values
+    final initialDistanceOption = _getDistanceOption(_maxDistance);
+    final initialPriceRangeOption = _getPriceRangeOption(_priceRange);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          // Local state variables for the modal
+          String? selectedDistanceOption = initialDistanceOption;
+          String? selectedPriceRangeOption = initialPriceRangeOption;
+          bool showVerifiedOnly = _showVerifiedOnly;
+          double maxDistance = _maxDistance;
+          RangeValues priceRange = _priceRange;
+          
+          return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filters',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _maxDistance = 50;
+                        _priceRange = const RangeValues(0, 5000);
+                        _showVerifiedOnly = false;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Reset',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Max Distance Section
+              const Text(
+                'Max Distance',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedDistanceOption,
+                decoration: InputDecoration(
+                  hintText: 'Select or enter distance',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                items: [
+                  '5', '10', '15', '20', '25', '30', '40', '50', '75', '100', 'Custom'
+                ].map((option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option == 'Custom' ? 'Custom (Enter below)' : '$option km'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setModalState(() {
+                    selectedDistanceOption = value;
+                    if (value != 'Custom' && value != null) {
+                      maxDistance = double.parse(value);
+                      _customDistanceController.clear();
+                    }
+                  });
+                },
+              ),
+              if (selectedDistanceOption == 'Custom') ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _customDistanceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Enter distance in km',
+                    hintText: 'e.g., 35',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.location_on),
+                    suffixText: 'km',
+                  ),
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      final distance = double.tryParse(value);
+                      if (distance != null && distance > 0) {
+                        setModalState(() {
+                          maxDistance = distance.clamp(1, 1000);
+                        });
+                      }
+                    }
+                  },
+                ),
+              ],
+              const SizedBox(height: 24),
+              
+              // Price Range Section
+              const Text(
+                'Price Range',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedPriceRangeOption,
+                decoration: InputDecoration(
+                  hintText: 'Select or enter price range',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                items: [
+                  '0-1000', '0-2500', '0-5000', '0-10000', '1000-5000', '2500-10000', 'Custom'
+                ].map((option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(
+                      option == 'Custom' 
+                        ? 'Custom (Enter below)' 
+                        : '₹${option.replaceAll('-', ' - ₹')}',
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setModalState(() {
+                    selectedPriceRangeOption = value;
+                    if (value != 'Custom' && value != null) {
+                      final parts = value.split('-');
+                      if (parts.length == 2) {
+                        final min = double.tryParse(parts[0]) ?? 0;
+                        final max = double.tryParse(parts[1]) ?? 10000;
+                        priceRange = RangeValues(min, max);
+                        _minPriceController.text = min.toInt().toString();
+                        _maxPriceController.text = max.toInt().toString();
+                      }
+                    }
+                  });
+                },
+              ),
+              if (selectedPriceRangeOption == 'Custom') ...[
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Filters',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: TextField(
+                        controller: _minPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Min Price',
+                          hintText: '0',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          prefixText: '₹',
+                        ),
+                        onChanged: (value) {
+                          final min = double.tryParse(value) ?? 0;
+                          setModalState(() {
+                            priceRange = RangeValues(
+                              min.clamp(0, priceRange.end),
+                              priceRange.end,
+                            );
+                          });
+                        },
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _maxDistance = 50;
-                          _priceRange = const RangeValues(0, 5000);
-                          _showVerifiedOnly = false;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Reset',
-                        style: TextStyle(fontSize: 16),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _maxPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Max Price',
+                          hintText: '10000',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          prefixText: '₹',
+                        ),
+                        onChanged: (value) {
+                          final max = double.tryParse(value) ?? 10000;
+                          setModalState(() {
+                            priceRange = RangeValues(
+                              priceRange.start,
+                              max.clamp(priceRange.start, 100000),
+                            );
+                          });
+                        },
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Max Distance: ${_maxDistance.toInt()} km',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
+              ],
+              const SizedBox(height: 16),
+              
+              // Verified Providers Toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: showVerifiedOnly 
+                    ? AppColors.success.withOpacity(0.1)
+                    : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: showVerifiedOnly 
+                      ? AppColors.success.withOpacity(0.3)
+                      : Colors.grey[300]!,
                   ),
                 ),
-                Slider(
-                  value: _maxDistance,
-                  min: 1,
-                  max: 100,
-                  divisions: 99,
-                  label: '${_maxDistance.toInt()} km',
-                  onChanged: (val) => setState(() => _maxDistance = val),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Price Range: ₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-                RangeSlider(
-                  values: _priceRange,
-                  min: 0,
-                  max: 10000,
-                  divisions: 100,
-                  labels: RangeLabels(
-                    '₹${_priceRange.start.toInt()}',
-                    '₹${_priceRange.end.toInt()}',
-                  ),
-                  onChanged: (val) => setState(() => _priceRange = val),
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
+                child: SwitchListTile(
                   title: const Text(
                     'Verified Providers Only',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text('4.5+ rating & 10+ reviews'),
-                  value: _showVerifiedOnly,
+                  value: showVerifiedOnly,
                   activeColor: AppColors.success,
-                  onChanged: (val) => setState(() => _showVerifiedOnly = val),
+                  onChanged: (val) {
+                    setModalState(() {
+                      showVerifiedOnly = val;
+                    });
+                  },
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: AppColors.primary,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Apply custom values if entered
+                    if (selectedDistanceOption == 'Custom' && 
+                        _customDistanceController.text.isNotEmpty) {
+                      final distance = double.tryParse(_customDistanceController.text);
+                      if (distance != null && distance > 0) {
+                        maxDistance = distance.clamp(1, 1000);
+                      }
+                    }
+                    
+                    if (selectedPriceRangeOption == 'Custom') {
+                      final min = double.tryParse(_minPriceController.text) ?? 0;
+                      final max = double.tryParse(_maxPriceController.text) ?? 10000;
+                      priceRange = RangeValues(
+                        min.clamp(0, max),
+                        max.clamp(min, 100000),
+                      );
+                    }
+                    
+                    // Update parent state
+                    setState(() {
+                      _maxDistance = maxDistance;
+                      _priceRange = priceRange;
+                      _showVerifiedOnly = showVerifiedOnly;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
-                      'Apply Filters',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text(
+                    'Apply Filters',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        );
+        },
+      ),
     );
+  }
+  
+  String? _getDistanceOption(double distance) {
+    final options = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
+    if (options.contains(distance.toInt())) {
+      return distance.toInt().toString();
+    }
+    return 'Custom';
+  }
+  
+  String? _getPriceRangeOption(RangeValues range) {
+    final options = [
+      {'min': 0, 'max': 1000},
+      {'min': 0, 'max': 2500},
+      {'min': 0, 'max': 5000},
+      {'min': 0, 'max': 10000},
+      {'min': 1000, 'max': 5000},
+      {'min': 2500, 'max': 10000},
+    ];
+    
+    for (var option in options) {
+      if (range.start == option['min'] && range.end == option['max']) {
+        return '${option['min']}-${option['max']}';
+      }
+    }
+    return 'Custom';
   }
 
   void _showSortSheet() {

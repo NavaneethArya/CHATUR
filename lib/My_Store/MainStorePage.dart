@@ -29,6 +29,7 @@ class _MainStorePageState extends State<MainStorePage>
   String _selectedCategory = 'All';
   bool _showSearch = false;
   String _selectedView = 'Stores';
+  String? _userPhotoUrl;
 
   final List<String> _categories = [
     'All',
@@ -52,6 +53,37 @@ class _MainStorePageState extends State<MainStorePage>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('Profile')
+          .doc('main')
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        setState(() {
+          _userPhotoUrl = data?['photoUrl'] ?? _auth.currentUser?.photoURL;
+        });
+      } else {
+        setState(() {
+          _userPhotoUrl = _auth.currentUser?.photoURL;
+        });
+      }
+    } catch (e) {
+      print('Error loading user profile: $e');
+      setState(() {
+        _userPhotoUrl = _auth.currentUser?.photoURL;
+      });
+    }
   }
 
   @override
@@ -132,6 +164,7 @@ class _MainStorePageState extends State<MainStorePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey[50],
       appBar: _buildAppBar(),
       drawer: _buildDrawer(),
@@ -1338,20 +1371,24 @@ class _MainStorePageState extends State<MainStorePage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.6,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
-            builder:
-                (context, scrollController) => Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25),
+          (context) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.95,
+              builder:
+                  (context, scrollController) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25),
+                        topRight: Radius.circular(25),
+                      ),
                     ),
-                  ),
-                  child: Column(
+                    child: Column(
                     children: [
                       // Handle bar
                       Container(
@@ -1543,7 +1580,12 @@ class _MainStorePageState extends State<MainStorePage>
                       // Write Review Section
                       if (userId != null)
                         Container(
-                          padding: EdgeInsets.all(16),
+                          padding: EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                            bottom: 16,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             boxShadow: [
@@ -1555,18 +1597,39 @@ class _MainStorePageState extends State<MainStorePage>
                             ],
                           ),
                           child: SafeArea(
+                            top: false,
                             child: Row(
                               children: [
                                 Expanded(
                                   child: TextField(
                                     controller: reviewController,
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                     decoration: InputDecoration(
                                       hintText: 'Write your review...',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                      ),
                                       filled: true,
                                       fillColor: Colors.grey[100],
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(25),
                                         borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(25),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(25),
+                                        borderSide: BorderSide(
+                                          color: Colors.deepPurple,
+                                          width: 2,
+                                        ),
                                       ),
                                       contentPadding: EdgeInsets.symmetric(
                                         horizontal: 20,
@@ -1574,6 +1637,8 @@ class _MainStorePageState extends State<MainStorePage>
                                       ),
                                     ),
                                     maxLines: null,
+                                    keyboardType: TextInputType.multiline,
+                                    textInputAction: TextInputAction.newline,
                                   ),
                                 ),
                                 SizedBox(width: 10),
@@ -1632,6 +1697,7 @@ class _MainStorePageState extends State<MainStorePage>
                     ],
                   ),
                 ),
+            ),
           ),
     );
   }
@@ -2025,7 +2091,12 @@ class _MainStorePageState extends State<MainStorePage>
           CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
-            child: Icon(Icons.person, size: 45, color: Colors.deepPurple),
+            backgroundImage: _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty
+                ? NetworkImage(_userPhotoUrl!)
+                : null,
+            child: _userPhotoUrl == null || _userPhotoUrl!.isEmpty
+                ? Icon(Icons.person, size: 45, color: Colors.deepPurple)
+                : null,
           ),
           SizedBox(height: 15),
           Text(

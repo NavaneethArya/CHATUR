@@ -1,4 +1,3 @@
-// chaturChatbot.dart - AI Chatbot for Government Schemes with Multilingual Support & Chat History
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -33,6 +32,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
   bool _isLoading = false;
   bool _isListening = false;
   bool _isSpeaking = false;
+  bool _hasText = false; // Track if text field has content
 
   late stt.SpeechToText _speech;
   late FlutterTts _flutterTts;
@@ -125,9 +125,12 @@ class _ChaturChatbotState extends State<ChaturChatbot>
 
     // Add listener to update UI when text changes
     _messageController.addListener(() {
-      setState(() {
-        // This will trigger a rebuild when text changes
-      });
+      final hasText = _messageController.text.trim().isNotEmpty;
+      if (_hasText != hasText) {
+        setState(() {
+          _hasText = hasText;
+        });
+      }
     });
   }
 
@@ -1134,71 +1137,78 @@ class _ChaturChatbotState extends State<ChaturChatbot>
     final suggestions = _getSuggestions();
 
     return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(maxHeight: 150),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: cardColor.withOpacity(0.5),
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _t('quickSuggestions'),
-            style: TextStyle(
-              fontSize: 12 * _textSizeMultiplier,
-              color: textColor.withOpacity(0.6),
-              fontWeight: FontWeight.w600,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _t('quickSuggestions'),
+              style: TextStyle(
+                fontSize: 12 * _textSizeMultiplier,
+                color: textColor.withOpacity(0.6),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children:
-                suggestions.map((suggestion) {
-                  return GestureDetector(
-                    onTap: () => _sendMessage(suggestion),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF667eea).withOpacity(0.1),
-                            Color(0xFF764ba2).withOpacity(0.1),
-                          ],
+            SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  suggestions.map((suggestion) {
+                    return GestureDetector(
+                      onTap: () => _sendMessage(suggestion),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Color(0xFF667eea).withOpacity(0.3),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF667eea).withOpacity(0.1),
+                              Color(0xFF764ba2).withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Color(0xFF667eea).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          suggestion,
+                          style: TextStyle(
+                            fontSize: 13 * _textSizeMultiplier,
+                            color: Color(0xFF764ba2),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        suggestion,
-                        style: TextStyle(
-                          fontSize: 13 * _textSizeMultiplier,
-                          color: Color(0xFF764ba2),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-          ),
-        ],
+                    );
+                  }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInputArea(Color cardColor, Color textColor) {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
         top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: bottomPadding > 0 ? 16 : 0,
       ),
       decoration: BoxDecoration(
         color: cardColor,
@@ -1212,6 +1222,8 @@ class _ChaturChatbotState extends State<ChaturChatbot>
       ),
       child: SafeArea(
         top: false,
+        bottom: true,
+        minimum: EdgeInsets.only(bottom: 16),
         child: Row(
           children: [
             GestureDetector(
@@ -1281,6 +1293,15 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                   ),
                   maxLines: null,
                   textInputAction: TextInputAction.send,
+                  onChanged: (text) {
+                    // This will trigger the listener and update _hasText
+                    final hasText = text.trim().isNotEmpty;
+                    if (_hasText != hasText) {
+                      setState(() {
+                        _hasText = hasText;
+                      });
+                    }
+                  },
                   onSubmitted: (text) {
                     if (text.trim().isNotEmpty && !_isListening) {
                       _sendMessage(text);
@@ -1298,18 +1319,13 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                 }
               },
               child: IgnorePointer(
-                ignoring:
-                    _isListening ||
-                    _messageController.text.trim().isEmpty ||
-                    _isLoading,
+                ignoring: _isListening || !_hasText || _isLoading,
                 child: Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
                     gradient:
-                        _messageController.text.trim().isEmpty ||
-                                _isLoading ||
-                                _isListening
+                        !_hasText || _isLoading || _isListening
                             ? LinearGradient(
                               colors: [
                                 Colors.grey.shade300,
@@ -1321,9 +1337,7 @@ class _ChaturChatbotState extends State<ChaturChatbot>
                             ),
                     shape: BoxShape.circle,
                     boxShadow:
-                        _messageController.text.trim().isEmpty ||
-                                _isLoading ||
-                                _isListening
+                        !_hasText || _isLoading || _isListening
                             ? []
                             : [
                               BoxShadow(

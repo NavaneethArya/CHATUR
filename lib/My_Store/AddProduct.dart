@@ -112,6 +112,7 @@ class _AddProductPageState extends State<AddProductPage>
     {'icon': '🪴', 'name': 'Gardening Tools'},
     {'icon': '🍂', 'name': 'Organic Compost / Manure'},
     {'icon': '🪴', 'name': 'Pots & Planters'},
+    {'icon': '➕', 'name': 'Others'},
   ];
 
   final List<Map<String, dynamic>> shippingMethods = [
@@ -382,16 +383,132 @@ class _AddProductPageState extends State<AddProductPage>
                             size: 16,
                           ),
                           onTap: () {
-                            setState(() {
-                              _productTypeController.text =
-                                  productCategories[index]['name'];
-                            });
-                            Navigator.pop(context);
+                            if (productCategories[index]['name'] == 'Others') {
+                              Navigator.pop(context);
+                              _showCustomCategoryDialog();
+                            } else {
+                              setState(() {
+                                _productTypeController.text =
+                                    productCategories[index]['name'];
+                              });
+                              Navigator.pop(context);
+                            }
                           },
                         ),
                       );
                     },
                   ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCustomCategoryDialog() {
+    final TextEditingController customCategoryController =
+        TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.deepPurple,
+                      size: 28,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Enter Custom Category',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: customCategoryController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Category Name',
+                    hintText: 'e.g., Custom Product Type',
+                    prefixIcon: Icon(Icons.category, color: Colors.deepPurple),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.deepPurple,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (customCategoryController.text.trim().isNotEmpty) {
+                          setState(() {
+                            _productTypeController.text =
+                                customCategoryController.text.trim();
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Text('Add Category'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -742,6 +859,7 @@ class _AddProductPageState extends State<AddProductPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -869,7 +987,7 @@ class _AddProductPageState extends State<AddProductPage>
       ),
       child: TextFormField(
         controller: _productTypeController,
-        readOnly: true,
+        readOnly: false,
         onTap: _showProductTypeDialog,
         decoration: InputDecoration(
           labelText: 'Product Type',

@@ -358,19 +358,51 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
             expandedHeight: 300,
             pinned: true,
             backgroundColor: AppColors.primary,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.edit, color: Colors.white),
+                ),
                 onPressed: _editSkill,
                 tooltip: 'Edit Skill',
               ),
               IconButton(
-                icon: const Icon(Icons.qr_code_2),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.qr_code_2, color: Colors.white),
+                ),
                 onPressed: _showQRCode,
                 tooltip: 'Show QR Code',
               ),
               PopupMenuButton(
-                icon: const Icon(Icons.more_vert),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.more_vert, color: Colors.white),
+                ),
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'share',
@@ -409,15 +441,42 @@ class _SkillProfileScreenState extends State<SkillProfileScreen>
                   images.isNotEmpty
                       ? Image.network(images.first, fit: BoxFit.cover)
                       : Container(color: Colors.grey[300]),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
+                  // Gradient overlay at top for app bar visibility
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 120,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.3),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Bottom gradient overlay
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
+                        ),
                       ),
                     ),
                   ),

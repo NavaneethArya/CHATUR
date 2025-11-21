@@ -229,10 +229,30 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
             expandedHeight: 300,
             pinned: true,
             backgroundColor: AppColors.primary,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
             actions: [
               IconButton(
-                icon: Icon(_isSaved ? Icons.favorite : Icons.favorite_border),
-                color: _isSaved ? Colors.red : Colors.white,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isSaved ? Icons.favorite : Icons.favorite_border,
+                    color: _isSaved ? Colors.red : Colors.white,
+                  ),
+                ),
                 onPressed: _toggleSave,
               ),
               // IconButton(
@@ -243,22 +263,47 @@ class _EnhancedSkillDetailScreenState extends State<EnhancedSkillDetailScreen>
               // ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: images.isNotEmpty
-                  ? PageView.builder(
-                      itemCount: images.length,
-                      itemBuilder: (context, index) => Image.network(
-                        images[index],
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  images.isNotEmpty
+                      ? PageView.builder(
+                          itemCount: images.length,
+                          itemBuilder: (context, index) => Image.network(
+                            images[index],
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image, size: 80),
+                            ),
+                          ),
+                        )
+                      : Container(
                           color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 80),
+                          child: const Icon(Icons.image, size: 80),
+                        ),
+                  // Gradient overlay at top for app bar visibility
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 120,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.3),
+                            Colors.transparent,
+                          ],
                         ),
                       ),
-                    )
-                  : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 80),
                     ),
+                  ),
+                ],
+              ),
             ),
           ),
 

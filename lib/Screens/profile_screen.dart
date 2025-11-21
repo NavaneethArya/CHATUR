@@ -8,7 +8,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool autoEdit;
+  
+  const ProfileScreen({super.key, this.autoEdit = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -45,6 +47,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+    // Auto-enable editing if autoEdit is true
+    if (widget.autoEdit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _editing = true;
+          });
+        }
+      });
+    }
   }
 
   @override

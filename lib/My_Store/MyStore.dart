@@ -1187,6 +1187,7 @@ class _MyStorePageState extends State<MyStorePage>
     final products = _productManager.products;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

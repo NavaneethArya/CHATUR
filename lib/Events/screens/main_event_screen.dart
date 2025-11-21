@@ -2,6 +2,7 @@ import 'package:chatur_frontend/Events/models/event_model.dart';
 import 'package:chatur_frontend/Events/screens/add_event_with_location.dart';
 import 'package:chatur_frontend/Events/screens/all_events.dart';
 import 'package:chatur_frontend/Events/screens/bookmarked_events_screen.dart';
+import 'package:chatur_frontend/Events/screens/edit_events_screen.dart';
 import 'package:chatur_frontend/Events/screens/notifications_screen.dart';
 import 'package:chatur_frontend/Events/screens/panchayat_login_screen.dart';
 import 'package:chatur_frontend/Events/services/event_firebase_service.dart';
@@ -14,6 +15,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ============================================
 // COLORS & CONSTANTS
@@ -32,7 +37,10 @@ class EventColors {
   );
 
   static const gradient2 = LinearGradient(
-    colors: [Color(0xFFFF6B9D), Color(0xFFFD79A8)],
+    colors: [
+      Color.fromARGB(255, 244, 161, 8),
+      Color.fromARGB(255, 244, 161, 8),
+    ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -148,6 +156,17 @@ class _MainEventScreenState extends State<MainEventScreen>
   String? _userName;
   bool _isLoadingProfile = true;
 
+  // Multilingual support
+  String _selectedLanguage = 'English';
+  Map<String, Map<String, String>> _translatedEvents = {};
+  bool _isTranslating = false;
+
+  static const String _translationApiKey =
+      'AIzaSyDRJ80dwt7j5wL8WSJoINZRK3enlC8hVkw';
+  static const String _translationBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+  static const String _languagePreferenceKey = 'events_language_preference';
+
   late AnimationController _fabController;
   late AnimationController _headerController;
   late AnimationController _fabMenuController;
@@ -160,9 +179,266 @@ class _MainEventScreenState extends State<MainEventScreen>
     super.initState();
     _initAnimations();
     _checkPanchayatStatus();
+    _loadLanguagePreference();
     _loadEvents();
     _loadBookmarks();
-    _loadUserProfile(); // Add this line
+    _loadUserProfile();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedLanguage =
+          prefs.getString(_languagePreferenceKey) ?? 'English';
+      setState(() {
+        _selectedLanguage = savedLanguage;
+      });
+    } catch (e) {
+      debugPrint('Error loading language preference: $e');
+    }
+  }
+
+  Future<void> _saveLanguagePreference(String language) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_languagePreferenceKey, language);
+    } catch (e) {
+      debugPrint('Error saving language preference: $e');
+    }
+  }
+
+  Future<Map<String, String>> _translateBatch(
+    List<String> texts,
+    String targetLanguage,
+  ) async {
+    if (targetLanguage == 'English' || texts.isEmpty) {
+      return {for (var text in texts) text: text};
+    }
+
+    // Check cache first and filter out already translated texts
+    final textsToTranslate = <String>[];
+    final cachedTranslations = <String, String>{};
+
+    for (var text in texts) {
+      final cacheKey = '${text}_$targetLanguage';
+      if (_translatedEvents.containsKey(cacheKey)) {
+        cachedTranslations[text] =
+            _translatedEvents[cacheKey]!['translated'] ?? text;
+      } else {
+        textsToTranslate.add(text);
+      }
+    }
+
+    // If all are cached, return immediately
+    if (textsToTranslate.isEmpty) {
+      return cachedTranslations;
+    }
+
+    try {
+      String targetLangCode = 'Kannada';
+      if (targetLanguage == 'Hindi') {
+        targetLangCode = 'Hindi';
+      }
+
+      // Optimized prompt for faster response
+      final textsList = textsToTranslate.map((t) => '"$t"').join(', ');
+      final prompt =
+          'Translate to $targetLangCode. Return JSON: {$textsList}. Map each original to translation.';
+
+      final response = await http
+          .post(
+            Uri.parse('$_translationBaseUrl?key=$_translationApiKey'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'contents': [
+                {
+                  'parts': [
+                    {'text': prompt},
+                  ],
+                },
+              ],
+              'generationConfig': {
+                'temperature': 0.1,
+                'maxOutputTokens': 1024,
+                'topP': 0.8,
+                'topK': 20,
+              },
+            }),
+          )
+          .timeout(
+            Duration(seconds: 8),
+            onTimeout: () {
+              throw TimeoutException('Translation timeout');
+            },
+          );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        var translatedJson =
+            data['candidates'][0]['content']['parts'][0]['text']
+                .toString()
+                .trim();
+
+        // Clean up JSON response
+        if (translatedJson.contains('```json')) {
+          translatedJson =
+              translatedJson.split('```json')[1].split('```')[0].trim();
+        } else if (translatedJson.contains('```')) {
+          translatedJson =
+              translatedJson.split('```')[1].split('```')[0].trim();
+        }
+
+        final translations =
+            json.decode(translatedJson) as Map<String, dynamic>;
+
+        // Cache and return translations
+        for (var text in textsToTranslate) {
+          final translated = translations[text]?.toString() ?? text;
+          final cacheKey = '${text}_$targetLanguage';
+          _translatedEvents[cacheKey] = {
+            'original': text,
+            'translated': translated,
+          };
+          cachedTranslations[text] = translated;
+        }
+
+        return cachedTranslations;
+      }
+    } catch (e) {
+      debugPrint('Batch translation error: $e');
+      // Return original texts if translation fails
+      for (var text in textsToTranslate) {
+        cachedTranslations[text] = text;
+      }
+    }
+
+    return cachedTranslations;
+  }
+
+  Future<void> _translateEvents() async {
+    if (_selectedLanguage == 'English' || _events.isEmpty) {
+      setState(() {
+        _isTranslating = false;
+      });
+      return;
+    }
+
+    // Update UI immediately with cached translations (non-blocking)
+    setState(() {
+      _isTranslating = true;
+    });
+
+    // Translate in background without blocking UI
+    _translateEventsInBackground();
+  }
+
+  Future<void> _translateEventsInBackground() async {
+    try {
+      // Collect all unique texts to translate
+      final headingsToTranslate = <String>[];
+      final descriptionsToTranslate = <String>[];
+      final headingMap = <String, List<EventModel>>{};
+      final descriptionMap = <String, List<EventModel>>{};
+
+      for (var event in _events) {
+        final headingKey = '${event.heading}_${_selectedLanguage}';
+        final descKey = '${event.description}_${_selectedLanguage}';
+
+        if (!_translatedEvents.containsKey(headingKey)) {
+          if (!headingsToTranslate.contains(event.heading)) {
+            headingsToTranslate.add(event.heading);
+          }
+          headingMap.putIfAbsent(event.heading, () => []).add(event);
+        }
+
+        if (!_translatedEvents.containsKey(descKey)) {
+          if (!descriptionsToTranslate.contains(event.description)) {
+            descriptionsToTranslate.add(event.description);
+          }
+          descriptionMap.putIfAbsent(event.description, () => []).add(event);
+        }
+      }
+
+      // Translate in smaller batches for faster response
+      const batchSize = 5; // Smaller batches = faster individual responses
+
+      // Translate headings in batches
+      if (headingsToTranslate.isNotEmpty) {
+        for (int i = 0; i < headingsToTranslate.length; i += batchSize) {
+          final batch = headingsToTranslate.skip(i).take(batchSize).toList();
+          final headingTranslations = await _translateBatch(
+            batch,
+            _selectedLanguage,
+          );
+
+          // Update cache and UI progressively
+          for (var text in batch) {
+            final translated = headingTranslations[text] ?? text;
+            final cacheKey = '${text}_${_selectedLanguage}';
+            _translatedEvents[cacheKey] = {
+              'original': text,
+              'translated': translated,
+            };
+          }
+
+          // Update UI after each batch for progressive loading
+          if (mounted) {
+            setState(() {});
+          }
+        }
+      }
+
+      // Translate descriptions in batches
+      if (descriptionsToTranslate.isNotEmpty) {
+        for (int i = 0; i < descriptionsToTranslate.length; i += batchSize) {
+          final batch =
+              descriptionsToTranslate.skip(i).take(batchSize).toList();
+          final descriptionTranslations = await _translateBatch(
+            batch,
+            _selectedLanguage,
+          );
+
+          // Update cache and UI progressively
+          for (var text in batch) {
+            final translated = descriptionTranslations[text] ?? text;
+            final cacheKey = '${text}_${_selectedLanguage}';
+            _translatedEvents[cacheKey] = {
+              'original': text,
+              'translated': translated,
+            };
+          }
+
+          // Update UI after each batch for progressive loading
+          if (mounted) {
+            setState(() {});
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error translating events: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTranslating = false;
+        });
+      }
+    }
+  }
+
+  String _getTranslatedHeading(EventModel event) {
+    if (_selectedLanguage == 'English') {
+      return event.heading;
+    }
+    final cacheKey = '${event.heading}_${_selectedLanguage}';
+    return _translatedEvents[cacheKey]?['translated'] ?? event.heading;
+  }
+
+  String _getTranslatedDescription(EventModel event) {
+    if (_selectedLanguage == 'English') {
+      return event.description;
+    }
+    final cacheKey = '${event.description}_${_selectedLanguage}';
+    return _translatedEvents[cacheKey]?['translated'] ?? event.description;
   }
 
   void _loadBookmarks() {
@@ -297,6 +573,10 @@ class _MainEventScreenState extends State<MainEventScreen>
           _isLoading = false;
           _isRefreshing = false;
         });
+        // Translate events after loading
+        if (_selectedLanguage != 'English') {
+          _translateEvents();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -511,7 +791,11 @@ class _MainEventScreenState extends State<MainEventScreen>
               fontSize: 20,
             ),
           ),
-          actions: [_buildBookmarkButton(), _buildNotificationButton()],
+          actions: [
+            _buildLanguageButton(),
+            _buildBookmarkButton(),
+            _buildNotificationButton(),
+          ],
         ),
       ),
     );
@@ -521,6 +805,116 @@ class _MainEventScreenState extends State<MainEventScreen>
     return IconButton(
       icon: Icon(icon, color: Colors.white, size: 24),
       onPressed: onPressed,
+    );
+  }
+
+  Widget _buildLanguageButton() {
+    return IconButton(
+      icon: Stack(
+        children: [
+          Icon(Icons.translate, color: Colors.white, size: 24),
+          if (_isTranslating)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+      onPressed: _showLanguageDialog,
+      tooltip: 'Select Language',
+    );
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.translate, color: EventColors.primary),
+              SizedBox(width: 10),
+              Text('Select Language'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLanguageOption('English', '🇬🇧'),
+              SizedBox(height: 12),
+              _buildLanguageOption('Kannada', '🇮🇳'),
+              SizedBox(height: 12),
+              _buildLanguageOption('Hindi', '🇮🇳'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(String language, String flag) {
+    final isSelected = _selectedLanguage == language;
+    return InkWell(
+      onTap: () async {
+        Navigator.pop(context);
+        if (_selectedLanguage != language) {
+          // Update language immediately for instant UI response
+          setState(() {
+            _selectedLanguage = language;
+          });
+
+          // Save preference and translate in background (non-blocking)
+          _saveLanguagePreference(language);
+
+          if (language != 'English') {
+            // Start translation in background - UI already updated with cached translations
+            _translateEvents();
+          } else {
+            // For English, just refresh UI immediately
+            setState(() {});
+          }
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? EventColors.primary.withOpacity(0.1)
+                  : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? EventColors.primary : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: TextStyle(fontSize: 24)),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                language,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? EventColors.primary : Colors.black87,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: EventColors.primary),
+          ],
+        ),
+      ),
     );
   }
 
@@ -833,6 +1227,25 @@ class _MainEventScreenState extends State<MainEventScreen>
         },
       },
       {
+        'icon': Icons.edit_rounded,
+        'title': 'Edit Events',
+        'subtitle': 'Manage existing events',
+        'gradient': LinearGradient(
+          colors: [Color(0xFFE17055), Color(0xFFD63031)],
+        ),
+        'action': () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => EditEventsScreen()),
+          ).then((result) {
+            if (result == true) {
+              _loadEvents(forceRefresh: true);
+            }
+          });
+        },
+      },
+      {
         'icon': Icons.notifications_active_rounded,
         'title': 'Notifications',
         'subtitle': 'View notifications',
@@ -997,6 +1410,8 @@ class _MainEventScreenState extends State<MainEventScreen>
         currentUserEmail: currentUser?.email ?? '',
         isPanchayatMember: _isPanchayatMember,
         isBookmarked: _bookmarkedEventIds.contains(_events[index].id),
+        translatedHeading: _getTranslatedHeading(_events[index]),
+        translatedDescription: _getTranslatedDescription(_events[index]),
         onEventChanged: () => _loadEvents(forceRefresh: true),
         onLikeToggled:
             (eventId, userEmail, isLiked) =>
@@ -1313,6 +1728,8 @@ class EventCard extends StatefulWidget {
   final VoidCallback onEventChanged;
   final Function(String eventId, String userEmail, bool isLiked)? onLikeToggled;
   final Function(String eventId, bool isBookmarked)? onBookmarkToggled;
+  final String? translatedHeading;
+  final String? translatedDescription;
 
   const EventCard({
     super.key,
@@ -1323,6 +1740,8 @@ class EventCard extends StatefulWidget {
     required this.onEventChanged,
     this.onLikeToggled,
     this.onBookmarkToggled,
+    this.translatedHeading,
+    this.translatedDescription,
   });
 
   @override
@@ -1833,7 +2252,7 @@ class _EventCardState extends State<EventCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.event.heading,
+            widget.translatedHeading ?? widget.event.heading,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20,
@@ -1845,14 +2264,12 @@ class _EventCardState extends State<EventCard>
           ),
           SizedBox(height: 8),
           Text(
-            widget.event.description,
+            widget.translatedDescription ?? widget.event.description,
             style: TextStyle(
               fontSize: 15,
               color: Colors.grey[700],
               height: 1.5,
             ),
-            maxLines: 5,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
