@@ -252,16 +252,12 @@ class _EditStorePageState extends State<EditStorePage>
     }
 
     if (!_isListening) {
-      if (mounted) {
-        setState(() => _isListening = true);
-      }
+      setState(() => _isListening = true);
       await _speech.listen(
         onResult: (result) {
-          if (mounted) {
-            setState(() {
-              _descriptionController.text = result.recognizedWords;
-            });
-          }
+          setState(() {
+            _descriptionController.text = result.recognizedWords;
+          });
         },
         listenFor: Duration(seconds: 30),
         pauseFor: Duration(seconds: 3),
@@ -274,9 +270,7 @@ class _EditStorePageState extends State<EditStorePage>
   void _stopListening() async {
     if (_isListening) {
       await _speech.stop();
-      if (mounted) {
-        setState(() => _isListening = false);
-      }
+      setState(() => _isListening = false);
     }
   }
 
@@ -1054,16 +1048,12 @@ class _CreateStorePageState extends State<CreateStorePage>
     }
 
     if (!_isListening) {
-      if (mounted) {
-        setState(() => _isListening = true);
-      }
+      setState(() => _isListening = true);
       await _speech.listen(
         onResult: (result) {
-          if (mounted) {
-            setState(() {
-              _descriptionController.text = result.recognizedWords;
-            });
-          }
+          setState(() {
+            _descriptionController.text = result.recognizedWords;
+          });
         },
         listenFor: Duration(seconds: 30),
         pauseFor: Duration(seconds: 3),
@@ -1076,9 +1066,7 @@ class _CreateStorePageState extends State<CreateStorePage>
   void _stopListening() async {
     if (_isListening) {
       await _speech.stop();
-      if (mounted) {
-        setState(() => _isListening = false);
-      }
+      setState(() => _isListening = false);
     }
   }
 

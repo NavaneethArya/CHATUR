@@ -263,16 +263,45 @@ class _AddEventWithLocationPageState extends State<AddEventWithLocationPage>
       }
 
       // Get panchayat member info
-      final memberName =
-          widget.panchayatData?['name'] ??
-          widget.existingEvent?.createdBy ??
-          FirebaseAuth.instance.currentUser?.displayName ??
-          'Panchayat Member';
-      final memberEmail =
-          widget.panchayatData?['email'] ??
-          widget.existingEvent?.createdByEmail ??
-          FirebaseAuth.instance.currentUser?.email ??
-          'admin@chatur.com';
+      // First try from widget.panchayatData, then from existing event, 
+      // then fetch from Firebase if user is panchayat member, finally fallback
+      String memberName = widget.panchayatData?['name'] ?? 
+          widget.existingEvent?.createdBy ?? '';
+      String memberEmail = widget.panchayatData?['email'] ?? 
+          widget.existingEvent?.createdByEmail ?? '';
+      
+      // If name/email not found and user is logged in, try to fetch from Firebase
+      if ((memberName.isEmpty || memberEmail.isEmpty) && 
+          FirebaseAuth.instance.currentUser?.email != null) {
+        try {
+          final userEmail = FirebaseAuth.instance.currentUser!.email!;
+          final querySnapshot = await FirebaseFirestore.instance
+              .collection('panchayat_members')
+              .where('email', isEqualTo: userEmail)
+              .limit(1)
+              .get();
+          
+          if (querySnapshot.docs.isNotEmpty) {
+            final panchayatData = querySnapshot.docs.first.data();
+            memberName = memberName.isEmpty 
+                ? (panchayatData['name'] ?? 'Panchayat Member')
+                : memberName;
+            memberEmail = memberEmail.isEmpty 
+                ? (panchayatData['email'] ?? userEmail)
+                : memberEmail;
+          }
+        } catch (e) {
+          print('Error fetching panchayat member data: $e');
+        }
+      }
+      
+      // Final fallback if still empty
+      memberName = memberName.isEmpty 
+          ? (FirebaseAuth.instance.currentUser?.displayName ?? 'Panchayat Member')
+          : memberName;
+      memberEmail = memberEmail.isEmpty 
+          ? (FirebaseAuth.instance.currentUser?.email ?? 'admin@chatur.com')
+          : memberEmail;
 
       final event = EventModel(
         id: widget.existingEvent?.id ?? '',

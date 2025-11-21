@@ -1,4 +1,5 @@
 // AddProduct.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -43,6 +44,7 @@ class _AddProductPageState extends State<AddProductPage>
       TextEditingController();
 
   List<File> _productImages = [];
+  List<String> _existingImageUrls = []; // NEW: Track existing URLs in edit mode
   final ImagePicker _picker = ImagePicker();
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -145,6 +147,7 @@ class _AddProductPageState extends State<AddProductPage>
     _animationController.forward();
 
     // Populate fields if in edit mode
+    // Populate fields if in edit mode
     if (widget.isEditMode && widget.existingProduct != null) {
       _productTypeController.text = widget.existingProduct!.productType;
       _productNameController.text = widget.existingProduct!.productName;
@@ -157,6 +160,9 @@ class _AddProductPageState extends State<AddProductPage>
       _shippingMethodController.text = widget.existingProduct!.shippingMethod;
       _shippingAvailabilityController.text =
           widget.existingProduct!.shippingAvailability;
+
+      // Store existing image URLs for edit mode
+      _existingImageUrls = List.from(widget.existingProduct!.productImageUrls);
       _productImages = List.from(widget.existingProduct!.productImages);
     }
   }
@@ -175,17 +181,50 @@ class _AddProductPageState extends State<AddProductPage>
   }
 
   Future<void> _pickImages() async {
+    // Calculate remaining slots
+    final int remainingSlots = 3 - _productImages.length;
+
+    if (remainingSlots <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum 3 images allowed'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     final List<XFile> images = await _picker.pickMultiImage();
     if (images.isNotEmpty) {
+      // Only add up to remaining slots
+      final List<XFile> imagesToAdd = images.take(remainingSlots).toList();
+
       setState(() {
-        _productImages.addAll(images.map((image) => File(image.path)));
+        _productImages.addAll(imagesToAdd.map((image) => File(image.path)));
       });
+
+      if (images.length > remainingSlots) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Only ${remainingSlots} image(s) added. Maximum is 3 images total.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
   void _removeImage(int index) {
     setState(() {
       _productImages.removeAt(index);
+    });
+  }
+
+  void _removeImageUrl(int index) {
+    setState(() {
+      _existingImageUrls.removeAt(index);
     });
   }
 
@@ -615,7 +654,9 @@ class _AddProductPageState extends State<AddProductPage>
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (_productImages.isEmpty) {
+      // Check if at least one image exists (either existing URL or new file)
+      final totalImages = _existingImageUrls.length + _productImages.length;
+      if (totalImages == 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Please add at least one product image'),
@@ -625,6 +666,7 @@ class _AddProductPageState extends State<AddProductPage>
         return;
       }
 
+      // Show loading dialog
       // Show loading dialog
       showDialog(
         context: context,
@@ -637,58 +679,57 @@ class _AddProductPageState extends State<AddProductPage>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.deepPurple),
-                    SizedBox(height: 15),
-                    Text('Uploading images...', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    Text(
-                      'Please wait',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
+                child: CircularProgressIndicator(color: Colors.deepPurple),
               ),
             ),
       );
+      List<String> finalImageUrls = List.from(_existingImageUrls);
 
-      print('Uploading ${_productImages.length} images to Cloudinary...');
+      // Upload new images only if there are any
+      if (_productImages.isNotEmpty) {
+        print('Uploading ${_productImages.length} new images to Cloudinary...');
 
-      // Upload images to Cloudinary
-      List<String> imageUrls = await CloudinaryStoreService.uploadProductImages(
-        _productImages,
-      );
+        List<String> newImageUrls =
+            await CloudinaryStoreService.uploadProductImages(_productImages);
+
+        if (newImageUrls.isEmpty && _productImages.isNotEmpty) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload new images. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        finalImageUrls.addAll(newImageUrls);
+        print('Successfully uploaded ${newImageUrls.length} new images');
+      }
 
       Navigator.pop(context); // Close loading dialog
 
-      if (imageUrls.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload images. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      print('Successfully uploaded ${imageUrls.length} images');
-      print('Image URLs: $imageUrls');
+      print('Final image URLs: $finalImageUrls');
 
       final product = Product(
-        productType: _productTypeController.text,
-        productName: _productNameController.text,
-        productDescription: _productDescriptionController.text,
+        productType: _productTypeController.text.trim(),
+        productName: _productNameController.text.trim(),
+        productDescription: _productDescriptionController.text.trim(),
         productPrice: double.parse(_productPriceController.text),
         stockQuantity: int.parse(_stockQuantityController.text),
-        productImages: List.from(_productImages),
-        productImageUrls: imageUrls, // Add Cloudinary URLs
-        shippingMethod: _shippingMethodController.text,
-        shippingAvailability: _shippingAvailabilityController.text,
+        productImages: [], // Empty for Firebase, we use URLs
+        productImageUrls: finalImageUrls,
+        shippingMethod: _shippingMethodController.text.trim(),
+        shippingAvailability: _shippingAvailabilityController.text.trim(),
+        productId:
+            widget
+                .existingProduct
+                ?.productId, // Preserve product ID in edit mode
       );
 
-      print('Product created: ${product.productName}');
+      print(
+        'Product ${widget.isEditMode ? 'updated' : 'created'}: ${product.productName}',
+      );
       print('Returning product to MyStore...');
 
       // Return the product to MyStore
@@ -828,7 +869,7 @@ class _AddProductPageState extends State<AddProductPage>
       ),
       child: TextFormField(
         controller: _productTypeController,
-        readOnly: false,
+        readOnly: true,
         onTap: _showProductTypeDialog,
         decoration: InputDecoration(
           labelText: 'Product Type',
@@ -1005,6 +1046,8 @@ class _AddProductPageState extends State<AddProductPage>
   }
 
   Widget _buildImageUpload() {
+    final totalImages = _existingImageUrls.length + _productImages.length;
+
     return Column(
       children: [
         Container(
@@ -1020,7 +1063,7 @@ class _AddProductPageState extends State<AddProductPage>
             ],
           ),
           child: InkWell(
-            onTap: _pickImages,
+            onTap: totalImages < 3 ? _pickImages : null,
             borderRadius: BorderRadius.circular(15),
             child: Container(
               padding: EdgeInsets.all(30),
@@ -1029,20 +1072,24 @@ class _AddProductPageState extends State<AddProductPage>
                   Icon(
                     Icons.add_photo_alternate,
                     size: 60,
-                    color: Colors.deepPurple,
+                    color: totalImages < 3 ? Colors.deepPurple : Colors.grey,
                   ),
                   SizedBox(height: 15),
                   Text(
-                    'Upload Product Images',
+                    totalImages < 3
+                        ? 'Upload Product Images'
+                        : 'Maximum 3 Images',
                     style: TextStyle(
-                      color: Colors.deepPurple,
+                      color: totalImages < 3 ? Colors.deepPurple : Colors.grey,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    'Tap to select multiple images',
+                    totalImages < 3
+                        ? 'Tap to select (${totalImages}/3)'
+                        : 'Remove an image to add more',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ],
@@ -1050,8 +1097,110 @@ class _AddProductPageState extends State<AddProductPage>
             ),
           ),
         ),
+
+        // Show existing images from URLs (in edit mode)
+        if (_existingImageUrls.isNotEmpty) ...[
+          SizedBox(height: 20),
+          Text(
+            'Current Images',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _existingImageUrls.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: EdgeInsets.only(right: 10),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: CachedNetworkImage(
+                          imageUrl: _existingImageUrls[index],
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.deepPurple,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) =>
+                                  Icon(Icons.error, color: Colors.red),
+                        ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: GestureDetector(
+                          onTap: () => _removeImageUrl(index),
+                          child: Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 5,
+                        left: 5,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Existing',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+
+        // Show new images from local files
         if (_productImages.isNotEmpty) ...[
           SizedBox(height: 20),
+          if (_existingImageUrls.isNotEmpty)
+            Text(
+              'New Images',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+          SizedBox(height: 10),
           SizedBox(
             height: 120,
             child: ListView.builder(
@@ -1090,6 +1239,28 @@ class _AddProductPageState extends State<AddProductPage>
                           ),
                         ),
                       ),
+                      Positioned(
+                        bottom: 5,
+                        left: 5,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'New',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -1116,7 +1287,7 @@ class _AddProductPageState extends State<AddProductPage>
       ),
       child: TextFormField(
         controller: _shippingMethodController,
-        readOnly: false,
+        readOnly: true,
         onTap: _showShippingMethodDialog,
         decoration: InputDecoration(
           labelText: 'Shipping Method',
@@ -1157,7 +1328,7 @@ class _AddProductPageState extends State<AddProductPage>
       ),
       child: TextFormField(
         controller: _shippingAvailabilityController,
-        readOnly: false,
+        readOnly: true,
         onTap: _showShippingAvailabilityDialog,
         decoration: InputDecoration(
           labelText: 'Shipping Coverage Area',

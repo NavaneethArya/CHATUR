@@ -1,7 +1,9 @@
 // MyStore.dart
 import 'package:chatur_frontend/My_Store/StoreDetailView.dart';
 import 'package:chatur_frontend/My_Store/createStore.dart';
+import 'package:chatur_frontend/My_Store/firebase_store_service.dart';
 import 'package:chatur_frontend/My_Store/productDetailMyStore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'AddProduct.dart';
@@ -45,6 +47,14 @@ class _MyStorePageState extends State<MyStorePage>
     _fabController.forward();
 
     _initializeFromFirebase();
+  }
+
+  Widget _buildDot(Color color) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
   }
 
   Future<void> _initializeFromFirebase() async {
@@ -710,32 +720,143 @@ class _MyStorePageState extends State<MyStorePage>
     );
 
     if (result != null && result is Product) {
-      _productManager.addProduct(result);
-      setState(() {});
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Product "${result.productName}" added successfully!',
+      // Show loading
+      // Show attractive loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Center(
+              child: Container(
+                padding: EdgeInsets.all(30),
+                margin: EdgeInsets.symmetric(horizontal: 40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Animated container with gradient
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.deepPurple.shade300,
+                            Colors.deepPurple,
+                            Colors.purple.shade700,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 25),
+                    Text(
+                      'Adding Product',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Please wait while we add your\nproduct to the store...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    // Animated dots or progress indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildDot(Colors.deepPurple.shade200),
+                        SizedBox(width: 8),
+                        _buildDot(Colors.deepPurple.shade400),
+                        SizedBox(width: 8),
+                        _buildDot(Colors.deepPurple),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+            ),
       );
+
+      // Add product to Firebase
+      final success = await _productManager.addProduct(result);
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (success) {
+        setState(() {});
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Product "${result.productName}" added successfully!',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add product'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
   void _navigateToEditProduct(int index) async {
     final product = _productManager.products[index];
+    final productId = product.productId;
 
     final result = await Navigator.push(
       context,
@@ -750,28 +871,71 @@ class _MyStorePageState extends State<MyStorePage>
     );
 
     if (result != null && result is Product) {
-      setState(() {
-        _productManager.products[index] = result;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Product "${result.productName}" updated successfully!',
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
                 ),
+                child: CircularProgressIndicator(color: Colors.deepPurple),
               ),
-            ],
-          ),
-          backgroundColor: Colors.blue,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+            ),
       );
+
+      bool success = false;
+
+      // UPDATE product instead of delete and re-add
+      if (productId != null && productId.isNotEmpty) {
+        print('Updating product: $productId');
+        success = await FirebaseStoreService.updateProduct(productId, result);
+
+        if (success) {
+          // Also update in all users' carts
+          await _updateProductInAllCarts(productId, result);
+          // Reload products list
+          await _productManager.loadProducts();
+        }
+      }
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (success) {
+        if (mounted) setState(() {});
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Product "${result.productName}" updated successfully!',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update product'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -793,11 +957,18 @@ class _MyStorePageState extends State<MyStorePage>
     );
   }
 
+  // Replace your _deleteProduct method with this improved version:
+
+  // Replace your _deleteProduct method in MyStore.dart with this:
+
   void _deleteProduct(int index) {
-    final productName = _productManager.products[index].productName;
+    final product = _productManager.products[index];
+    final productName = product.productName;
+    final productId = product.productId;
+
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
@@ -806,36 +977,56 @@ class _MyStorePageState extends State<MyStorePage>
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange),
               SizedBox(width: 10),
-              Text('Delete Product'),
+              Expanded(child: Text('Delete Product')),
             ],
           ),
           content: Text(
-            'Are you sure you want to delete "$productName"?\n\nThis action cannot be undone.',
+            'Are you sure you want to delete "$productName"?\n\nThis will:\n• Remove it from your store\n• Remove it from all users\' carts\n• This action cannot be undone.',
+            style: TextStyle(height: 1.5),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _productManager.removeProduct(index);
-                });
-                Navigator.pop(context);
+                // 1. Close dialog FIRST
+                Navigator.pop(dialogContext);
+
+                // 2. IMMEDIATELY remove from local list and update UI
+                // This makes the product disappear instantly - no loading!
+                _productManager.removeProductLocally(index);
+                setState(() {});
+
+                // 3. Show success message immediately
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
                       children: [
                         Icon(Icons.delete, color: Colors.white),
                         SizedBox(width: 10),
-                        Text('Product deleted'),
+                        Text('Product "$productName" deleted'),
                       ],
                     ),
                     backgroundColor: Colors.red,
                     behavior: SnackBarBehavior.floating,
+                    duration: Duration(seconds: 2),
                   ),
                 );
+
+                // 4. Delete from Firebase in background - NO loading, NO await
+                if (productId != null && productId.isNotEmpty) {
+                  // Fire and forget - don't await, don't show loading
+                  _productManager.deleteProductInBackground(productId).then((
+                    success,
+                  ) {
+                    if (success) {
+                      // Clean up carts in background too
+                      _deleteProductFromAllCarts(productId, productName);
+                    }
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -849,6 +1040,146 @@ class _MyStorePageState extends State<MyStorePage>
         );
       },
     );
+  }
+
+  // Also keep your _deleteProductFromAllCarts method but make sure it's not awaited:
+  Future<void> _deleteProductFromAllCarts(
+    String productId,
+    String productName,
+  ) async {
+    try {
+      print('Deleting product $productId from all carts in background...');
+
+      final usersSnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+
+      int cartItemsDeleted = 0;
+
+      for (var userDoc in usersSnapshot.docs) {
+        QuerySnapshot cartSnapshot;
+
+        // Try by productId first
+        cartSnapshot =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userDoc.id)
+                .collection('cart')
+                .where('productId', isEqualTo: productId)
+                .get();
+
+        // Fallback to productName
+        if (cartSnapshot.docs.isEmpty) {
+          cartSnapshot =
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userDoc.id)
+                  .collection('cart')
+                  .where('productName', isEqualTo: productName)
+                  .get();
+        }
+
+        for (var cartDoc in cartSnapshot.docs) {
+          await cartDoc.reference.delete();
+          cartItemsDeleted++;
+        }
+      }
+
+      print('Deleted $cartItemsDeleted cart items across all users');
+    } catch (e) {
+      print('Error deleting from carts (non-blocking): $e');
+    }
+  }
+
+  // You can REMOVE the old _deleteProductInBackground method from MyStore.dart
+  // since we now use _productManager.deleteProductInBackground() instead
+
+  // Also update _deleteProductFromAllCarts to not block anything:
+
+  // REMOVE the old _deleteProductInBackground method entirely
+  // as we're now handling everything inline
+  Future<void> _deleteProductInBackground(
+    String? productId,
+    String productName,
+  ) async {
+    try {
+      if (productId != null && productId.isNotEmpty) {
+        // Delete from Firebase
+        final success = await FirebaseStoreService.deleteProduct(productId);
+
+        if (success) {
+          // Delete from all users' carts
+          await _deleteProductFromAllCarts(productId, productName);
+          print('Product deleted from Firebase and all carts: $productName');
+        } else {
+          print('Failed to delete product from Firebase: $productName');
+          // Optionally reload to restore if delete failed
+          if (mounted) {
+            await _productManager.loadProducts();
+            setState(() {});
+          }
+        }
+      }
+    } catch (e) {
+      print('Error in background delete: $e');
+    }
+  }
+
+  Future<void> _updateProductInAllCarts(
+    String productId,
+    Product updatedProduct,
+  ) async {
+    try {
+      print('Attempting to update product $productId in all carts...');
+
+      // Get all users
+      final usersSnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+
+      int cartItemsUpdated = 0;
+
+      // For each user, check their cart
+      for (var userDoc in usersSnapshot.docs) {
+        // Find cart items with this productId or productName
+        QuerySnapshot cartSnapshot =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userDoc.id)
+                .collection('cart')
+                .where('productId', isEqualTo: productId)
+                .get();
+
+        // If no results by productId, try by old productName
+        if (cartSnapshot.docs.isEmpty) {
+          cartSnapshot =
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userDoc.id)
+                  .collection('cart')
+                  .where('productName', isEqualTo: updatedProduct.productName)
+                  .get();
+        }
+
+        // Update matching cart items
+        for (var cartDoc in cartSnapshot.docs) {
+          await cartDoc.reference.update({
+            'productId': productId,
+            'productName': updatedProduct.productName,
+            'productType': updatedProduct.productType,
+            'productPrice': updatedProduct.productPrice,
+            'productImageUrls': updatedProduct.productImageUrls,
+            'productDescription': updatedProduct.productDescription,
+            'stockQuantity': updatedProduct.stockQuantity,
+            'shippingMethod': updatedProduct.shippingMethod,
+            'shippingAvailability': updatedProduct.shippingAvailability,
+          });
+          cartItemsUpdated++;
+        }
+      }
+
+      print('Updated $cartItemsUpdated cart items across all users');
+    } catch (e) {
+      print('Error updating product in carts: $e');
+    }
   }
 
   @override
@@ -895,10 +1226,39 @@ class _MyStorePageState extends State<MyStorePage>
                     children: [
                       _buildAppBar(products.length),
                       Expanded(
-                        child:
-                            products.isEmpty
-                                ? _buildEmptyState()
-                                : _buildProductsList(products),
+                        // NEW: Wrap with RefreshIndicator
+                        child: RefreshIndicator(
+                          color: Colors.deepPurple,
+                          onRefresh: () async {
+                            setState(() => _isLoading = true);
+                            await Future.wait([
+                              _productManager.initializeStore(),
+                              _productManager.loadProducts(),
+                            ]);
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(Icons.refresh, color: Colors.white),
+                                    SizedBox(width: 10),
+                                    Text('Store refreshed'),
+                                  ],
+                                ),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          child:
+                              products.isEmpty
+                                  ? _buildEmptyState()
+                                  : _buildProductsList(products),
+                        ),
                       ),
                     ],
                   ),
@@ -949,6 +1309,15 @@ class _MyStorePageState extends State<MyStorePage>
       ),
       child: Row(
         children: [
+          // NEW: Back button
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white, size: 24),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            tooltip: 'Back to Market',
+          ),
+          SizedBox(width: 10),
           if (widget.storeLogo != null)
             Container(
               width: 50,
@@ -984,6 +1353,8 @@ class _MyStorePageState extends State<MyStorePage>
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '$productCount Product${productCount != 1 ? 's' : ''}',
@@ -1003,8 +1374,12 @@ class _MyStorePageState extends State<MyStorePage>
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      physics: AlwaysScrollableScrollPhysics(), // NEW: Enable pull-to-refresh
+      child: Container(
+        height:
+            MediaQuery.of(context).size.height -
+            200, // NEW: Ensure minimum height
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

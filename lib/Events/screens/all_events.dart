@@ -9,6 +9,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AllEventsPage extends StatefulWidget {
   const AllEventsPage({super.key});
@@ -147,8 +148,27 @@ class _AllEventsPageState extends State<AllEventsPage>
         );
       }
     } else {
-      // Already panchayat member, proceed directly
-      _navigateToAddEvent(eventToUpdate: eventToUpdate);
+      // Already panchayat member, fetch data and proceed
+      Map<String, dynamic>? panchayatData;
+      if (currentUser?.email != null) {
+        try {
+          final querySnapshot = await FirebaseFirestore.instance
+              .collection('panchayat_members')
+              .where('email', isEqualTo: currentUser!.email!)
+              .limit(1)
+              .get();
+          
+          if (querySnapshot.docs.isNotEmpty) {
+            panchayatData = querySnapshot.docs.first.data();
+          }
+        } catch (e) {
+          print('Error fetching panchayat data: $e');
+        }
+      }
+      _navigateToAddEvent(
+        eventToUpdate: eventToUpdate,
+        memberData: panchayatData,
+      );
     }
   }
 
@@ -1268,6 +1288,7 @@ class EventDetailsBottomSheet extends StatelessWidget {
     required this.onDelete,
   });
 
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -1342,13 +1363,98 @@ class EventDetailsBottomSheet extends StatelessWidget {
                     children: [
                       // Event Image
                       if (event.imageUrl != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: CachedNetworkImage(
-                            imageUrl: event.imageUrl!,
-                            width: double.infinity,
-                            height: 250,
-                            fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (dialogContext) => Dialog(
+                                backgroundColor: Colors.transparent,
+                                child: Stack(
+                                  children: [
+                                    Center(
+                                      child: Hero(
+                                        tag: 'event_detail_image_${event.imageUrl}',
+                                        child: Container(
+                                          constraints: BoxConstraints(
+                                            maxHeight: MediaQuery.of(context).size.height * 0.8,
+                                            maxWidth: MediaQuery.of(context).size.width * 0.9,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(20),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.3),
+                                                blurRadius: 20,
+                                                offset: Offset(0, 10),
+                                              ),
+                                            ],
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(20),
+                                            child: CachedNetworkImage(
+                                              imageUrl: event.imageUrl!,
+                                              fit: BoxFit.contain,
+                                              placeholder: (context, url) => Container(
+                                                color: Colors.black54,
+                                                child: Center(
+                                                  child: CircularProgressIndicator(
+                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                              errorWidget: (context, url, error) => Container(
+                                                color: Colors.black54,
+                                                child: Center(
+                                                  child: Icon(Icons.error, color: Colors.red, size: 50),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 20,
+                                      right: 20,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          icon: Icon(Icons.close, color: Colors.white, size: 28),
+                                          onPressed: () => Navigator.of(dialogContext).pop(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Hero(
+                            tag: 'event_detail_image_${event.imageUrl}',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: CachedNetworkImage(
+                                imageUrl: event.imageUrl!,
+                                width: double.infinity,
+                                height: 250,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  height: 250,
+                                  color: Colors.grey[300],
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  height: 250,
+                                  color: Colors.grey[300],
+                                  child: Icon(Icons.error, color: Colors.red),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         SizedBox(height: 20),

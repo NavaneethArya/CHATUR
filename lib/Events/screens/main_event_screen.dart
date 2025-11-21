@@ -20,7 +20,7 @@ import 'package:latlong2/latlong.dart';
 // ============================================
 class EventColors {
   static const primary = Color(0xFF6C5CE7);
-  static const secondary = Color(0xFFFF6B9D);
+  static const secondary = Color.fromARGB(224, 235, 94, 7);
   static const accent = Color(0xFF00D4FF);
   static const success = Color(0xFF00C896);
   static const background = Color(0xFFF8F9FE);
@@ -406,9 +406,31 @@ class _MainEventScreenState extends State<MainEventScreen>
 
   Future<void> _navigateToAddEvent() async {
     if (_isPanchayatMember) {
+      // Fetch panchayat member data from Firebase if available
+      Map<String, dynamic>? panchayatData;
+      if (currentUser?.email != null) {
+        try {
+          final querySnapshot =
+              await FirebaseFirestore.instance
+                  .collection('panchayat_members')
+                  .where('email', isEqualTo: currentUser!.email!)
+                  .limit(1)
+                  .get();
+
+          if (querySnapshot.docs.isNotEmpty) {
+            panchayatData = querySnapshot.docs.first.data();
+          }
+        } catch (e) {
+          print('Error fetching panchayat data: $e');
+        }
+      }
+
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => AddEventWithLocationPage()),
+        MaterialPageRoute(
+          builder:
+              (_) => AddEventWithLocationPage(panchayatData: panchayatData),
+        ),
       );
       if (result == true) _loadEvents(forceRefresh: true);
     } else {
@@ -1386,6 +1408,96 @@ class _EventCardState extends State<EventCard>
     });
   }
 
+  void _showImageDialog(String imageUrl) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.zero,
+            child: Stack(
+              children: [
+                Center(
+                  child: Hero(
+                    tag: 'event_image_$imageUrl',
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.contain,
+                          placeholder:
+                              (context, url) => Container(
+                                color: Colors.black,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Container(
+                                color: Colors.black,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.error,
+                                        color: Colors.red,
+                                        size: 50,
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'Failed to load image',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 10,
+                  right: 20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.close, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Close',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
   void _showComments() {
     showModalBottomSheet(
       context: context,
@@ -1570,42 +1682,46 @@ class _EventCardState extends State<EventCard>
 
   Widget _buildImage() {
     return GestureDetector(
+      onTap: () => _showImageDialog(widget.event.imageUrl!),
       onDoubleTap: _toggleLike,
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(0),
-            child: CachedNetworkImage(
-              imageUrl: widget.event.imageUrl!,
-              width: double.infinity,
-              height: 400,
-              fit: BoxFit.cover,
-              placeholder:
-                  (_, __) => Container(
-                    height: 400,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.grey[200]!, Colors.grey[300]!],
+          Hero(
+            tag: 'event_image_${widget.event.imageUrl}',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(0),
+              child: CachedNetworkImage(
+                imageUrl: widget.event.imageUrl!,
+                width: double.infinity,
+                height: 400,
+                fit: BoxFit.cover,
+                placeholder:
+                    (_, __) => Container(
+                      height: 400,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.grey[200]!, Colors.grey[300]!],
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          EventColors.primary,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            EventColors.primary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              errorWidget:
-                  (_, __, ___) => Container(
-                    height: 400,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.grey[200]!, Colors.grey[300]!],
+                errorWidget:
+                    (_, __, ___) => Container(
+                      height: 400,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.grey[200]!, Colors.grey[300]!],
+                        ),
                       ),
+                      child: Icon(Icons.error, size: 50, color: Colors.red),
                     ),
-                    child: Icon(Icons.error, size: 50, color: Colors.red),
-                  ),
+              ),
             ),
           ),
           Positioned(

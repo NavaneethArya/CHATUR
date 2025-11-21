@@ -1,19 +1,20 @@
 // productDetailMyStore.dart
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_store_service.dart';
 
-// Product class
 class Product {
   final String productName;
   final String productDescription;
   final String productType;
   final double productPrice;
   final int stockQuantity;
-  final String shippingMethod;
-  final String shippingAvailability;
   final List<File> productImages;
   final List<String> productImageUrls;
-  final String? productId; // NEW: For Firebase document ID
+  final String shippingMethod;
+  final String shippingAvailability;
+  final String? productId;
 
   Product({
     required this.productName,
@@ -21,15 +22,43 @@ class Product {
     required this.productType,
     required this.productPrice,
     required this.stockQuantity,
+    required this.productImages,
+    required this.productImageUrls,
     required this.shippingMethod,
     required this.shippingAvailability,
-    required this.productImages,
-    this.productImageUrls = const [],
-    this.productId, // NEW
+    this.productId,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productName': productName,
+      'productDescription': productDescription,
+      'productType': productType,
+      'productPrice': productPrice,
+      'stockQuantity': stockQuantity,
+      'productImageUrls': productImageUrls,
+      'shippingMethod': shippingMethod,
+      'shippingAvailability': shippingAvailability,
+      'productId': productId,
+    };
+  }
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      productName: json['productName'] ?? '',
+      productDescription: json['productDescription'] ?? '',
+      productType: json['productType'] ?? '',
+      productPrice: (json['productPrice'] ?? 0.0).toDouble(),
+      stockQuantity: json['stockQuantity'] ?? 0,
+      productImages: [],
+      productImageUrls: List<String>.from(json['productImageUrls'] ?? []),
+      shippingMethod: json['shippingMethod'] ?? '',
+      shippingAvailability: json['shippingAvailability'] ?? '',
+      productId: json['productId'],
+    );
+  }
 }
 
-// StoreData class
 class StoreData {
   final String storeName;
   final String storeDescription;
@@ -48,194 +77,305 @@ class StoreData {
     required this.phoneNumber,
     required this.address,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'storeName': storeName,
+      'storeDescription': storeDescription,
+      'storeLogoUrl': storeLogoUrl,
+      'ownerName': ownerName,
+      'phoneNumber': phoneNumber,
+      'address': address,
+    };
+  }
+
+  factory StoreData.fromJson(Map<String, dynamic> json) {
+    return StoreData(
+      storeName: json['storeName'] ?? '',
+      storeDescription: json['storeDescription'] ?? '',
+      storeLogo: null,
+      storeLogoUrl: json['storeLogoUrl'],
+      ownerName: json['ownerName'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      address: json['address'] ?? '',
+    );
+  }
 }
 
-// Updated Singleton class to work with Firebase
 class ProductManager {
-  // Private constructor
-  ProductManager._internal();
+  List<Product> products = [];
+  StoreData? storeData;
+  bool isStoreCreated = false;
+  bool isStoreDeactivated = false;
+  DateTime? deactivatedUntil;
 
-  // Single instance
-  static final ProductManager _instance = ProductManager._internal();
+  int get productCount => products.length;
 
-  // Factory constructor to return the same instance
-  factory ProductManager() => _instance;
+  Future<void> initializeStore() async {
+    try {
+      print('Initializing store from Firebase...');
+      storeData = await FirebaseStoreService.getStore();
+      isStoreCreated = storeData != null;
 
-  // ===== STORE MANAGEMENT =====
-  StoreData? _storeData;
-  DateTime? _deactivatedUntil;
+      if (isStoreCreated) {
+        print('Store loaded: ${storeData!.storeName}');
+        await _checkStoreStatus();
+      } else {
+        print('No store found for current user');
+      }
+    } catch (e) {
+      print('Error initializing store: $e');
+      isStoreCreated = false;
+    }
+  }
 
-  // Check if store is created
-  bool get isStoreCreated => _storeData != null;
+  Future<void> _checkStoreStatus() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
 
-  // Get store data
-  StoreData? get storeData => _storeData;
+      final storeDoc =
+          await FirebaseFirestore.instance
+              .collection('stores')
+              .doc(userId)
+              .get();
 
-  // Check if store is currently deactivated
-  bool get isStoreDeactivated {
-    if (_deactivatedUntil == null) return false;
-    if (DateTime.now().isAfter(_deactivatedUntil!)) {
-      _deactivatedUntil = null;
+      if (storeDoc.exists) {
+        final data = storeDoc.data()!;
+        final status = data['status'] ?? 'active';
+        isStoreDeactivated = status == 'deactivated';
+
+        if (isStoreDeactivated && data['deactivatedUntil'] != null) {
+          deactivatedUntil = (data['deactivatedUntil'] as Timestamp).toDate();
+
+          if (deactivatedUntil!.isBefore(DateTime.now())) {
+            await reactivateStore();
+            isStoreDeactivated = false;
+            deactivatedUntil = null;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error checking store status: $e');
+    }
+  }
+
+  Future<void> loadProducts() async {
+    try {
+      print('Loading products from Firebase...');
+      final loadedProducts = await FirebaseStoreService.getProducts();
+      products = loadedProducts;
+      print('Loaded ${products.length} products from Firebase');
+    } catch (e) {
+      print('Error loading products: $e');
+      products = [];
+    }
+  }
+
+  Future<bool> addProduct(Product product) async {
+    try {
+      print('Adding product to Firebase: ${product.productName}');
+      final success = await FirebaseStoreService.addProduct(product);
+
+      if (success) {
+        await loadProducts();
+        print('Product added successfully and list refreshed');
+        return true;
+      }
+
+      print('Failed to add product to Firebase');
+      return false;
+    } catch (e) {
+      print('Error in addProduct: $e');
       return false;
     }
-    return true;
   }
 
-  // Get deactivation time
-  DateTime? get deactivatedUntil => _deactivatedUntil;
+  Future<bool> updateProduct(int index, Product updatedProduct) async {
+    if (index < 0 || index >= products.length) return false;
 
-  // Initialize store from Firebase
-  Future<void> initializeStore() async {
-    _storeData = await FirebaseStoreService.getStore();
-    print('Store initialized from Firebase: ${_storeData?.storeName}');
-  }
+    try {
+      final productId = products[index].productId;
 
-  // Create store
-  Future<bool> createStore(StoreData storeData) async {
-    final success = await FirebaseStoreService.createStore(storeData);
-    if (success) {
-      _storeData = storeData;
-      print('Store created: ${storeData.storeName}');
+      if (productId == null || productId.isEmpty) {
+        print('Error: Product ID is missing for product at index $index');
+        return false;
+      }
+
+      print('Updating product with ID: $productId');
+
+      final success = await FirebaseStoreService.updateProduct(
+        productId,
+        updatedProduct,
+      );
+
+      if (success) {
+        await loadProducts();
+        print('Product updated successfully and list refreshed');
+        return true;
+      }
+
+      print('Failed to update product in Firebase');
+      return false;
+    } catch (e) {
+      print('Error in updateProduct: $e');
+      return false;
     }
-    return success;
   }
 
-  // Update existing store information
-  Future<bool> updateStore(StoreData storeData) async {
-    final success = await FirebaseStoreService.updateStore(storeData);
-    if (success) {
-      _storeData = storeData;
-      print('Store updated: ${storeData.storeName}');
+  // ============ NEW METHOD: Remove product locally (instant, no Firebase call) ============
+  /// Removes product from local list only - for instant UI update
+  /// Use this for optimistic UI updates, then call deleteProductInBackground separately
+  void removeProductLocally(int index) {
+    if (index >= 0 && index < products.length) {
+      final productName = products[index].productName;
+      products.removeAt(index);
+      print('Product removed locally: $productName');
     }
-    return success;
   }
 
-  // Delete store completely
-  Future<bool> deleteStore() async {
-    final success = await FirebaseStoreService.deleteStore();
-    if (success) {
-      _storeData = null;
-      _products.clear();
-      _deactivatedUntil = null;
-      print('Store deleted from Firebase');
+  // ============ NEW METHOD: Delete from Firebase in background (no await needed) ============
+  /// Deletes product from Firebase without blocking UI
+  /// Returns Future but you don't need to await it
+  Future<bool> deleteProductInBackground(String productId) async {
+    try {
+      print('Deleting product from Firebase in background: $productId');
+      final success = await FirebaseStoreService.deleteProduct(productId);
+      if (success) {
+        print('Product deleted from Firebase successfully: $productId');
+      } else {
+        print('Failed to delete product from Firebase: $productId');
+      }
+      return success;
+    } catch (e) {
+      print('Error deleting product in background: $e');
+      return false;
     }
-    return success;
   }
 
-  // Deactivate store temporarily
-  Future<bool> deactivateStore(DateTime until) async {
-    final success = await FirebaseStoreService.deactivateStore(until);
-    if (success) {
-      _deactivatedUntil = until;
-      print('Store deactivated until: $_deactivatedUntil');
-    }
-    return success;
-  }
-
-  // Reactivate store manually
-  Future<bool> reactivateStore() async {
-    final success = await FirebaseStoreService.reactivateStore();
-    if (success) {
-      _deactivatedUntil = null;
-      print('Store reactivated');
-    }
-    return success;
-  }
-
-  // Clear store (for testing purposes)
-  void clearStore() {
-    _storeData = null;
-    _products.clear();
-    _deactivatedUntil = null;
-  }
-
-  // ===== PRODUCT MANAGEMENT =====
-  final List<Product> _products = [];
-
-  // Get all products
-  List<Product> get products => _products;
-
-  // Get product count
-  int get productCount => _products.length;
-
-  // Load products from Firebase
-  Future<void> loadProducts() async {
-    _products.clear();
-    final firebaseProducts = await FirebaseStoreService.getProducts();
-    _products.addAll(firebaseProducts);
-    print('Loaded ${_products.length} products from Firebase');
-  }
-
-  // Add a product
-  Future<bool> addProduct(Product product) async {
-    final success = await FirebaseStoreService.addProduct(product);
-    if (success) {
-      await loadProducts(); // Reload to get the complete data with Firebase IDs
-      print('Product added: ${product.productName}');
-      print('Total products: ${_products.length}');
-    }
-    return success;
-  }
-
-  // Remove a product
+  // Old method - kept for backward compatibility but consider using the new methods above
   Future<bool> removeProduct(int index) async {
-    if (index >= 0 && index < _products.length) {
-      final productId = _products[index].productId;
-      if (productId != null) {
-        final success = await FirebaseStoreService.deleteProduct(productId);
-        if (success) {
-          _products.removeAt(index);
-          print('Product removed at index: $index');
-          return true;
-        }
+    if (index < 0 || index >= products.length) return false;
+
+    try {
+      final productId = products[index].productId;
+      if (productId == null) {
+        print('Error: Product ID is null');
+        return false;
       }
-    }
-    return false;
-  }
 
-  // Update a product
-  Future<bool> updateProduct(int index, Product product) async {
-    if (index >= 0 && index < _products.length) {
-      final productId = _products[index].productId;
-      if (productId != null) {
-        final success = await FirebaseStoreService.updateProduct(
-          productId,
-          product,
-        );
-        if (success) {
-          await loadProducts(); // Reload to get updated data
-          print('Product updated: ${product.productName}');
-          return true;
-        }
+      print('Deleting product from Firebase: $productId');
+      final success = await FirebaseStoreService.deleteProduct(productId);
+
+      if (success) {
+        // Don't reload from Firebase - just remove locally for instant UI
+        products.removeAt(index);
+        print('Product deleted successfully');
+        return true;
       }
+
+      print('Failed to delete product from Firebase');
+      return false;
+    } catch (e) {
+      print('Error in removeProduct: $e');
+      return false;
     }
-    return false;
   }
 
-  // Get product by index
-  Product? getProduct(int index) {
-    if (index >= 0 && index < _products.length) {
-      return _products[index];
+  Future<void> clearAllProducts() async {
+    try {
+      print('Clearing all products from Firebase...');
+      final success = await FirebaseStoreService.clearAllProducts();
+
+      if (success) {
+        products.clear();
+        print('All products cleared successfully');
+      } else {
+        print('Failed to clear products from Firebase');
+      }
+    } catch (e) {
+      print('Error clearing products: $e');
     }
-    return null;
   }
 
-  // Clear all products but keep store data
-  Future<bool> clearAllProducts() async {
-    final success = await FirebaseStoreService.clearAllProducts();
-    if (success) {
-      _products.clear();
-      print('All products cleared from Firebase');
+  Future<void> deleteStore() async {
+    try {
+      print('Deleting store from Firebase...');
+      final success = await FirebaseStoreService.deleteStore();
+
+      if (success) {
+        products.clear();
+        storeData = null;
+        isStoreCreated = false;
+        print('Store deleted successfully');
+      } else {
+        print('Failed to delete store from Firebase');
+      }
+    } catch (e) {
+      print('Error deleting store: $e');
     }
-    return success;
   }
 
-  // Stream operations for real-time updates
-  Stream<StoreData?> streamStore() {
-    return FirebaseStoreService.streamStore();
+  Future<void> deactivateStore(DateTime until) async {
+    try {
+      print('Deactivating store until $until...');
+      final success = await FirebaseStoreService.deactivateStore(until);
+
+      if (success) {
+        isStoreDeactivated = true;
+        deactivatedUntil = until;
+        print('Store deactivated successfully');
+      } else {
+        print('Failed to deactivate store');
+      }
+    } catch (e) {
+      print('Error deactivating store: $e');
+    }
   }
 
-  Stream<List<Product>> streamProducts() {
-    return FirebaseStoreService.streamProducts();
+  Future<bool> reactivateStore() async {
+    try {
+      print('Reactivating store...');
+      final success = await FirebaseStoreService.reactivateStore();
+
+      if (success) {
+        isStoreDeactivated = false;
+        deactivatedUntil = null;
+        print('Store reactivated successfully');
+        return true;
+      }
+
+      print('Failed to reactivate store');
+      return false;
+    } catch (e) {
+      print('Error reactivating store: $e');
+      return false;
+    }
+  }
+
+  Future<bool> createStore(StoreData storeData) async {
+    try {
+      print('Creating store in Firebase...');
+      final success = await FirebaseStoreService.createStore(storeData);
+
+      if (success) {
+        this.storeData = storeData;
+        isStoreCreated = true;
+        print('Store created successfully: ${storeData.storeName}');
+        return true;
+      }
+
+      print('Failed to create store in Firebase');
+      return false;
+    } catch (e) {
+      print('Error in createStore: $e');
+      return false;
+    }
+  }
+
+  void updateStore(StoreData newStoreData) {
+    storeData = newStoreData;
+    FirebaseStoreService.updateStore(newStoreData);
+    print('Store data updated: ${newStoreData.storeName}');
   }
 }

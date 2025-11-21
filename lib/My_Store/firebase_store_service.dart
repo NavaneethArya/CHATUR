@@ -232,19 +232,24 @@ class FirebaseStoreService {
   // ============ PRODUCT OPERATIONS ============
 
   /// Add product
+  /// Add product
   static Future<bool> addProduct(Product product) async {
     if (currentUserId == null) return false;
 
     try {
-      // Upload product images to Cloudinary
-      List<String> imageUrls = [];
-      for (var imageFile in product.productImages) {
-        final url = await _uploadToCloudinary(imageFile, "Store/Products");
-        if (url != null) imageUrls.add(url);
+      // Use the image URLs that were already uploaded in AddProduct.dart
+      List<String> imageUrls = product.productImageUrls;
+
+      // Only upload new images if productImages is not empty (fallback)
+      if (product.productImages.isNotEmpty) {
+        for (var imageFile in product.productImages) {
+          final url = await _uploadToCloudinary(imageFile, "Store/Products");
+          if (url != null) imageUrls.add(url);
+        }
       }
 
       if (imageUrls.isEmpty) {
-        print('Failed to upload product images');
+        print('Failed to upload product images - no image URLs provided');
         return false;
       }
 
@@ -281,6 +286,7 @@ class FirebaseStoreService {
   }
 
   /// Get all products
+  /// Get all products
   static Future<List<Product>> getProducts() async {
     if (currentUserId == null) return [];
 
@@ -305,6 +311,7 @@ class FirebaseStoreService {
           shippingAvailability: data['shippingAvailability'] ?? '',
           productImages: [], // Empty as we use URLs now
           productImageUrls: List<String>.from(data['productImageUrls'] ?? []),
+          productId: doc.id, // ADD THIS LINE - Very important!
         );
       }).toList();
     } catch (e) {
@@ -314,44 +321,43 @@ class FirebaseStoreService {
   }
 
   /// Update product
+  /// Update product
   static Future<bool> updateProduct(String productId, Product product) async {
-    if (currentUserId == null) return false;
-
     try {
-      Map<String, dynamic> updateData = {
-        'productName': product.productName,
-        'productDescription': product.productDescription,
-        'productType': product.productType,
-        'productPrice': product.productPrice,
-        'stockQuantity': product.stockQuantity,
-        'shippingMethod': product.shippingMethod,
-        'shippingAvailability': product.shippingAvailability,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      // Upload new images if provided
-      if (product.productImages.isNotEmpty) {
-        List<String> imageUrls = [];
-        for (var imageFile in product.productImages) {
-          final url = await _uploadToCloudinary(imageFile, "Store/Products");
-          if (url != null) imageUrls.add(url);
-        }
-        if (imageUrls.isNotEmpty) {
-          updateData['productImageUrls'] = imageUrls;
-        }
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        print('Error: No user logged in');
+        return false;
       }
 
-      await _firestore
+      if (productId.isEmpty) {
+        print('Error: Product ID is empty');
+        return false;
+      }
+
+      print('Updating product $productId in Firebase...');
+
+      await FirebaseFirestore.instance
           .collection('stores')
-          .doc(currentUserId)
+          .doc(userId)
           .collection('products')
           .doc(productId)
-          .update(updateData);
+          .update({
+            'productName': product.productName,
+            'productDescription': product.productDescription,
+            'productType': product.productType,
+            'productPrice': product.productPrice,
+            'stockQuantity': product.stockQuantity,
+            'shippingMethod': product.shippingMethod,
+            'shippingAvailability': product.shippingAvailability,
+            'productImageUrls': product.productImageUrls,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
-      print('Product updated successfully');
+      print('Product updated successfully in Firebase: $productId');
       return true;
     } catch (e) {
-      print('Error updating product: $e');
+      print('Error updating product in Firebase: $e');
       return false;
     }
   }

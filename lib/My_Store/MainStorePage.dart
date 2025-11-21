@@ -682,7 +682,7 @@ class _MainStorePageState extends State<MainStorePage>
       return allProducts;
     } catch (e) {
       print('Error in _fetchAllProducts: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -987,6 +987,8 @@ class _MainStorePageState extends State<MainStorePage>
                           .doc(userId)
                           .collection('cart')
                           .add({
+                            'productId':
+                                productData['productId'] ?? '', // ADD THIS LINE
                             'productName': productData['productName'],
                             'productType': productData['productType'],
                             'productPrice': productData['productPrice'],
